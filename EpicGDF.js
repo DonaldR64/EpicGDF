@@ -905,9 +905,9 @@ const Main = (() => {
         outputCard.inline = [];
     };
 
-    const DisplayDice = (roll,tablename,size) => {
+    const DisplayDice = (roll,faction,size) => {
         roll = roll.toString();
-        tablename = tablename.replace(/\s+/g, '');
+        let tablename = Factions[faction].dice;
         let table = findObjs({type:'rollabletable', name: tablename})[0];
         if (!table) {
             table = findObjs({type:'rollabletable', name: "Neutral"})[0];
@@ -1349,13 +1349,13 @@ log(playerID);
             return;
         }
         if (id) {
-            unit = UnitArray[id];
-            if (unit) {
-                faction = unit.faction;
-                player = unit.player;
+            model = ModelArray[id];
+            if (model) {
+                faction = model.faction;
+                player = model.player;
             }
         }
-        if ((!id || !unit) && playerID) {
+        if ((!id || !model) && playerID) {
             faction = state.Epic.players[playerID];
             player = (state.Epic.factions[0] === faction) ? 0:1;
         }
@@ -1548,20 +1548,6 @@ log(playerID);
         }
 
         return result;
-    }
-
-    const SetMarker = (msg) => {
-        if (!msg.selected) {return};
-        let id = msg.selected[0]._id;
-        let unit = UnitArray[id];
-        if (!unit) {return};
-        let token = unit.token;
-        let marker = msg.content.split(";")[1];
-        marker = SM[marker];
-        if (marker) {
-            let onoff = token.get(marker) === true ? false:true;
-            token.set(marker,onoff)
-        }        
     }
 
 
