@@ -129,16 +129,24 @@ const Main = (() => {
         return String(val).charAt(0).toUpperCase() + String(val).slice(1);
     }
 
+    //cover true,false, or Infantry for infantry only
+    //building - is a building
+    //blockLOS - blocks LOS beyond
+    //height - height of terrain
+    //type - Open, Difficult, Dangerous, Impassable or Impassable to Vehicles etc
 
     const TerrainInfo = {
         "Open": {name: "Open",cover: false, building: false, blockLOS: false,height: 0, type: "Open"},
         "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 2, type: "Difficult"},
-        "Building 1": {name: "Building 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
-        "Building 2": {name: "Building 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
+        "Brick Building 1": {name: "Brick Building 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
+        "Brick Building 2": {name: "Brick Building 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
+        "Concrete Building 1": {name: "Concrete Building 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
+        "Concrete Building 2": {name: "Concrete Building 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
         "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 0, type: "Open"},
         "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
         "Craters": {name: "Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
-        "Ruins": {name: "Ruins", cover: true,building: false, blockLOS: false,height: 0, type: "Difficult"},
+        "Ruined Building": {name: "Ruined Building", cover: true,building: false, blockLOS: false,height: 0, type: "Difficult"},
+        "Ruined Concrete": {name: "Ruined Concrete Building", cover: true,building: false, blockLOS: false, height: 0, type: "Difficult"},
 
 
 
@@ -1100,7 +1108,7 @@ log(weapons)
         }
         //AddElevations();
         AddTerrain();    
-        AddTokens();
+        //AddTokens();
 
 
         let elapsed = Date.now()-startTime;
@@ -1136,23 +1144,17 @@ log(weapons)
                 }
 
                 hex.terrain = name;
-                if (name.includes("Building") && name.includes("Ruined") === false) {
-                    for (let i=0;i<buildingTypes.length;i++) {
-                        if (name.includes(buildingTypes[i])) {
-                            hex.hp = 3 * (i+2);
-                            break;
-                        }
-                    }
+                hex.cover = (hex.cover === false) ? terrain.cover:false;
+                if (terrain.building === true) {
+                    hex.building = true;
                 }
-                if (name === "Woods") {
-                    hex.hp = 3;
+                if (terrain.blockLOS === true) {
+                    hex.blockLOS = true;
                 }
-                hex.cover = terrain.cover;
-                hex.los = terrain.los;
-                hex.terrainHeight = terrain.height;
-                if (terrain.difficult) {hex.difficult = terrain.difficult};
-                if (terrain.building) {hex.building = terrain.building};
-          
+                hex.terrainHeight = Math.max(hex.terrainHeight,terrain.height);
+                hex.type = (hex.type === "Open") ? terrain.type:"Open";
+//elevation later
+
 
             }
 
