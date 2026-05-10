@@ -138,10 +138,10 @@ const Main = (() => {
     const TerrainInfo = {
         "Open": {name: "Open",cover: false, building: false, blockLOS: false,height: 0, type: "Open"},
         "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 2, type: "Difficult"},
-        "Brick Building 1": {name: "Brick Building 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
-        "Brick Building 2": {name: "Brick Building 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
-        "Concrete Building 1": {name: "Concrete Building 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
-        "Concrete Building 2": {name: "Concrete Building 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
+        "Brick Building 1": {name: "Brick Building Height 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
+        "Brick Building 2": {name: "Brick Building Height 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
+        "Concrete Building 1": {name: "Concrete Building Height 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
+        "Concrete Building 2": {name: "Concrete Building Height 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
         "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 0, type: "Open"},
         "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
         "Craters": {name: "Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
@@ -633,10 +633,11 @@ const Main = (() => {
             this.label = offset.label();
             this.elevation = 0;
             this.terrain = "Open";
-            this.cover = 0;
+            this.cover = false;
             this.terrainHeight = 0;
             this.blockLOS = false;
             this.building = false;
+            this.type = "Open";
             this.edges = {};
             _.each(DIRECTIONS,a => {
                 this.edges[a] = "Open";
@@ -654,7 +655,7 @@ const Main = (() => {
 
     }
 
-    class Unit {
+    class Model {
         constructor(id) {
             let token = findObjs({_type:"graphic", id: id})[0];
             let cube = (new Point(token.get("left"),token.get("top"))).toCube();
@@ -687,24 +688,12 @@ const Main = (() => {
                 }
             }
             this.player = player;
-log(this.name)
-log(this.faction)
-log(this.player)
 
-            this.models = parseInt(aa.models) || 1;
             this.quality = parseInt(aa.quality);
             this.defense = parseInt(aa.defense);
             this.toughness = parseInt(aa.toughness) || 1;
-
-            this.woundsMax = this.models * this.toughness;
-
             this.type = aa.type;
-            this.size = 1;
-            if (this.type === "Light Vehicle/Small Monster") {this.size = 2};
-            if (this.type === "Vehicle/Monster" || this.type === "Artillery") {this.size = 3};
-            if (this.type === "Titan") {this.size = 4};
-log("Size")
-log(this.size)
+
             let keywords = [];
 
             //Unit Keywords, separated by a comma
@@ -741,8 +730,7 @@ log(this.size)
             }
             this.keywords = keywords;
             this.flavours = flavours;
-log(keywords)
-log(flavours)
+
             let weapons = [];
             for (let i=1;i<11;i++) {
                 if (aa["weapon" + i + "equipped"] === "Equipped") {
@@ -751,7 +739,6 @@ log(flavours)
 
                     let weapon = {
                         name: aa["weapon" + i + "name"],
-                        number: parseInt(aa["weapon" + i + "number"]) || 1,
                         type: aa["weapon" + i + "type"],
                         range: parseInt(aa["weapon" + i + "range"]) || 0,
                         attacks: parseInt(aa["weapon" + i + "attack"]) || 1,
@@ -767,27 +754,30 @@ log(flavours)
             let ravage = keywords.find((e) => e.includes("Ravage")) || "0";
             ravage = parseInt(ravage.replace(/\D/g,''));
             if (ravage > 0) {
-                let weapon = {name: "Ravage",number: ravage,type: "CCW",range: 0,attacks: 1,ap: 0,keywords: [""],fx: "",sound: "Growl"};
+                let weapon = {name: "Ravage",type: "CCW",range: 0,attacks: ravage,ap: 0,keywords: [""],fx: "",sound: "Growl"};
                 weapons.push(weapon);
             }
 
             let impact = keywords.find((e) => e.includes("Impact")) || "0";
             impact = parseInt(impact.replace(/\D/g,''));
             if (impact > 0) {
-                let weapon = {name: "Impact",number: impact,type: "CCW",range: 0,attacks: 1,ap: 0,keywords: [""],fx: "",sound: ""};
+                let weapon = {name: "Impact",type: "CCW",range: 0,attacks: impact,ap: 0,keywords: [""],fx: "",sound: ""};
                 weapons.push(weapon);
             }
 
             this.weapons = weapons;
-log(weapons)
             this.moved = false;
             this.hexLabel = label;
 
 
 
-            UnitArray[this.tokenID] = this;
+            ModelArray[id] = this;
+            let index = HexMap[label].tokenIDs.indexOf(id);
+            if (index < 0) {
+                HexMap[label].tokenIDs.push(id);
+            }
 
-
+            log(this);
 
         }
 
@@ -1106,9 +1096,8 @@ log(weapons)
                 halfToggleY = -halfToggleY;
             }
         }
-        //AddElevations();
         AddTerrain();    
-        //AddTokens();
+        AddTokens();
 
 
         let elapsed = Date.now()-startTime;
@@ -1152,8 +1141,10 @@ log(weapons)
                     hex.blockLOS = true;
                 }
                 hex.terrainHeight = Math.max(hex.terrainHeight,terrain.height);
-                hex.type = (hex.type === "Open") ? terrain.type:"Open";
-//elevation later
+                if (terrain.type !== "Open") {
+                    hex.type = terrain.type;
+                }
+//elevation later as hill hexes UNDER the other hexes
 
 
             }
@@ -1218,11 +1209,14 @@ log(weapons)
         tokens.forEach((token) => {
             let character = getObj("character", token.get("represents"));   
             if (character) {
-                let unit = new Unit(token.get("id"));
+                let model = new Model(token.get("id"));
+
+
+
             }
         });
         let elapsed = Date.now()-start;
-        log(`${c} token${s} checked in ${elapsed/1000} seconds - ` + Object.keys(UnitArray).length + " placed in Unit Array");
+        log(`${c} token${s} checked in ${elapsed/1000} seconds - ` + Object.keys(ModelArray).length + " placed in Model Array");
     }
 
 
@@ -1285,22 +1279,23 @@ log(weapons)
 
 
     const TokenInfo = (msg) => {
-        if (!msg.selected) {return};
-        let id = msg.selected[0]._id;
-        let unit = UnitArray[id];
-
-log(unit)
-        let label = unit.hexLabel;
+        let Tag = msg.content.split(";");
+        let id = Tag[1];
+        let model = ModelArray[id];
+        if (!model) {return};
+log(model)
+        let label = model.hexLabel;
         let hex = HexMap[label];
 
 log(hex)
-        SetupCard(unit.name,"Info",unit.faction);
+        SetupCard(model.name,"Info",model.faction);
         outputCard.body.push("Hex Label: " + label);
         outputCard.body.push("Terrain: " + hex.terrain);
         outputCard.body.push("Elevation: " + hex.elevation);
         outputCard.body.push("Terrain Height: " + hex.terrainHeight);
-        outputCard.body.push("Cover Level: " + hex.cover);
-        outputCard.body.push("LOS Blocking: " + hex.los);
+        outputCard.body.push("Cover: " + hex.cover);
+        outputCard.body.push("Blocks LOS: " + hex.blockLOS);
+        outputCard.body.push("Type: " + hex.type);
         PrintCard();
     }
 
@@ -1584,68 +1579,29 @@ log(shooter.sniper + " / " + shooter.at)
 
 
     const changeGraphic = (tok,prev) => {
-        let unit = UnitArray[tok.id];
-        if (unit) {
-            let cube = (new Point(tok.get("left"),tok.get("top"))).toCube();
-            let label = cube.label();
-            let prevLabel = (new Point(prev.left,prev.top)).label();
-            if (label !== prevLabel) {
-                if (unit.token.get(SM.immobilized) === true) {
-                    label = prevLabel;
-                    sendChat("",unit.name + " Is Immobilized");
-                }
-                if (unit.token.get(SM.supp) > 0 && unit.token.get(SM.assault) === false) {
-                    label = prevLabel;
-                    sendChat("",unit.name + " Is Suppressed");
-                }
-                if (unit.token.get(SM.rallied) === true) {
-                    label = prevLabel;
-                    sendChat("",unit.name + " Just Rallied");
-                }
+        let model = ModelArray[tok.id];
+        let newLabel = new Point(tok.get("left"),tok.get("top")).toCube().label();
+        let prevLabel = new Point(prev.left,prev.top).toCube().label();
+        if (newLabel !== prevLabel && model) {
+            log(model.name + " is Moving");
+            model.hexLabel = newLabel;
+            let newHex = HexMap[newLabel];
+            let prevHex = HexMap[prevLabel];
+            let index = prevHex.tokenIDs.indexOf(tok.id);
+            if (index > -1) {
+                prevHex.tokenIDs.splice(index,1);
+            }
+            if (newHex.tokenIDs.includes(tok.id) === false) {
+                newHex.tokenIDs.push(tok.id);
+            }
 
-                log(unit.name + ' is moving from ' + prevLabel + ' to ' + label)
-                //remove old occupied hexes
-                let index = HexMap[prevLabel].tokenIDs.indexOf(unit.id);
-                if (index > -1) {
-                    HexMap[prevLabel].tokenIDs.splice(index,1);
-                }
-                //place in new hex
-                if (HexMap[label].tokenIDs.includes(unit.id) === false) {
-                    HexMap[label].tokenIDs.push(unit.id);
-                }
-                unit.label = label;
-                unit.cube = cube;
-                if (state.Epic.turn > 0 && label !== prevLabel && unit.token.set(SM.assault) === false) {
-                    unit.token.set(SM.moved,true);
-                }
-                if (label === prevLabel) {
-                    unit.token.set({
-                        left: prev.left,
-                        top: prev.top,
-                    })
-                } else {
-                    unit.token.set(SM.zeroed,false);
-                    PlaySound(unit.mode);
-                    if (state.Epic.hidden === true) {
-                        CheckVisibility(unit);
-                    }
-                }
-            }
-        } else {
-            let character = getObj("character", tok.get("represents"));   
-            if (character) {
-                let unit = new Unit(tok.get("id"));
-                log(unit.name + " was added to array")
-            }
         }
+
+
     }
     
     const destroyGraphic = (obj) => {
-        let name = obj.get("name");
-        log(name + " Destroyed")
-        if (UnitArray[obj.get("id")]) {
-            delete UnitArray[obj.get("id")];
-        }
+
 
 
     }
@@ -1669,6 +1625,8 @@ log(shooter.sniper + " / " + shooter.at)
                 log(state.Epic);
                 log("Units");
                 log(UnitArray)
+                log("Models");
+                log(ModelArray)
                 break;
             case '!ClearState':
                 ClearState(msg);
