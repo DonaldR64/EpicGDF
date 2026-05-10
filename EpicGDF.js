@@ -1132,7 +1132,7 @@ const Main = (() => {
                     }
                 }
 
-                hex.terrain = name;
+                hex.terrain = terrain.name;
                 hex.cover = (hex.cover === false) ? terrain.cover:false;
                 if (terrain.building === true) {
                     hex.building = true;
@@ -1496,7 +1496,7 @@ log(playerID);
                 //does hex block LOS (unless is targetHex)
                 if (interHex.blockLOS === true && i<(len-1)) {
                     los[side] = false;
-                    losReason[side] = interHex.name;
+                    losReason[side] = interHex.terrain;
                     break;
                 }
                 //does edge at end give cover
