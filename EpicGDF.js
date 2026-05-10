@@ -131,33 +131,20 @@ const Main = (() => {
 
 
     const TerrainInfo = {
-        "Open": {name: "Open",cover: 0,los: false,height: 0, difficult: false},
-        "Woods": {name: "Woods",cover: 1,los: true,height: 1,difficult: true},
-        "Concrete Building 1": {name: "Stone Building 1",cover: 2,los: true,height: 1,difficult: true, building: true},
-        "Concrete Building 2": {name: "Stone Building 2",cover: 2,los: true,height: 2, difficult: true, building: true},
-        "Brick Building 1": {name: "Brick Building 1",cover: 2,los: true,height: 1,difficult: true, building: true},
-        "Brick Building 2": {name: "Brick Building 2",cover: 2,los: true,height: 2, difficult: true, building: true},
-        "Wood Building 1": {name: "Wood Building 1",cover: 2,los: true,height: 1,difficult: true, building: true},
-        "Wood Building 2": {name: "Wood Building 2",cover: 2,los: true,height: 2, difficult: true, building: true},
-        "Crops": {name: "Crops",cover: 1,los: false,height: 0, difficult: false, building: false},
-        "Water": {name: "Water",cover: 1,los: false,height: 0, difficult: true, building: false},
-        "Craters": {name: "Craters",cover: 1,los: false,height: 0, difficult: true, building: false},
-        "craters": {name: "Craters",cover: 1,los: false,height: 0, difficult: true, building: false}, //used for temp craters
-        "Burning Woods": {name: "Burning Woods",cover: 1,los: true,height: 1,difficult: true, dangerous: true},
-        "Ruined Building": {name: "Ruined Building",cover: 1,los: true,height: 0,difficult: true, building: false},
-        "Ruined Concrete": {name: "Ruined Concrete",cover: 1,los: true,height: 0,difficult: true, building: false},
+        "Open": {name: "Open",cover: false, building: false, blockLOS: false,height: 0, type: "Open"},
+        "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 2, type: "Difficult"},
+        "Building 1": {name: "Building 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
+        "Building 2": {name: "Building 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
+        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 0, type: "Open"},
+        "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
+        "Craters": {name: "Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
+        "Ruins": {name: "Ruins", cover: true,building: false, blockLOS: false,height: 0, type: "Difficult"},
+
 
 
 
 
     }
-
-    const HillHeights = {
-        //each successive level has a height of 1
-        "#000000": 1,
-        "#666666": 2,
-    }
-
 
     const EdgeInfo = {
         "#00ff00": {name: "Hedge", cover: 1, los: false,height: 0.25},
