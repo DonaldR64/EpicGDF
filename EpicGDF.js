@@ -155,8 +155,8 @@ const Main = (() => {
     }
 
     const EdgeInfo = {
-        "#00ff00": {name: "Hedge", cover: 1, los: false,height: 0.25},
-        "#980000": {name: "Wall", cover: 1, los: false, height: 0.25},
+        "#00ff00": {name: "Hedge"},
+        "#980000": {name: "Wall"},
 
 
 
@@ -1438,8 +1438,8 @@ log(playerID);
 
     const CheckLOS = (msg) => {
         let Tag = msg.content.split(";");
-        let shooter = UnitArray[Tag[1]];
-        let target = UnitArray[Tag[2]];
+        let shooter = ModelArray[Tag[1]];
+        let target = ModelArray[Tag[2]];
         let targetHex = HexMap[target.label];
 
         if (!shooter) {
@@ -1459,17 +1459,11 @@ log(playerID);
             outputCard.body.push(losResult.losReason);
         } else {
             outputCard.body.push("There is LOS to Target");
-            if (targetHex.cover === 0) {
-                outputCard.body.push("Target has no Terrain Cover");
-            } else {
-                outputCard.body.push("Target has Cover of " + targetHex.cover);
+            if (losResult.cover === true) {
+                outputCard.body.push("Target Has Cover");
             }
-            if (target.cover1 === true) {
-                outputCard.body.push("Target is hard to hit, -1 Cover");
-            }
-
-            if (target.type.includes("Infantry") && targetHex.infantry > 0) {
-                outputCard.body.push("Target has Armour Bonus of " + targetHex.infantry);
+            if (losResult.building === true) {
+                outputCard.body.push("Target in Building");
             }
         }
         
@@ -1478,18 +1472,19 @@ log(playerID);
 
 
     const LOS = (shooter,target) => {
-        let shooterHex = HexMap[shooter.label];
-        let targetHex = HexMap[target.label];
+        let shooterHex = HexMap[shooter.hexLabel];
+        let targetHex = HexMap[target.hexLabel];
         let distance = targetHex.cube.distance(shooterHex.cube);
         let finalLOS = true;
+        let finalCover = false;
         let finalLOSReason = "";
-        let ignoreEdge = (shooterHex.name.includes("Hill")) ? [1,1]:[0,0];
  
         let interCubes = [shooterHex.cube.linedraw(targetHex.cube),shooterHex.cube.linedraw2(targetHex.cube)];
         let labels = [interCubes[0].map((e)=> e.label()), interCubes[1].map((e)=> e.label())];
 
         let len = labels[0].length;
         let los = [true,true];
+        let cover = [false,false];
         let losReason = ["",""];
         for (let side=0;side<2;side++) {
             for (let i=0;i<len;i++) {
@@ -1504,29 +1499,12 @@ log(playerID);
                     losReason[side] = interHex.name;
                     break;
                 }
-                //smoke or white phosphorus
-                _.each(interHex.tokenIDs,tokenID => {
-                    let u2 = UnitArray[tokenID];
-                    if ((u2.name.includes("Smoke") || u2.name.includes("Phosphorus")) && u2.name.includes("Ammo") === false) {
-                        los[side] = false;
-                        losReason[side] = "Smoke";
-                    }
-                })
-                //does edge between hex and prior hex block LOS
-                let dir = lastHex.cube.whatDirection(interHex.cube);
-                let edge = lastHex.edges[dir];
-log(i + ": " + interHex.label)
-log(edge)
-log(shooter.sniper + " / " + shooter.at)
-                if (i > 0 || (shooter.sniper === false && shooter.at === false)) {
-                    if (edge === "Bocage") {
-                        if (ignoreEdge[side] === 0) {
-                            los[side] = false;
-                            losReason[side] = "Bocage";
-                            break;
-                        } else {
-                            ignoreEdge[side] = 0;
-                        }
+                //does edge at end give cover
+                if (i === (len-1)) {
+                    let dir = lastHex.cube.whatDirection(interHex.cube);
+                    let edge = lastHex.edges[dir];
+                    if (edge !== "Open") {
+                        cover[side] = true;
                     }
                 }
             }
@@ -1540,11 +1518,33 @@ log(shooter.sniper + " / " + shooter.at)
             }
             finalLOSReason = "Blocked by " + finalLOSReason;
         }
+        if (los[0] === true && los[1] === true) {
+            if (cover[0] === true || cover[1] === true) {
+                finalCover = true;
+            }
+        }
+        if (los[0] === true && los[1] === false) {
+            finalCover = cover[0];
+        }
+        if (los[0] === false && los[1] === true) {
+            finalCover = cover[1];
+        }
+
+        if (targetHex.cover === true) {
+            finalCover = true;
+        }
+        if (targetHex.cover === "Infantry" && target.type === "Infantry") {
+            finalCover = true;
+        }
+
+
 
         let result = {
             los: finalLOS,
             losReason: finalLOSReason,
             distance: distance,
+            cover: finalCover,
+            building: targetHex.building,
         }
 
         return result;
@@ -1634,9 +1634,7 @@ log(shooter.sniper + " / " + shooter.at)
             case '!AddAbilities':
                 AddAbilities(msg);
                 break;
-            case '!InitiativeCheck':
-                InitiativeCheck(msg);
-                break;
+
 
             case '!SetupGame':
                 SetupGame(msg);
