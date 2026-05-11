@@ -71,7 +71,6 @@ const Main = (() => {
         }
     }
 
-    let ModelArray = {};
     let UnitArray = {};
 
     let outputCard = {title: "",subtitle: "",side: "",body: [],buttons: [],};
@@ -204,22 +203,22 @@ const Main = (() => {
         }
     };
 
-    const FX = (fxname,model1,model2) => {
-        //model2 is target, model1 is shooter
-        //if its an area effect, model1 isnt used
+    const FX = (fxname,unit1,unit2) => {
+        //unit2 is target, unit1 is shooter
+        //if its an area effect, unit1 isnt used
         if (fxname.includes("System")) {
             //system fx
             fxname = fxname.replace("System-","");
             if (fxname.includes("Blast")) {
                 fxname = fxname.replace("Blast-","");
-                spawnFx(model2.token.get("left"),model2.token.get("top"), fxname);
+                spawnFx(unit2.token.get("left"),unit2.token.get("top"), fxname);
             } else {
-                spawnFxBetweenPoints(new Point(model1.token.get("left"),model1.token.get("top")), new Point(model2.token.get("left"),model2.token.get("top")), fxname);
+                spawnFxBetweenPoints(new Point(unit1.token.get("left"),unit1.token.get("top")), new Point(unit2.token.get("left"),unit2.token.get("top")), fxname);
             }
         } else {
             let fxType =  findObjs({type: "custfx", name: fxname})[0];
             if (fxType) {
-                spawnFxBetweenPoints(new Point(model1.token.get("left"),model1.token.get("top")), new Point(model2.token.get("left"),model2.token.get("top")), fxType.id);
+                spawnFxBetweenPoints(new Point(unit1.token.get("left"),unit1.token.get("top")), new Point(unit2.token.get("left"),unit2.token.get("top")), fxType.id);
             }
         }
     }
@@ -273,8 +272,8 @@ const Main = (() => {
     }
 
 
-    const KeyNum = (model,keyword) => {
-        let key = model.keywords.split(",");
+    const KeyNum = (unit,keyword) => {
+        let key = unit.keywords.split(",");
         log(key)
         let num = 1;
         _.each(key,word => {
@@ -655,7 +654,7 @@ const Main = (() => {
 
     }
 
-    class Model {
+    class Unit {
         constructor(id) {
             let token = findObjs({_type:"graphic", id: id})[0];
             let cube = (new Point(token.get("left"),token.get("top"))).toCube();
@@ -771,7 +770,7 @@ const Main = (() => {
 
 
 
-            ModelArray[id] = this;
+            UnitArray[id] = this;
             let index = HexMap[label].tokenIDs.indexOf(id);
             if (index < 0) {
                 HexMap[label].tokenIDs.push(id);
@@ -829,14 +828,14 @@ const Main = (() => {
             return;
         };
         let id = msg.selected[0]._id;
-        let model = ModelArray[id];
-        if (!model) {return};
-        AddAbilities2(model);
+        let unit = UnitArray[id];
+        if (!unit) {return};
+        AddAbilities2(unit);
     }
 
 
-    const AddAbilities2 = (model) => {
-        let char = getObj("character", model.charID);   
+    const AddAbilities2 = (unit) => {
+        let char = getObj("character", unit.charID);   
 
         let abilityName,action;
         let abilArray = findObjs({_type: "ability", _characterid: char.id});
@@ -845,7 +844,7 @@ const Main = (() => {
             abilArray[a].remove();
         } 
         //Move 
-        if (model.moveMax > 0) {
+        if (unit.moveMax > 0) {
             abilityName = "0 - Move";
             action = "!Activate;Move;@{selected|token_id}";
             AddAbility(abilityName,action,char.id);
@@ -853,8 +852,8 @@ const Main = (() => {
 
         let systemNum = 0;
         //Use Weapons 
-        for (let i=0;i<model.weapons.length;i++) {
-            let weapon = model.weapons[i];
+        for (let i=0;i<unit.weapons.length;i++) {
+            let weapon = unit.weapons[i];
             systemNum++;
             abilityName = systemNum + " - " + weapon.name;
             action = "!Activate;Attack" + i + ";@{selected|token_id}";
@@ -1209,14 +1208,14 @@ const Main = (() => {
         tokens.forEach((token) => {
             let character = getObj("character", token.get("represents"));   
             if (character) {
-                let model = new Model(token.get("id"));
+                let unit = new Unit(token.get("id"));
 
 
 
             }
         });
         let elapsed = Date.now()-start;
-        log(`${c} token${s} checked in ${elapsed/1000} seconds - ` + Object.keys(ModelArray).length + " placed in Model Array");
+        log(`${c} token${s} checked in ${elapsed/1000} seconds - ` + Object.keys(UnitArray).length + " placed in Unit Array");
     }
 
 
@@ -1234,11 +1233,8 @@ const Main = (() => {
 
 
     const SetupGame = (msg) => {
-        //!Setup;?{Hidden Units|Yes|No};?{Don is|Wermacht|US Army};?{Ted is|Wermacht|US Army};
         let Tag = msg.content.split(";");
-        state.Epic.hidden = Tag[1] === "Yes" ? true:false;
-        state.Epic.players["-OrEQprPPo3w2WOluH58"] = Tag[2];
-        //state.Epic.players[""] = Tag[3];
+
 
 
 
@@ -1253,20 +1249,6 @@ const Main = (() => {
         SetupCard("Turn " + turn,"","Neutral");
         PrintCard();
 
-        let removals = ["shaken","fired","moved","flanked1","flanked2","assault","shaken","rallied"];
-        _.each(UnitArray,unit => {
-            _.each(removals,marker => {
-                unit.token.set(SM[marker],false);
-                unit.Fire();
-                unit.Rally();
-                if (unit.name.includes("Smoke") || unit.name.includes("Phosphorus")) {
-                    unit.Casualty(false);
-                }
-            })
-        })
-
-        //minefields/engineers
-        //artillery placed in prev rounds
 
 
 
@@ -1281,14 +1263,14 @@ const Main = (() => {
     const TokenInfo = (msg) => {
         let Tag = msg.content.split(";");
         let id = Tag[1];
-        let model = ModelArray[id];
-        if (!model) {return};
-log(model)
-        let label = model.hexLabel;
+        let unit = UnitArray[id];
+        if (!unit) {return};
+log(unit)
+        let label = unit.hexLabel;
         let hex = HexMap[label];
 
 log(hex)
-        SetupCard(model.name,"Info",model.faction);
+        SetupCard(unit.name,"Info",unit.faction);
         outputCard.body.push("Hex Label: " + label);
         outputCard.body.push("Terrain: " + hex.terrain);
         outputCard.body.push("Elevation: " + hex.elevation);
@@ -1338,7 +1320,7 @@ log(hex)
         let roll = randomInteger(6);
         let playerID = msg.playerid;
 log(playerID);
-        let id,model,player;
+        let id,unit,player;
         if (msg.selected) {
             id = msg.selected[0]._id;
         }
@@ -1349,13 +1331,13 @@ log(playerID);
             return;
         }
         if (id) {
-            model = ModelArray[id];
-            if (model) {
-                faction = model.faction;
-                player = model.player;
+            unit = UnitArray[id];
+            if (unit) {
+                faction = unit.faction;
+                player = unit.player;
             }
         }
-        if ((!id || !model) && playerID) {
+        if ((!id || !unit) && playerID) {
             faction = state.Epic.players[playerID];
             player = (state.Epic.factions[0] === faction) ? 0:1;
         }
@@ -1438,8 +1420,8 @@ log(playerID);
 
     const CheckLOS = (msg) => {
         let Tag = msg.content.split(";");
-        let shooter = ModelArray[Tag[1]];
-        let target = ModelArray[Tag[2]];
+        let shooter = UnitArray[Tag[1]];
+        let target = UnitArray[Tag[2]];
         let targetHex = HexMap[target.label];
 
         if (!shooter) {
@@ -1565,12 +1547,12 @@ log(playerID);
 
 
     const changeGraphic = (tok,prev) => {
-        let model = ModelArray[tok.id];
+        let unit = UnitArray[tok.id];
         let newLabel = new Point(tok.get("left"),tok.get("top")).toCube().label();
         let prevLabel = new Point(prev.left,prev.top).toCube().label();
-        if (newLabel !== prevLabel && model) {
-            log(model.name + " is Moving");
-            model.hexLabel = newLabel;
+        if (newLabel !== prevLabel && unit) {
+            log(unit.name + " is Moving");
+            unit.hexLabel = newLabel;
             let newHex = HexMap[newLabel];
             let prevHex = HexMap[prevLabel];
             let index = prevHex.tokenIDs.indexOf(tok.id);
@@ -1611,8 +1593,6 @@ log(playerID);
                 log(state.Epic);
                 log("Units");
                 log(UnitArray)
-                log("Models");
-                log(ModelArray)
                 break;
             case '!ClearState':
                 ClearState(msg);
