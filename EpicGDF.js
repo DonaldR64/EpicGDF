@@ -121,8 +121,21 @@ const Main = (() => {
 
     const SM = {
         fatigue: "status_brown",
+        halfStr: "status_Blood::2006465",
+        spotter: "status_Bullseye::2006535",
 
     }
+
+    const TT = {
+        vAAP: "Versatile Attack = +1 AP",
+        vATH: "Versatile Attack = +1 to Hit",
+        vDD: "Versatile Defense = +1 to Defense",
+        vDTH: "Versatile Defense = -1 to Be Hit",
+        steadfast: "Steadfast Buff",
+        piercing: "Piercing Shooting Mark +1 to AP",
+
+    }
+
 
     const Capit = (val) => {
         return String(val).charAt(0).toUpperCase() + String(val).slice(1);
@@ -692,6 +705,9 @@ const Main = (() => {
             this.defense = parseInt(aa.defense);
             this.toughness = parseInt(aa.toughness) || 1;
             this.type = aa.type;
+            this.size = (aa.type === "Titan") ? 2:1;
+
+
 
             let keywords = [];
 
@@ -1239,6 +1255,301 @@ const Main = (() => {
 
 
     }
+
+
+    const Auras = (unit) => {
+        ///checks if model or assoc hero has an active aura and returns their names
+        let auras = unit.keywords.filter((e) => e.includes("Aura"));
+        let hero = Hero(unit);
+        if (hero && hero !== false) {
+            auras = auras.concat(hero.keywords.filter((e) => e.includes("Aura")));
+        }
+        auras = auras.map((e) => e.replace(" Aura",""));
+        auras = [...new Set(auras)];
+        return auras;
+    }
+
+    const Hero = (unit) => {
+        if (unit.size === 2) {return false}; //heros cannot boost Titans
+        let hex = HexMap[unit.hexLabel];
+        let unit2 = false;
+        _.each(hex.tokenIDs,tokenID => {
+            if (tokenID !== unit.id) {
+                if (unit2.type === "Hero") {
+                    unit2 = UnitArray[tokenID];
+                }
+            }
+        })
+        return unit2;
+    }
+
+    const Activate = (msg) => {
+        let Tag = msg.content.split(";");
+        let id = Tag[1];
+        let order = Tag[2];
+        let unit = UnitArray[id];
+        let unitAuras = Auras(unit);
+        let unitTT = TTip(unit);
+        let addBreak = false;
+        let ignoreDifficult = false;
+        let shaken = (unit.token.get("tint_color") === "#ff0000") ? true:false;
+
+        //RemoveDead();
+
+        SetupCard("Activate " + unit.name,"",unit.faction);
+
+        state.Epic.activeID = id;
+
+        if ((unit.keywords.includes("Bounding") || unitAuras.includes("Bounding")) && order !== "Rally") {
+            let roll = random(2);
+            outputCard.body.push("The Unit may immediately be placed anywhere within " + roll + " Hexes")
+        }
+
+        outputCard.subtitle = order;
+        unit.token.set("aura1_color","#000000");
+
+        let move = 3;
+        if (unit.keywords.includes("Fast")) {
+            addBreak = true;
+            move++
+            outputCard.body.push("Unit has Fast and has +1 to Move");
+        };
+        if (unit.keywords.includes("Very Fast")) {
+            addBreak = true;
+            move += 2
+            outputCard.body.push("Unit has Very Fast and has +2 to Move");
+        }
+        if (unit.keywords.includes("Slow")) {
+            addBreak = true;
+            move--;
+            outputCard.body.push("Unit has Slow and has -1 to Move");
+        }
+
+    //other modifiers
+
+        let charge = move * 2;
+        let rush = move * 2;
+
+        if (unit.keywords.includes("Agile") && order === "Charge/Rush") {
+            charge += 1, rush+= 1;
+            addBreak = true;
+            outputCard.body.push("Unit has Agile gets +1 Hex to Charge/Rush");
+        }
+        if ((unit.keywords.includes("Rapid Charge") || unitAuras.includes("Rapid Charge") && order === "Charge/Rush")) {
+            addBreak = true;
+            outputCard.body.push("Unit has Rapid Charge gets +2 Hexes to Charge");
+            charge += 2;
+        }
+        if ((unit.keywords.includes("Rapid Rush") || unitAuras.includes("Rapid Rush")) && order === "Charge/Rush") {
+            addBreak = true;
+            outputCard.body.push("Unit has Rapid Rush and gets +3 Hexes to Rush");
+            rush += 3;
+        }
+
+        if (unit.keywords.includes("Strider") && order !== "Hold" && order !== "Rally") {
+            addBreak = true;
+            outputCard.body.push("Unit has Strider and may ignore the effects of Difficult Terrain");
+            ignoreDifficult = true;
+        }
+        if ((unit.keywords.includes("Flying") || unit.keywords.includes("Fly")) && order !== "Hold" && order !== "Rally") {
+            addBreak = true;
+            outputCard.body.push("Unit has Flying and may Ignore Terrain and Units while Moving");
+            ignoreDifficult = true;
+        }
+        if (unit.type === "Aircraft") {
+            addBreak = true;
+            ignoreDifficult = true;
+            outputCard.body.push("Unit is an Aircraft and Ignores Units and Terrain");
+        }
+
+        if (addBreak === true) {
+            outputCard.body.push("[hr]");
+        }
+
+
+        let difMove = (ignoreDifficult === false) ? Math.min(move,3):move;
+        let difCharge = (ignoreDifficult === false) ? Math.min(charge, 3): charge;
+        let difRush = (ignoreDifficult === false) ? Math.min(rush,3): rush;
+
+        let startHex = HexMap[unit.hexLabel()];
+
+        if (unit.type === "Aircraft") {
+            move = "15-18";
+            difMove = move;
+        }
+
+        let situation = 1; //open
+        if (startHex.type === "Difficult" && ignoreDifficult === false) {situation = 2}; //difficult but not building
+        if (startHex.building === true) {situation = 3}; //building
+
+
+        switch(order) {
+            case 'Hold':
+                outputCard.body.push("Unit stays in Place and may Fire");
+                break;
+            case 'Advance':
+                if (situation === 1) { //open
+                    outputCard.body.push("Advance is " + move + " Hexes");
+                    if (difMove !== move) {
+                        outputCard.body.push("Entering or Crossing Difficult Terrain limits Advance to " + difMove + " Hexes");
+                    }
+                }
+                if (situation === 2) { //difficult
+                    outputCard.body.push("Unit starts in Difficult Ground");
+                    outputCard.body.push("Advance is " + difMove + " Hexes");
+                }
+                if (situation === 3) {
+                    outputCard.body.push("Unit starts in a Building");
+                    outputCard.body.push("Advance is " + difMove + " Hexes, to a maximum of 3 Hexes from any part of the Building");
+                }
+                break;
+            case 'Charge/Rush':
+                if (situation === 1) {
+                    if (charge === rush) {
+                        outputCard.body.push("Charge/Rush is " + charge + " Hexes");
+                    } else {
+                        outputCard.body.push("Charge is " + charge + " Hexes, Rush is " + rush + " Hexes");
+                    }
+                    if (difMove !== move) {
+                        if (charge === rush) {
+                            outputCard.body.push("Entering or Crossing Difficult Terrain limits Charge/Rush to " + difCharge + " Hexes");
+                        } else {
+                            outputCard.body.push("Entering/Crossing Difficult Terrain limits Charge to " + difCharge + " Hexes and Rush to " + difRush + " Hexes");
+                        }
+                    }
+                }
+                if (situation === 2) {
+                    outputCard.body.push("Unit starts in Difficult Ground");
+                    if (difCharge !== difRush) {
+                        outputCard.body.push("Charge is " + difCharge + " Hexes");
+                        outputCard.body.push("Rush is " + difRush + " Hexes");
+                    } else {
+                        outputCard.body.push("Charge/Rush is " + difCharge + " Hexes");
+                    }
+                }
+                if (situation === 3) {
+                    outputCard.body.push("Unit starts in a Building");
+                    if (difCharge !== difRush) {
+                        outputCard.body.push("Charge is " + difCharge + " Hexes");
+                        outputCard.body.push("Rush is " + difRush + " Hexes");
+                    } else {
+                        outputCard.body.push("Charge/Rush is " + difCharge + " Hexes");
+                    }
+                    outputCard.body.push("To a maximum of 3 Hexes from any part of the Building");
+
+
+
+                }
+
+                if ((unit.keywords.includes("Hit & Run Shooter")) || unitAuras.includes("Hit & Run Shooter")) {
+                    outputCard.body.push("The Unit may move up to 2 Hexes after Shooting");
+                }
+                if ((unit.keywords.includes("Hit & Run Fighter")) || unitAuras.includes("Hit & Run Fighter")) {
+                    outputCard.body.push("The Unit may move up to 2 Hexes after Melee");
+                }
+                if ((unit.keywords.includes("Hit & Run")) || unitAuras.includes("Hit & Run")) {
+                    outputCard.body.push("The Unit may move up to 2 Hexes after Shooting or Melee");
+                }
+
+
+
+                break;
+            case 'Rally':
+                if (unit.type !== "Aircraft") {
+                    outputCard.body.push("Unit Stays in Hex and Rallies");
+                } else {
+                    outputCard.body.push("Aircraft moves " + move + " Hexes");
+                    outputCard.body.push("As the Aircraft is Rallying, it may not Fire");
+                }
+                unit.token.set("tint_color","transparent");
+                break;
+        }
+
+
+        if (unit.keywords.includes("Versatile Attack") || unitAuras.includes("Versatile Attack")) {
+            outputCard.body.push("Unit has Versatile Attack")
+            let buttons = [];
+            buttons.push({
+                phrase: "Choose +1 AP",
+                action: "!SetTT;" + unit.tokenID + ";vAAP",
+            })
+            buttons.push({
+                phrase: "Choose +1 to Hit",
+                action: "!SetTT;" + unit.tokenID + ";vATH",
+            })
+            outputCard.body.push(InlineButtons(buttons));
+        }
+        if (unit.keywords.includes("Versatile Defense") || unitAuras.includes("Versatile Defense")) {
+            outputCard.body.push("Unit has Versatile Defense")
+            let buttons = [];
+            buttons.push({
+                phrase: "Choose +1 Defense",
+                action: "!SetTT;" + unit.tokenID + ";vDD",
+            })
+            buttons.push({
+                phrase: "Choose -1 to Hit",
+                action: "!SetTT;" + unit.tokenID + ";vDTH",
+            })
+            outputCard.body.push(InlineButtons(buttons));
+        }
+
+        
+
+
+
+        PrintCard();
+
+
+    }
+
+
+
+    const SetTT = (msg) => {
+        let Tag = msg.content.split(";");
+
+        let id = Tag[1];
+        let unit = UnitArray[id];
+        let type = Tag[2];
+        let info = TT[type];
+        if (unit) {
+            SetTT2(unit,info);
+            sendChat("",info + " Set");
+        }
+    }
+
+    const SetTT2 = (unit,info) => {
+        let tooltip = unit.token.get("tooltip");
+        tooltip += "," + info;
+        unit.token.set("tooltip",tooltip);
+    }
+
+    const TTip = (unit) => {
+        let tooltip = unit.token.get("tooltip") || "";
+        tooltip = tooltip.split(",");
+        tooltip = tooltip.map((e) => e.trim());
+        return tooltip;
+    }
+
+    const RemoveTTip = (unit,tip) => {
+        let tooltip = unit.token.get("tooltip") || "";
+        tooltip = tooltip.split(",");
+        tooltip = tooltip.map((e) => e.trim());
+        tip = TT.tip;
+        let index = tooltip.indexOf(tip);
+        if (index > -1) {
+            tooltip.splice(index,1);
+            unit.token.set("tooltip",tooltip);
+        }
+    }
+
+
+
+
+
+
+
+
+
 
     const NextTurn = () => {
         let turn = state.Epic.turn;
