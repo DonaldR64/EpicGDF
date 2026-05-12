@@ -2183,8 +2183,118 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
     }
 
 
+    const SetArmies = () => {
+        //resets all tokens to base levels, makes sure theyre in arrays etc
+        //renames also
+        let tokens = findObjs({
+            _pageid: Campaign().get("playerpageid"),
+            _type: "graphic",
+            _subtype: "token",
+            layer: "objects",
+        });
+
+        let names = {};
+
+        for (let i=0;i<tokens.length;i++) {
+            let token = tokens[i];
+            let unit = UnitArray[token];
+            let character = getObj("character", token.get("represents"));   
+            let name = character.get("name");
+            if (!unit) {
+                unit = new Unit(token.get("id"));
+    log("new Unit")
+                if (!unit.faction) {
+                    unit.faction === "Neutral";
+                    continue;
+                }
+            }
+            if (unit.type === "Hero") {
+                let name = HeroNames(unit);
+                unit.name = name;
+                unit.token.set("name",name);
+            } else {
+                if (names[name]) {
+                    names[name]++;
+                    unit.name = name + " " + names[name];
+                    unit.token.set("name",unit.name); 
+                } else {
+                    names[name] = 1;
+                }
+            }
+            unit.token.set({
+                bar1_value: unit.woundsMax,
+                bar1_max: unit.woundsMax,
+                showplayers_bar1: true,
+                aura1_color: "#00ff00",
+                aura1_radius: 0.05,
+                showplayers_aura1: true,
+                tooltip: "",
+                show_tooltip: true,
+                showplayers_tooltip: true,
+                showplayers_name: true,
+                statusmarkers: "",
+                tint_color: "transparent",
+            })
+            if (unit.keywords.includes("Melee Shrouding") || unit.keywords.includes("Melee Shrouding Aura")) {
+                unit.token.set({
+                    aura2_color: "#ffffff",
+                    aura2_radius: 2,
+                    showplayers_aura2: true,
+                })
+            }
+            AddAbilities2(unit)
 
 
+        }
+
+
+
+
+
+
+
+    }
+
+
+
+    const HeroNames = (unit) => {
+        let name = "";
+        let charName = getObj("character", unit.token.get("represents")).get("name");
+
+        let factionNames = {
+            "Plague Disciples": ["Blight","Pustus","Bilegore","Cachexis","Clotticus","Colathrax","Corpulux","Poxmaw","Dragan","Festardius","Fethius","Fugaris","Gangrous","Rotheart","Glauw","Leprus","Kholerus","Malarrus","Necrosius","Phage"],
+            "Dao Union": ["Shi'ur","Por'o","Kai","Vor","Shi","Ru","Ni","Chi-Ha","Tor-lak"],
+            "Alien Hives": ["Swarmlord","Deathleaper","Old One-Eye","The Doom of Vasta","Razor"],
+        }
+
+        if (state.Epic.heroes[unit.player] === []) {
+            _.each(factionNames[unit.faction],name => {
+                state.Epic.heroes[unit.player].push(name);
+            })
+        } 
+
+
+
+        if (charName.includes("Champion")) {name = "Champion "};
+        if (charName.includes("Lord")) {name = "Lord "};
+        if (unit.faction === "Dao Union") {name = "Commander "};
+        if (unit.keywords.includes("Ethereal Elder")) {name = "Ethereal "};
+        if (charName.includes("Captain")) {name = "Captain "};
+
+
+
+        let number = state.Epic.heroes[unit.player].length - 1; //0 ordered array
+        let factionName = "Unknown"
+        if (number > 0) {
+            let pos = randomInteger(number);
+            factionName = state.Epic.heroes[unit.player][pos];
+            state.Epic.heroes[unit.player].splice(pos,1);
+        }
+        name += factionName;
+
+        return name;
+
+    }
 
 
 
@@ -2289,6 +2399,7 @@ log(playerID);
             activeID: "",
             deployLines: [],
             losLines: [],
+            heroes: [[],[]],
         }
 
         sendChat("","Cleared State/Arrays");

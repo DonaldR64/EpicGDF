@@ -1421,9 +1421,15 @@ log(weapons)
         let factionNames = {
             "Plague Disciples": ["Blight","Pustus","Bilegore","Cachexis","Clotticus","Colathrax","Corpulux","Poxmaw","Dragan","Festardius","Fethius","Fugaris","Gangrous","Rotheart","Glauw","Leprus","Kholerus","Malarrus","Necrosius","Phage"],
             "Dao Union": ["Shi'ur","Por'o","Kai","Vor","Shi","Ru","Ni","Chi-Ha","Tor-lak"],
-
-
+            "Alien Hives": ["Swarmlord","Deathleaper","Old One-Eye","The Doom of Vasta","Razor"],
         }
+
+        if (state.Epic.heroes[unit.player] === []) {
+            _.each(factionNames[unit.faction],name => {
+                state.Epic.heroes[unit.player].push(name);
+            })
+        } 
+
 
 
         if (charName.includes("Champion")) {name = "Champion "};
@@ -1434,8 +1440,13 @@ log(weapons)
 
 
 
-        let number = factionNames[unit.faction].length - 1
-        let factionName = factionNames[unit.faction][randomInteger(number)];
+        let number = state.Epic.heroes[unit.player].length - 1; //0 ordered array
+        let factionName = "Unknown"
+        if (number > 0) {
+            let pos = randomInteger(number);
+            factionName = state.Epic.heroes[unit.player][pos];
+            state.Epic.heroes[unit.player].splice(pos,1);
+        }
         name += factionName;
 
         return name;
@@ -2476,7 +2487,7 @@ log(label)
         let defenderModelMax = defender.models; //used for morale;
         let defenderModels = Math.ceil(parseInt(defender.token.get("bar1_value")) / defender.toughness); //used for blast
 
-        //check if assoc infantry for either if heros, add to start of array
+        //check if assoc infantry for either if heroes, add to start of array
         //for attacker, only combine if melee,otherwise each fires independently
         if (attacker.type === "Hero" && combatType === "Melee") {
             _.each(UnitArray,unit => {
