@@ -1438,6 +1438,9 @@ const Main = (() => {
 
         //RemoveDead();
 
+//if unit has already activated and is still current activation, see if want to change order and if so, then reset position and change order ?
+
+
         SetupCard("Activate " + unit.name,"",unit.faction);
 
         state.Epic.activeID = id;
