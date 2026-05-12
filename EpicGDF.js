@@ -796,6 +796,113 @@ const Main = (() => {
 
         }
 
+        Morale() {
+            let target = this.quality;
+            let tip = "Quality: " + target;
+
+            let hero = Hero(this);
+            if (hero && hero !== false) {
+                if (hero.quality < target) {
+                    tip = "Hero's Quality: " + hero.quality;
+                    target = hero.quality;
+                }
+            }
+
+            let auras = Auras(this)
+            let moraleRoll = randomInteger(6);
+            let shaken = false;
+
+            if (this.token.get("tint_color") === "#ff0000") {
+                target++;
+                tip += "<br>Shaken -1";
+                shaken = true;
+            }
+            if (this.keywords.includes("Hive Bond") || auras.includes("Hive Bond")) {
+                if (this.keywords.includes("Hive Bond Boost") || auras.includes("Hive Bond Boost")) {
+                    target -= 2;
+                    tip += "<br>Hive Bond Boost +2";
+                } else {
+                    target--;
+                    tip += "<br>Hive Bond +1";
+                }
+            }
+
+            target = Math.max(2,target);
+            let success = (moraleRoll >= target || moraleRoll === 6) ? true:false;
+
+            //fearless
+            if (this.keywords.includes("Fearless") && success === false) {
+                let fearlessRoll = randomInteger(6);
+                if (fearlessRoll > 3) {
+                    tip += "<br>Unit is Fearless!";
+                    success = true;
+                } else {
+                    tip += "<br>Unit is not Fearless!";
+                }
+                tip += + " [Roll " + fearlessRoll + "]"
+            }
+
+            //after failure changes - automatic
+            extra = [];
+            if (this.keywords.includes("No Retreat") && success === false) {
+                success = true;
+                extra.push("The Test is still Passed due to No Retreat");
+                let hp = parseInt(this.token.get("bar1_value"));
+                let wounds = 0;
+                let noRRolls = [];
+                _.each(hp,e => {
+                    let roll = randomInteger(6);
+                    noRRolls.push(roll);
+                    if (roll < 4) {wounds++};
+                })
+                noRRolls = noRRolls.sort((a,b) => b-a);
+                let wtip = "Rolls: " + noRRolls.toString() + " vs. 4+";
+                wtip = '[' + wounds + '](#" class="showtip" title="' + wtip + ')';
+                extra.push("No Retreat causes " + wtip + " Wounds");
+                let destroyed = this.Damage(wounds);
+                if (destroyed === true) {
+                    extra.push(this.name + " is Destroyed!");
+                }
+            }
+
+            tip = '[' + target + '](#" class="showtip" title="' + tip + ')';
+
+            SetupCard(unit.name,"Morale",unit.faction);
+
+            outputCard.body.push("Morale Roll: " + DisplayDice(moraleRoll,Factions[this.faction].dice,24) + "vs. " + tip + "+");
+            outputCard.body.push("[hr]");
+
+            if (extra.length > 0) {
+                _.each(extra,line => {
+                    outputCard.body.push(line);
+                })
+            } else {
+                if (success === true) {
+                    outputCard.body.push("Success!");
+                } else {
+                    outputCard.body.push("Failure!");
+                    if (shaken === true) {
+                        outputCard.body.push("Shaken Unit Routs!");
+                        this.Destroyed();
+                    } else {
+                        outputCard.body.push("Failure! Unit is Shaken");
+                        unit.token.set("tint_color","#ff0000");
+                        if (this.token.get(SM.halfStr) === true) {
+                            outputCard.body.push("If this was a Melee, Remove the Unit as it Routs!");
+                        }                        
+                    }
+                }
+            }
+                
+            PrintCard();
+
+
+
+        }
+
+
+
+
 
 
 
@@ -1282,6 +1389,17 @@ const Main = (() => {
         })
         return unit2;
     }
+
+
+    const Morale = (msg) => {
+        let Tag = msg.content.split(";");
+        let unit = UnitArray[Tag[1]];
+        if (!unit) {return};
+        unit.Morale();
+    }
+
+
+
 
     const Activate = (msg) => {
         let Tag = msg.content.split(";");
@@ -1911,6 +2029,14 @@ log(playerID);
             case '!AddAbilities':
                 AddAbilities(msg);
                 break;
+
+            case '!Activate':
+                Activate(msg);
+                break;
+            case '!Morale':
+                Morale(msg);
+                break;
+
 
 
             case '!SetupGame':
