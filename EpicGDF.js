@@ -1,5 +1,5 @@
 const Main = (() => {
-    const version = '2026.5.5';
+    const version = '2026.5.11';
     if (!state.Epic) {state.Epic = {}};
 
     const pageInfo = {};
@@ -893,11 +893,7 @@ const Main = (() => {
                     }
                 }
             }
-                
             PrintCard();
-
-
-
         }
 
 
