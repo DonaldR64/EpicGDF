@@ -704,6 +704,7 @@ const Main = (() => {
             this.quality = parseInt(aa.quality);
             this.defense = parseInt(aa.defense);
             this.toughness = parseInt(aa.toughness) || 1;
+            this.wounds = parseInt(aa.wounds) || 1;
             this.type = aa.type;
             this.size = (aa.type === "Titan") ? 2:1;
 
@@ -1002,63 +1003,147 @@ const Main = (() => {
         })
     }    
 
+
     const AddAbilities = (msg) => {
-        if (!msg.selected) {
-            sendChat("","No Token Selected");
-            return;
-        };
+        if (!msg.selected) {return};
         let id = msg.selected[0]._id;
-        let unit = UnitArray[id];
-        if (!unit) {return};
-        AddAbilities2(unit);
+        let unit = UnitArray[id];  
+        if (!unit) {
+            unit = new Unit(id);
+        }
+        AddAbilities2(unit)
     }
-
-
+        
     const AddAbilities2 = (unit) => {
-        let char = getObj("character", unit.charID);   
+        let keywordList = unit.keywords;
+
+        unit.token.set({
+            disableSnapping: true,
+        })
 
         let abilityName,action;
-        let abilArray = findObjs({_type: "ability", _characterid: char.id});
+        let abilArray = findObjs({_type: "ability", _characterid: unit.charID});
         //clear old abilities
         for(let a=0;a<abilArray.length;a++) {
             abilArray[a].remove();
         } 
-        //Move 
-        if (unit.moveMax > 0) {
-            abilityName = "0 - Move";
-            action = "!Activate;Move;@{selected|token_id}";
-            AddAbility(abilityName,action,char.id);
+        
+        let types = {
+            "Rifle": [],
+            "Pistol": [],
+            "Heavy": [],
+            "Heavy2": [],
+            "Heavy3": [],
+            "Mod": [],
+            "CCW": [],
+            "Sniper": [],
+            "Bomb": [],
         }
-
-        let systemNum = 0;
-        //Use Weapons 
+  
         for (let i=0;i<unit.weapons.length;i++) {
             let weapon = unit.weapons[i];
-            systemNum++;
-            abilityName = systemNum + " - " + weapon.name;
-            action = "!Activate;Attack" + i + ";@{selected|token_id}";
-            //how many targets?
-            let targets = 1;
-            if (weapon.name.includes("(x")) {
-                let temp = weapon.name.split("(x");
-                targets = parseInt(temp[1].replace(")",""));
+            let name = weapon.name;
+            if (weapon.type === " " || weapon.name === " ") {continue}
+            if (weapon.keywords.includes("Limited")) {
+                name += " (Limited)";
             }
-            for (let t=0;t<targets;t++) {
-                action += ";@{target|Target " + (t+1) + "|token_id}";
-            }
-            AddAbility(abilityName,action,char.id);
+            keywordList = keywordList.concat(weapon.keywords)
+            types[weapon.type].push(name); 
+        }
+        
+        let keys = Object.keys(types);
+        let weaponNum = 1;
+
+
+        for (let i=0;i<keys.length;i++) {
+            let names = types[keys[i]];
+            if (names.length === 0) {continue};
+            names = names.toString();
+            if (names.charAt(0) === ",") {names = names.replace(",","")};
+            names = names.replaceAll(",","+");
+            abilityName = weaponNum + ": " + names;
+            weaponNum += 1;
+            let ct = (keys[i] === ("CCW")) ? "Melee":"Ranged";
+            action = "!Attack;@{selected|token_id};@{target|token_id};" + ct + ";" + keys[i];
+            AddAbility(abilityName,action,unit.charID);
         }
 
-        //Use Abilities
+        //activation 
+        let orders = ";?{Order|Hold|Advance|Charge/Rush}";
+        if (unit.type === "Aircraft") {orders = ";Advance"};
+        if (unit.keywords.includes("Artillery") || unit.keywords.includes("Immobile")) {orders = ";Hold"}
 
+        action = "!Activate;@{selected|token_id}" + orders;
+        AddAbility("Activate",action,unit.charID);
+
+
+       //special ability macros
+        let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6}];
+
+        _.each(specials,special => {
+            let t = "";
+            if (unit.keywords.includes(special.name)) {
+                if (special.targets === "Self") {
+                    t = ";@{selected|token_id}";
+                } else {
+                    if (special.targets === 1) {
+                        t = ";@{target|token_id}";
+                    } else {
+                        for (let i=1;i<=special.targets;i++) {
+                            t += ";@{target|Target " + i + "|token_id}";
+                        }
+                    }
+                }
+                abilityName = unit.flavours[special.name];
+                action = "!Special;" + special.name + ";" + special.range + ";@{selected|token_id}" + t;
+                AddAbility(abilityName,action,unit.charID);
+            }
+        })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //keywords list 
+        keywordList = [...new Set(keywordList)];
+        keywordList = keywordList.filter(Boolean);
+        keywordList = keywordList.map((e) => {
+            if (e.includes("(")) {
+                e = e.split("(")[0] + "(X)";
+            }
+            let item = {
+                name: e,
+                text: Keywords[e] || "Not in Database",
+            }
+            return item;
+        })
         
+        keywordList = keywordList.sort((a,b) => a.name.localeCompare(b.name))
+        for (let i=0;i<12;i++) {
+            let abName = "spec" + i + "Name";
+            let abTextName = "spec" + i + "Text";
+            let name = " ";
+            let text = " ";
+            if (i < keywordList.length) {
+                name = keywordList[i].name;
+                text = keywordList[i].text;
+            }
 
 
-        //Load Weapons/Abilities
-
-
-
-
+            AttributeSet(unit.charID,abName,name);
+            AttributeSet(unit.charID,abTextName,text);
+        }
 
         sendChat("","Abilities Added")
     }
@@ -2222,8 +2307,8 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 }
             }
             unit.token.set({
-                bar1_value: unit.woundsMax,
-                bar1_max: unit.woundsMax,
+                bar1_value: unit.wounds,
+                bar1_max: unit.wounds,
                 showplayers_bar1: true,
                 aura1_color: "#00ff00",
                 aura1_radius: 0.05,
