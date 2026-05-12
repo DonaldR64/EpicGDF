@@ -808,7 +808,7 @@ const Main = (() => {
                 }
             }
 
-            let auras = Auras(this)
+            let auras = this.Auras();
             let moraleRoll = randomInteger(6);
             let shaken = false;
 
@@ -896,9 +896,62 @@ const Main = (() => {
             PrintCard();
         }
 
+        Auras() {
+            ///checks if model or assoc hero has an active aura and returns their names
+            let auras = this.keywords.filter((e) => e.includes("Aura"));
+            let hero = this.Hero();
+            if (hero && hero !== false) {
+                auras = auras.concat(hero.keywords.filter((e) => e.includes("Aura")));
+            }
+            auras = auras.map((e) => e.replace(" Aura",""));
+            auras = [...new Set(auras)];
+            return auras;
+        }
 
+        Hero() {
+            if (this.size === 2) {return false}; //heros cannot boost Titans
+            let hex = HexMap[this.hexLabel];
+            let unit2 = false;
+            _.each(hex.tokenIDs,tokenID => {
+                if (tokenID !== this.id) {
+                    if (unit2.type === "Hero") {
+                        unit2 = UnitArray[tokenID];
+                    }
+                }
+            })
+            return unit2;
+        }
 
+        TTip() {
+            let tooltip = this.token.get("tooltip") || "";
+            tooltip = tooltip.split(",");
+            tooltip = tooltip.map((e) => e.trim());
+            return tooltip;
+        }
 
+        SetTT(tip) {
+            let tooltip = this.token.get("tooltip") || "";
+            if (tooltip !== "") {tooltip += ","};
+            tooltip += TT[tip];
+            this.token.set("tooltip",tooltip);
+        }
+
+        RemoveTTip(tip) {
+            let tooltip = this.token.get("tooltip") || "";
+            tooltip = tooltip.split(",");
+            tooltip = tooltip.map((e) => e.trim());
+            tip = TT[tip];
+            let index = tooltip.indexOf(tip);
+            if (index > -1) {
+                tooltip.splice(index,1);
+                if (tooltip.length === 0) {
+                    tooltip = "";
+                } else {
+                    tooltip = tooltip.toString();
+                }
+                this.token.set("tooltip",tooltip);
+            }
+        }
 
 
 
@@ -1360,31 +1413,6 @@ const Main = (() => {
     }
 
 
-    const Auras = (unit) => {
-        ///checks if model or assoc hero has an active aura and returns their names
-        let auras = unit.keywords.filter((e) => e.includes("Aura"));
-        let hero = Hero(unit);
-        if (hero && hero !== false) {
-            auras = auras.concat(hero.keywords.filter((e) => e.includes("Aura")));
-        }
-        auras = auras.map((e) => e.replace(" Aura",""));
-        auras = [...new Set(auras)];
-        return auras;
-    }
-
-    const Hero = (unit) => {
-        if (unit.size === 2) {return false}; //heros cannot boost Titans
-        let hex = HexMap[unit.hexLabel];
-        let unit2 = false;
-        _.each(hex.tokenIDs,tokenID => {
-            if (tokenID !== unit.id) {
-                if (unit2.type === "Hero") {
-                    unit2 = UnitArray[tokenID];
-                }
-            }
-        })
-        return unit2;
-    }
 
 
     const Morale = (msg) => {
@@ -1402,7 +1430,7 @@ const Main = (() => {
         let id = Tag[1];
         let order = Tag[2];
         let unit = UnitArray[id];
-        let unitAuras = Auras(unit);
+        let unitAuras = unit.Auras();
         let unitTT = TTip(unit);
         let addBreak = false;
         let ignoreDifficult = false;
@@ -1620,41 +1648,15 @@ const Main = (() => {
 
     const SetTT = (msg) => {
         let Tag = msg.content.split(";");
-
         let id = Tag[1];
         let unit = UnitArray[id];
-        let type = Tag[2];
-        let info = TT[type];
-        if (unit) {
-            SetTT2(unit,info);
-            sendChat("",info + " Set");
-        }
+        if (!unit) {return};
+        let tip = Tag[2];
+        unit.SetTT(tip);
     }
 
-    const SetTT2 = (unit,info) => {
-        let tooltip = unit.token.get("tooltip");
-        tooltip += "," + info;
-        unit.token.set("tooltip",tooltip);
-    }
 
-    const TTip = (unit) => {
-        let tooltip = unit.token.get("tooltip") || "";
-        tooltip = tooltip.split(",");
-        tooltip = tooltip.map((e) => e.trim());
-        return tooltip;
-    }
 
-    const RemoveTTip = (unit,tip) => {
-        let tooltip = unit.token.get("tooltip") || "";
-        tooltip = tooltip.split(",");
-        tooltip = tooltip.map((e) => e.trim());
-        tip = TT.tip;
-        let index = tooltip.indexOf(tip);
-        if (index > -1) {
-            tooltip.splice(index,1);
-            unit.token.set("tooltip",tooltip);
-        }
-    }
 
 
 
@@ -2052,7 +2054,9 @@ log(playerID);
             case '!Roll':
                 RollDice(msg);
                 break;
-
+            case '!SetTT':
+                SetTT(msg);
+                break;
 
         }
     };
