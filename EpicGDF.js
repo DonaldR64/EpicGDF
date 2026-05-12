@@ -783,8 +783,9 @@ const Main = (() => {
             this.weapons = weapons;
             this.moved = false;
             this.hexLabel = label;
+            this.prevHexLabel = label;
 
-
+            this.token = token;
 
             UnitArray[id] = this;
             let index = HexMap[label].tokenIDs.indexOf(id);
@@ -1055,6 +1056,38 @@ const Main = (() => {
         sendChat("","Abilities Added")
     }
 
+
+    const InlineButtons = (array) => {
+        let output = "";
+        for (let i=0;i<array.length;i++) {
+            let info = array[i];
+            let inline = true;
+            if (i>0 && inline === false) {
+                output += '<hr style="width:95%; align:center; margin:0px 0px 5px 5px; border-top:2px solid $1;">';
+            }
+            let out = "";
+            let borderColour = Factions[outputCard.side].borderColour;
+            if (inline === false || i===0) {
+                out += `<div style="display: table-row; background: #FFFFFF;; ">`;
+                out += `<div style="display: table-cell; padding: 0px 0px; font-family: Arial; font-style: normal; font-weight: normal; font-size: 14px; `;
+                out += `"><span style="line-height: normal; color: #000000; `;
+                out += `"> <div style='text-align: center; display:block;'>`;
+            }
+            if (inline === true) {
+                out += '<span>     </span>';
+            }
+            out += `<a style ="background-color: ` + Factions[outputCard.side].backgroundColour + `; padding: 5px;`
+            out += `color: ` + Factions[outputCard.side].fontColour + `; text-align: center; vertical-align: middle; border-radius: 5px;`;
+            out += `border-color: ` + borderColour + `; font-family: Tahoma; font-size: x-small; `;
+            out += `"href = "` + info.action + `">` + info.phrase + `</a>`
+            
+            if (inline === false || i === (array.length - 1)) {
+                out += `</div></span></div></div>`;
+            }
+            output += out;
+        }
+        return output;
+    }
 
     const ButtonInfo = (phrase,action,inline) => {
         //inline - has to be true in any buttons to have them in same line -  starting one to ending one
@@ -1430,19 +1463,26 @@ const Main = (() => {
         let id = Tag[1];
         let order = Tag[2];
         let unit = UnitArray[id];
+        if (!unit) {return};
+        if (unit.token.get("aura1_color") === "#000000") {
+            SetupCard("Re-Activation" + unit.name,"",unit.faction);
+            outputCard.body.push("Unit has Activated already, ?Redo")
+            ButtonInfo("Redo Order","!RedoOrder;" + unit.id + ";" + order);
+            PrintCard();
+        } else {
+            ActivateTwo(unit,order);
+        }
+    }
+
+    const ActivateTwo = (unit,order) => {
+        SetupCard("Activate " + unit.name,"",unit.faction);
         let unitAuras = unit.Auras();
-        let unitTT = TTip(unit);
+        let unitTT = unit.TTip();
         let addBreak = false;
         let ignoreDifficult = false;
         let shaken = (unit.token.get("tint_color") === "#ff0000") ? true:false;
         RemoveDead();
-
-//if unit has already activated and is still current activation, see if want to change order and if so, then reset position and change order ?
-
-
-        SetupCard("Activate " + unit.name,"",unit.faction);
-
-        state.Epic.activeID = id;
+        state.Epic.activeID = unit.id;
 
         if ((unit.keywords.includes("Bounding") || unitAuras.includes("Bounding")) && order !== "Rally") {
             let roll = random(2);
@@ -1451,6 +1491,8 @@ const Main = (() => {
 
         outputCard.subtitle = order;
         unit.token.set("aura1_color","#000000");
+
+unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
 
         let move = 3;
         if (unit.keywords.includes("Fast")) {
@@ -1515,7 +1557,7 @@ const Main = (() => {
         let difCharge = (ignoreDifficult === false) ? Math.min(charge, 3): charge;
         let difRush = (ignoreDifficult === false) ? Math.min(rush,3): rush;
 
-        let startHex = HexMap[unit.hexLabel()];
+        let startHex = HexMap[unit.hexLabel];
 
         if (unit.type === "Aircraft") {
             move = "15-18";
@@ -1645,6 +1687,23 @@ const Main = (() => {
 
 
     }
+
+    const RedoOrder = (msg) => {
+        let Tag = msg.content.split(";");
+        let id = Tag[1];
+        let order = Tag[2];
+        let unit = UnitArray[id];
+        let prevHex = HexMap[unit.prevHexLabel];
+        unit.token.set({
+            left: prevHex.centre.x,
+            top: prevHex.centre.y,
+        })
+        ActivateTwo(unit,order);
+    }
+
+
+
+
 
 
 
@@ -2033,6 +2092,10 @@ log(playerID);
             case '!Activate':
                 Activate(msg);
                 break;
+            case '!RedoOrder':
+                RedoOrder(msg);
+                break;
+
             case '!Morale':
                 Morale(msg);
                 break;
