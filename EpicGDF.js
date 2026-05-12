@@ -1765,7 +1765,7 @@ log(hex)
         outputCard.body.push("Terrain Height: " + hex.terrainHeight);
         outputCard.body.push("Cover: " + hex.cover);
         outputCard.body.push("Blocks LOS: " + hex.blockLOS);
-        outputCard.body.push("Type: " + hex.type);
+        outputCard.body.push("Movement: " + hex.type);
         PrintCard();
     }
 
