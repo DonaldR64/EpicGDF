@@ -1435,8 +1435,7 @@ const Main = (() => {
         let addBreak = false;
         let ignoreDifficult = false;
         let shaken = (unit.token.get("tint_color") === "#ff0000") ? true:false;
-
-        //RemoveDead();
+        RemoveDead();
 
 //if unit has already activated and is still current activation, see if want to change order and if so, then reset position and change order ?
 
