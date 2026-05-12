@@ -1465,7 +1465,7 @@ const Main = (() => {
         let unit = UnitArray[id];
         if (!unit) {return};
         if (unit.token.get("aura1_color") === "#000000") {
-            SetupCard("Re-Activation" + unit.name,"",unit.faction);
+            SetupCard(unit.name,"Change Order ?",unit.faction);
             outputCard.body.push("Unit has Activated already, ?Redo")
             ButtonInfo("Redo Order","!RedoOrder;" + unit.id + ";" + order);
             PrintCard();
@@ -1475,7 +1475,7 @@ const Main = (() => {
     }
 
     const ActivateTwo = (unit,order) => {
-        SetupCard("Activate " + unit.name,"",unit.faction);
+        SetupCard(unit.name,order,unit.faction);
         let unitAuras = unit.Auras();
         let unitTT = unit.TTip();
         let addBreak = false;
