@@ -1577,15 +1577,13 @@ const Main = (() => {
         }
         if (remaining === true) {return};
 
-
-
         //things at beginning of turn
         let notes = [];
         for (let i=0;i<keys.length;i++) {
             let unit = UnitArray[keys[i]];
 log(unit.name)
-            let unitTT = TTip(unit);
-            unitAuras = Auras(unit);
+            let unitTT = unit.TTip();
+            unitAuras = unit.Aruas();
 
             //Steadfast
             if ((unit.keywords.includes("Steadfast") || unitAuras.includes("Steadfast") || unitTT.includes("steadfast")) && (unit.token.get("tint_color") === "#ffff00")) {
@@ -1607,9 +1605,6 @@ log(unit.name)
 
         }
 
-
-
-
         state.Epic.turn += 1;
         let gameContinues = true;
         SetupCard("Turn " + state.Epic.turn,"","Neutral");
@@ -1618,8 +1613,6 @@ log(unit.name)
                 outputCard.body.push(note);
             })
         }
-
-
 
         if (state.Epic.turn > 6) {
             let roll = randomInteger(6);
@@ -1646,6 +1639,40 @@ log(unit.name)
         }
         PrintCard();
     }
+
+
+    const ObjectiveCheck = (objective) => {
+log("Objective Check");
+log(objective.name)
+        let factions = [];
+        let objHex = HexMap[objective.hexLabel()];
+        _.each(UnitArray, unit => {
+            if (unit.tokenID !== objective.tokenID) {
+    log(unit.name)
+    log(unit.faction)
+                let distance = objHex.distance(HexMap[unit.hexLabel()]);
+    log("D: "  + distance)
+                if (distance < 2 && factions.includes(unit.faction) === false) {
+                    factions.push(unit.faction)
+                }
+            }
+        })
+log("Factions: ")
+log(factions)
+        if (factions.length === 1) {
+            let c = Factions[factions[0]].objColour;
+log(c)
+            objective.token.set("aura1_color",c);
+        }
+        if (factions.length === 2) {
+            objective.token.set("aura1_color","#ffffff");
+        }    
+    }
+
+
+
+
+
 
     const ClearMarkers = () => {
         //persists turn to turn
