@@ -2352,21 +2352,19 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             "Alien Hives": ["Swarmlord","Deathleaper","Old One-Eye","The Doom of Vasta","Razor"],
         }
 
-        if (state.Epic.heroes[unit.player] === []) {
-            _.each(factionNames[unit.faction],name => {
+        if (state.Epic.heroes[unit.player].length === 0) {
+            _.each(factionNames[unit.faction], name => {
                 state.Epic.heroes[unit.player].push(name);
             })
         } 
 
-
+log(state.Epic.heroes)
 
         if (charName.includes("Champion")) {name = "Champion "};
         if (charName.includes("Lord")) {name = "Lord "};
         if (unit.faction === "Dao Union") {name = "Commander "};
         if (unit.keywords.includes("Ethereal Elder")) {name = "Ethereal "};
         if (charName.includes("Captain")) {name = "Captain "};
-
-
 
         let number = state.Epic.heroes[unit.player].length - 1; //0 ordered array
         let factionName = "Unknown"
@@ -2377,8 +2375,9 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         }
         name += factionName;
 
-        return name;
+log(state.Epic.heroes)
 
+        return name;
     }
 
 
