@@ -1583,7 +1583,7 @@ const Main = (() => {
             let unit = UnitArray[keys[i]];
 log(unit.name)
             let unitTT = unit.TTip();
-            unitAuras = unit.Aruas();
+            unitAuras = unit.Auras();
 
             //Steadfast
             if ((unit.keywords.includes("Steadfast") || unitAuras.includes("Steadfast") || unitTT.includes("steadfast")) && (unit.token.get("tint_color") === "#ffff00")) {
@@ -1686,7 +1686,7 @@ log(c)
             if (!unit.token) {return};
             if (unit.name.includes("Objective")) {return};
             unit.moved = false; 
-            let tt = TTip(unit);
+            let tt = unit.TTip();
             let persistant = tt.filter((e) => persistantTT.includes(e));
             let limited = tt.filter((e) => e.includes("Fired "));
             persistant = persistant.concat(limited);
