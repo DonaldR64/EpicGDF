@@ -1679,7 +1679,7 @@ log(c)
         let attackerHex = HexMap[attacker.hexLabel];
         let defender = UnitArray[Tag[2]];
         let defenderHex = HexMap[defender.hexLabel()];
-        let defenderHero = defender.Hero;
+        let defenderHero = defender.Hero();
 
         let combatType = Tag[3];  //Ranged, Melee
         let weaponType = Tag[4]; //CCW, Rifle etc
@@ -1705,6 +1705,7 @@ log(c)
             _.each(defenderHex.tokenIDs,tokenID => {
                 let unit2 = UnitArray[tokenID];
                 if (unit2.faction === defender.faction && unit2.id !== defender.id && unit2.type !== "Hero") {
+                    defenderHero = defender;
                     defender = unit2;
                 }
             })
@@ -1719,14 +1720,64 @@ log(c)
 
         let losResult = LOS(attacker,defender);
 
-        if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
-            errorMsg.push("No LOS to Target");
+        let weaponArray = [];
+        let notEligible = []; //weapons not eligible for various reasons
+        for (let i=0;i<attacker.weapons.length;i++) {
+            let weapon = DeepCopy(attacker.weapons[i]);
+            if (weapon.type !== weaponType) {continue};
+
+            if ((weapon.name === "Impact" && attacker.token.get(SM.fatigue) === true) || attacker.tokenID !== state.Epic.activeID) {
+                notEligible.push(weapon.name + " not eligible");
+                continue;
+            }
+            if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
+                notEligible.push(weapon.name + " - no LOS");
+                continue;
+            }
+            if (attackerTT.includes("Fired " + weapon.name)) {
+                notEligible.push(weapon.name + " Limited and Fired");
+                continue;
+            }
+
+
+            let range = (defender.type === "Aircraft" && weapon.keywords.includes("Unstoppable") === false) ? weapon.range - 6:weapon.range;
+            if (attacker.keywords.includes("Increased Shooting Range") || attackerAuras.includes("Increased Shooting Range")) {
+                range += 3;
+            }
+            if (losResult.distance > range) {
+                notEligible.push(weapon.name + " - lacks Range");
+                continue;
+            }
+            weaponArray.push(weapon); //can add hits, rolls etc 
+        }
+
+    log(weaponArray)
+
+
+        if (weaponArray.length === 0) {
+            errorMsg.push("No Weapons with LOS or Range");
+            errorMsg = errorMsg.concat(notEligible);
+        }
+
+        if (combatType === "Melee" && losResult.distance > 0) {
+            errorMsg.push("Not in Contact");
         }
 
         if (ErrorMsg(errorMsg) === true) {
             return;
         }
 
+        //clear a few debuffs that only lasted one activate
+        if (attacker.tokenID !== state.Epic.activeID) {
+            _.each(defenders,defender => {
+                let list = ["piercing"]
+                _.each(list,tip => {
+                    defender.RemoveTTip(tip)
+                })
+            })
+        }
+
+        //assign some buffs if available
         if (attacker.keywords.includes("Unpredictable") || (attacker.keywords.includes("Unpredictable Fighter") && combatType === "Melee")) {
             let roll = randomInteger(6);
             if (roll < 4) {
@@ -1737,89 +1788,13 @@ log(c)
                 attacker.upTH = true;            }
         }
 
-///
 
-
-
-
-            let weaponArray = [];
-            let no = [];
-            let totalWounds = 0;
-            for (let i=0;i<attacker.weapons.length;i++) {
-                let weapon = DeepCopy(attacker.weapons[i]);
-                if (weapon.type !== weaponType) {continue};
-                if (weapon.name === "Impact" && (attacker.token.get(SM.fatigue) === true || attacker.tokenID !== state.GDF3.activeID)) {
-                    no.push(weapon.name + " not eligible");
-                    continue;
-                }
-                if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
-                    no.push(weapon.name + " - no LOS");
-                    continue;
-                }
-                if (attackerTT.includes("Fired " + weapon.name)) {
-                    no.push(weapon.name + " Limited and Fired");
-                    continue;
-                }
-
-
-                let range = (defender.type === "Aircraft" && weapon.keywords.includes("Unstoppable") === false) ? weapon.range - 6:weapon.range;
-                if (attacker.keywords.includes("Increased Shooting Range") || attackerAuras.includes("Increased Shooting Range")) {
-                    range += 3;
-                }
-                if (losResult.distance > range) {
-                    no.push(weapon.name + " - lacks Range");
-                    continue;
-                }
-                weaponArray.push(weapon); //can add hits, rolls etc 
-            }
-
-
-            if (weaponArray.length === 0) {
-                errorMsg.push("No Weapons with LOS or Range");
-                errorMsg = errorMsg.concat(no);
-            }
-
-            SetupCard(attacker.name,defender.name,attacker.faction);
-
-            if (combatType === "Melee" && losResult.distance > 0) {
-                errorMsg.push("Not in Contact");
-            }
-
-            if (errorMsg.length > 0) {
-                _.each(errorMsg,error => {
-                    outputCard.body.push(error);
-                })
-                PrintCard();
-                return;
-            }
-
-
-            //clear a few debuffs that only lasted one activate
-            if (attacker.tokenID !== state.GDF3.activeID) {
-                _.each(defenders,defender => {
-                    let list = ["piercing"]
-                    _.each(list,tip => {
-                        RemoveTTip(defender,tip);
-                    })
-                })
-            }
-
-
-
-
-
-            //run through weapons, roll to hit/save any hits
-            let quality = attacker.quality;
-
-
-
-
-
-
-
-            let weaponHits = [];
-            let weaponMiss = [];
-    log(weaponArray)
+return
+///////
+        //run through weapons, roll to hit, assign any to unit or leader
+        let quality = attacker.quality;
+        let weaponHits = [];
+        let weaponMiss = [];
             _.each(weaponArray,weapon => {
                 let weaponOut;
                 let rolls = [], hits = 0, crits = 0
