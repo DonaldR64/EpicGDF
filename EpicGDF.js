@@ -754,6 +754,7 @@ const Main = (() => {
                     let keywords = key.map((e) => e.trim()) || [""];
 
                     let weapon = {
+                        number: aa["weapon" + i + "number"],
                         name: aa["weapon" + i + "name"],
                         type: aa["weapon" + i + "type"],
                         range: parseInt(aa["weapon" + i + "range"]) || 0,
@@ -1678,7 +1679,7 @@ log(c)
         let attackerTT = attacker.TTip();
         let attackerHex = HexMap[attacker.hexLabel];
         let defender = UnitArray[Tag[2]];
-        let defenderHex = HexMap[defender.hexLabel()];
+        let defenderHex = HexMap[defender.hexLabel];
         let defenderHero = defender.Hero();
 
         let combatType = Tag[3];  //Ranged, Melee
@@ -1726,7 +1727,7 @@ log(c)
             let weapon = DeepCopy(attacker.weapons[i]);
             if (weapon.type !== weaponType) {continue};
 
-            if ((weapon.name === "Impact" && attacker.token.get(SM.fatigue) === true) || attacker.tokenID !== state.Epic.activeID) {
+            if ((weapon.name === "Impact" && attacker.token.get(SM.fatigue) === true) || attacker.id !== state.Epic.activeID) {
                 notEligible.push(weapon.name + " not eligible");
                 continue;
             }
@@ -1768,7 +1769,7 @@ log(c)
         }
 
         //clear a few debuffs that only lasted one activate
-        if (attacker.tokenID !== state.Epic.activeID) {
+        if (attacker.id !== state.Epic.activeID) {
             _.each(defenders,defender => {
                 let list = ["piercing"]
                 _.each(list,tip => {
@@ -3254,7 +3255,9 @@ log(playerID);
                 Morale(msg);
                 break;
 
-
+            case '!Attack':
+                Attack(msg);
+                break;
 
 
 
