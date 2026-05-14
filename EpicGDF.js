@@ -913,15 +913,15 @@ const Main = (() => {
         Hero() {
             if (this.size === 2) {return false}; //heros cannot boost Titans
             let hex = HexMap[this.hexLabel];
-            let unit2 = false;
             _.each(hex.tokenIDs,tokenID => {
                 if (tokenID !== this.id) {
+                    let unit2 = UnitArray[tokenID];
                     if (unit2.type === "Hero") {
-                        unit2 = UnitArray[tokenID];
+                        return unit2;
                     }
                 }
             })
-            return unit2;
+            return false;
         }
 
         TTip() {
@@ -1679,6 +1679,7 @@ log(c)
         let attackerHex = HexMap[attacker.hexLabel];
         let defender = UnitArray[Tag[2]];
         let defenderHex = HexMap[defender.hexLabel()];
+        let defenderHero = defender.Hero;
 
         let combatType = Tag[3];  //Ranged, Melee
         let weaponType = Tag[4]; //CCW, Rifle etc
@@ -1712,6 +1713,7 @@ log(c)
         let defenderAuras = defender.Auras();
         let defenderTT = defender.TTip();
         let defenderModels = Math.ceil(parseInt(defender.token.get("bar1_value")) / defender.toughness); //used for blast
+        if (defenderHero) {defenderModels++};
 
         SetupCard(attacker.name,defender.name,attacker.faction);
 
@@ -1724,21 +1726,18 @@ log(c)
         if (ErrorMsg(errorMsg) === true) {
             return;
         }
-//////
 
-            if (a===1) {outputCard.body.push("[hr]")};
+        if (attacker.keywords.includes("Unpredictable") || (attacker.keywords.includes("Unpredictable Fighter") && combatType === "Melee")) {
+            let roll = randomInteger(6);
+            if (roll < 4) {
+                attacker.upAP = true;
+                attacker.upTH = false;
+            } else {
+                attacker.upAP = false;
+                attacker.upTH = true;            }
+        }
 
-            if (attacker.keywords.includes("Unpredictable") || (attacker.keywords.includes("Unpredictable Fighter") && combatType === "Melee")) {
-                let roll = randomInteger(6);
-                if (roll < 4) {
-                    attacker.upAP = true;
-                    attacker.upTH = false;
-                } else {
-                    attacker.upAP = false;
-                    attacker.upTH = true;            }
-            }
-
-
+///
 
 
 
