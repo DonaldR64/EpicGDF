@@ -1,13 +1,9 @@
 
 
 
-//in class, Attack to do the attack and feed back hit Info with hits to apply
-//output of Attacks to be in Attack
-class Test {
 
-    Attack(defender,weaponType) {
-
-        let attackerHex = HexMap[this.hexLabel];
+    WeaponAttack = () => {
+        let attackerHex = HexMap[attacker.hexLabel];
         let defenderHex = HexMap[defender.hexLabel];
         //if hero, check if shuld be a normal unit, if so change
         if (defender.type === "Hero" && defenderHex.tokenIDs.length > 1 && weaponType !== "Sniper") {
@@ -18,7 +14,6 @@ class Test {
                 }
             })
         }       
-
 
         let attackerAuras = attacker.Auras();
         let attackerTT = attacker.TTip();
@@ -37,7 +32,7 @@ class Test {
         let combatType = (losResult.distance === 0) ? "Melee":"Ranged";
         let weaponArray = [];
         let notEligible = []; //weapons not eligible for various reasons
-        for (let i=0;i<this.weapons.length;i++) {
+        for (let i=0;i<attacker.weapons.length;i++) {
             let weapon = DeepCopy(this.weapons[i]);
             let notE;
             if (weapon.type !== weaponType) {continue};
@@ -63,7 +58,12 @@ class Test {
             if (notE) {
                 notEligible.push(notE)
             } else {
-                weaponArray.push(weapon); //can add hits, rolls etc 
+                if (weapon.ketwords.includes("Deadly")) {
+                    weaponArray.unshift(weapon);                
+                } else {
+                    weaponArray.push(weapon);                
+                }
+
             }
         }
         if (weaponArray.length === 0) {
@@ -72,6 +72,154 @@ class Test {
         }
         if (ErrorMsg(errorMsg) === true) {
             return;
+        }
+
+        //run through weapons
+        for (let w=0;w++;w<weaponArray.length) {
+            let weapon = weaponArray[w];
+            let rolls = [], hits = 0, crits = 0
+        let relentless = 0,surge = 0, furious = 0,predator = 0,butcher = 0;
+        let notes = [];
+            let needed = attacker.quality;
+            let neededTip = "<br>Quality: " + quality + "+";
+
+            if (attacker.token.get(SM.fatigue) === true && combatType === "Melee") {
+                needed = 6;
+                neededTip = "<br>Fatigue: 6+";
+            }
+            if (weapon.name === "Ravage") {
+                needed = 6;
+                neededTip = "<br>Ravage: 6+";
+            }
+            if (weapon.name === "Impact") {
+                needed = 2;
+                neededTip = "<br>Impact: 2+";
+            }
+            if (weapon.keywords.includes("Reliable")) {
+                needed = 2;
+                neededTip = "<br>Reliable: 2+";
+            }
+
+            let blast = weapon.keywords.find(key => key.includes("Blast")) || "0";
+            blast = parseInt(blast.replace(/\D/g,''));
+
+            let cover;
+            let hitTip = "", tip;
+            //modifiers here
+            //cover
+            let ignoreCover = ["Unstoppable","Blast","Slam","Decimate"];
+            if (weapon.keywords.includes("Indirect")) {
+                //ignores hedges etc
+                cover = losResult.hexCover;
+            } else {
+                //if either edge or target terrain gives cover
+                cover = (losResult.hexCover === true || losResult.interCover === true) ? true:false;
+            }
+            if (cover === true) {
+                for (let i=0;i<weapon.keywords.length; i++) {
+                    for (let j=0;j<ignoreCover.length;j++) {
+                        if (weapon.keywords[i].includes(ignoreCover[j])) {
+                            cover = false;
+                            neededTip += "<br>" + ignoreCover[j] + " ignores Cover";
+                        }
+                    }
+                }  
+            }
+
+            //Positive To Hits
+            if (attacker.keywords.includes("Artillery") && losResult.distance > 4) {
+                needed -= 1;
+                neededTip += "<br>Artillery at Range +1 to Hit";
+            }
+            if (attacker.upTH === true) {
+                needed -= 1;
+                neededTip += "<br>Unpredictable +1 to Hit";
+            }
+            if (attackerTT.includes(TT.vATH)) {
+                needed -= 1;
+                neededTip += "<br>" + TT.vATH;
+            }
+            if (attacker.tokenID === state.Epic.activeID && combatType === "Melee" && weapon.keywords.includes("Thrust")) {
+                weapon.ap++;
+                notes.push("Thrust");
+                needed -= 1;
+                neededTip += "<br>Thrust/Charge +1 to Hit";
+            }
+            if (attacker.keywords.includes("Precise")) {
+                needed -= 1;
+                neededTip += "<br>Precise +1 to Hit";
+            }
+            if (attacker.keywords.includes("Targeting Visor") && losResult.distance > 4) {
+                if (attacker.keywords.includes("Targeting Visor Boost") || attackerAuras.includes("Targeting Visor Boost")) {
+                    needed -= 2;
+                    neededTip += "<br>Targeting Visor & Boost +2 to Hit";
+                } else {
+                    needed -= 1;
+                    neededTip += "<br>Targeting Visor +1 to Hit";
+                }
+            }
+            if (attacker.keywords.includes("Good Shot") && combatType === "Ranged") {
+                needed--;
+                neededTip += "<br>Good Shot +1 to Hit";
+            }
+            if (defender.token.get(SM.spotter) === true || defender.token.get(SM.spotter) > 0) {
+                let spotter = 1;
+                if (defender.token.get(SM.spotter) > 1) {
+                    spotter = parseInt(defender.token.get(SM.spotter));
+                }
+                needed -= spotter;
+                neededTip += "<br>Spotting Mark +" + spotter + " to Hit";
+                defender.token.set(SM.spotter,false); //used
+            }
+
+            //Negative To Hits - removed by Unstoppable
+            if (weapon.keywords.includes("Unstoppable") === false) {
+                if (cover === true && combatType === "Ranged") {
+                    needed += 1;
+                    neededTip += "<br>Cover -1 to Hit";
+                }
+                if (weapon.keywords.includes("Indirect") && attacker.moved === true) {
+                    needed += 1;
+                    neededTip += "<br>Indirect and Moved -1 to Hit";
+                }
+                if ((defender.keywords.includes("Stealth") || defenderAuras.includes("Stealth")) && losResult.distance > 4) {
+                    needed += 1;
+                    neededTip += "<br>Stealth -1 to Hit";
+                }
+                if (defenderTT.includes(TT.vDTH)) {
+                    needed += 1;
+                    neededTip += "<br>" + TT.vDTH;
+                }
+                if (attacker.keywords.includes("Evasive")) {
+                    needed++;
+                    neededTip += "<br>Evasive -1 to Hit";
+                }
+                if (defender.keywords.includes("Artillery") && losResult.distance > 4) {
+                    needed += 2;
+                    neededTip += "<br>Artillery being shot at > 4 hexes";
+                }
+            }
+
+            //Number of Attacks
+            let attacks = weapon.number * weapon.attacks;
+            if (attacker.get(SM.halfStr) === true) {
+                attacks = Math.floor(attacks/2);
+            }
+            if (attacks === 0) {
+                attacks = 1;
+                needed += 1;
+                if (attacker.type === "Infantry") {
+                    neededTip += "<br>Heavy Casualties -1 to Hit";
+                } else {
+                    neededTip += "<br>Unit Damaged -1 to Hit";
+                }
+            }
+
+
+
+
+
+
         }
 
 

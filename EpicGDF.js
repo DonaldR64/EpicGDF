@@ -1669,18 +1669,19 @@ log(c)
         }    
     }
 
+//move this to top later
+    let attacker,defender,weaponType;
+
     const Attack = (msg) => {
         let Tag = msg.content.split(";");
         let attacker = UnitArray[Tag[1]];
         let defender = UnitArray[Tag[2]];
+        if (!attacker || !defender) {return};
         SetupCard(attacker.name,defender.name,attacker.faction);
         let weaponType = Tag[3]; //CCW, Rifle etc
         defender.Debuffs("Combat");
         attacker.Buffs("Combat");
-        let hitInfo = attacker.Attack(defender,weaponType);
-        defender.Damage(hitInfo);
-
-
+        WeaponAttack();
         PrintCard();
     }
 
@@ -1809,8 +1810,6 @@ log(c)
         }
 
 
-return
-///////
         //run through weapons, roll to hit, assign any to unit or leader
         let quality = attacker.quality;
         let weaponHits = [];
@@ -1867,7 +1866,7 @@ return
                         }
                     }  
                 }
-
+////
                 //Positive To Hits
                 if (attacker.keywords.includes("Artillery") && losResult.distance > 4) {
                     needed -= 1;
@@ -1914,8 +1913,6 @@ return
                     neededTip += "<br>Spotting Mark +" + spotter + " to Hit";
                     defender.token.set(SM.spotter,false); //used
                 }
-
-
 
 
 
@@ -3120,7 +3117,8 @@ log(playerID);
         let targetHex = HexMap[target.hexLabel];
         let distance = targetHex.cube.distance(shooterHex.cube);
         let finalLOS = true;
-        let finalCover = false;
+        let interCoverFinal = false;
+        let hexCover = false;
         let finalLOSReason = "";
  
         let interCubes = [shooterHex.cube.linedraw(targetHex.cube),shooterHex.cube.linedraw2(targetHex.cube)];
@@ -3128,7 +3126,7 @@ log(playerID);
 
         let len = labels[0].length;
         let los = [true,true];
-        let cover = [false,false];
+        let interCover = [false,false];
         let losReason = ["",""];
         for (let side=0;side<2;side++) {
             for (let i=0;i<len;i++) {
@@ -3148,7 +3146,7 @@ log(playerID);
                     let dir = lastHex.cube.whatDirection(interHex.cube);
                     let edge = lastHex.edges[dir];
                     if (edge !== "Open") {
-                        cover[side] = true;
+                        interCover[side] = true;
                     }
                 }
             }
@@ -3163,22 +3161,22 @@ log(playerID);
             finalLOSReason = "Blocked by " + finalLOSReason;
         }
         if (los[0] === true && los[1] === true) {
-            if (cover[0] === true || cover[1] === true) {
-                finalCover = true;
+            if (interCover[0] === true && interCover[1] === true) {
+                interCoverFinal = true;
             }
         }
         if (los[0] === true && los[1] === false) {
-            finalCover = cover[0];
+            interCoverFinal = interCover[0];
         }
         if (los[0] === false && los[1] === true) {
-            finalCover = cover[1];
+            interCoverFinal = interCover[1];
         }
 
         if (targetHex.cover === true) {
-            finalCover = true;
+            hexCover = true;
         }
         if (targetHex.cover === "Infantry" && target.type === "Infantry") {
-            finalCover = true;
+            hexCover = true;
         }
 
 
@@ -3187,7 +3185,8 @@ log(playerID);
             los: finalLOS,
             losReason: finalLOSReason,
             distance: distance,
-            cover: finalCover,
+            hexCover: hexCover,
+            interCover: interCoverFinal,
             building: targetHex.building,
         }
 
@@ -3200,7 +3199,6 @@ log(playerID);
         _.each(msgs,msg => {
             outputCard.body.push(msg);
         })
-        PrintCard();
         return true;
     }
 
