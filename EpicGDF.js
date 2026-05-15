@@ -1064,8 +1064,7 @@ const Main = (() => {
             names = names.replaceAll(",","+");
             abilityName = weaponNum + ": " + names;
             weaponNum += 1;
-            let ct = (keys[i] === ("CCW")) ? "Melee":"Ranged";
-            action = "!Attack;@{selected|token_id};@{target|token_id};" + ct + ";" + keys[i];
+            action = "!Attack;@{selected|token_id};@{target|token_id};" + keys[i];
             AddAbility(abilityName,action,unit.charID);
         }
 
@@ -1685,7 +1684,7 @@ log(c)
 
 
 
-    
+
 
     const AttackOld = (msg) => {
         let Tag = msg.content.split(";");
