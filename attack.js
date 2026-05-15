@@ -85,7 +85,52 @@ class Test {
 
     }
 
+
+
+
+
+    Debuffs(phase) {
+        if (phase === "Combat") {
+            defender.RemoveTTip("piercing");
+        }
+
+
+
+
+    }
+
+    Buffs(phase) {
+        if (phase === "Combat") {
+            if (randomInteger(6) < 4) {
+                this.upAP = true;
+                this.upTH = false;
+            } else {
+                this.upAP = false;
+                this.upTH = true;
+            }
+
+
+
+
+
+        }
+
+
+
+
+
+    }
+
+
+
+//in Damage - apply hits from hitInfo, rolling over to any hero if destroyed
+
+
+
 }
+
+
+
 
 
 
