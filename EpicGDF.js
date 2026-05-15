@@ -974,6 +974,7 @@ const Main = (() => {
 
         Buffs(phase) {
             if (phase === "Combat") {
+    /*
                 if (randomInteger(6) < 4) {
                     this.upAP = true;
                     this.upTH = false;
@@ -981,8 +982,7 @@ const Main = (() => {
                     this.upAP = false;
                     this.upTH = true;
                 }
-
-
+    */
 
 
 
