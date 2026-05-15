@@ -1670,9 +1670,24 @@ log(c)
         }    
     }
 
-
-
     const Attack = (msg) => {
+        let Tag = msg.content.split(";");
+        let attacker = UnitArray[Tag[1]];
+        let defender = UnitArray[Tag[2]];
+        SetupCard(attacker.name,defender.name,attacker.faction);
+        let weaponType = Tag[3]; //CCW, Rifle etc
+        let hitInfo = attacker.Attack(defender,weaponType);
+        defender.Damage(hitInfo);
+
+
+        PrintCard();
+    }
+
+
+
+    
+
+    const AttackOld = (msg) => {
         let Tag = msg.content.split(";");
         let attacker = UnitArray[Tag[1]];
         let attackerAuras = attacker.Auras();
