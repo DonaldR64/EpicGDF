@@ -1704,7 +1704,7 @@ log(c)
         let attacker = UnitArray[Tag[1]];
         let defender = UnitArray[Tag[2]];
         if (!attacker || !defender) {return};
-        SetupCard(attacker.name,defender.name,attacker.faction);
+        SetupCard(attacker.name,"Attack",attacker.faction);
         let weaponType = Tag[3]; //CCW, Rifle etc
         defender.Debuffs("Combat");
         attacker.Buffs("Combat");
@@ -2061,11 +2061,16 @@ needs fixing
             outputCard.body.push(attacker.name + " takes " + attDisplay + attWord + s)
             outputCard.body.push(defender.name + " is " + weaponOut);
 
-
-
             if (weapon.keywords.includes("Limited")) {
                 SetTT2(attacker,"Fired " + weapon.name);
             }
+
+
+
+
+
+
+
 
 
 
@@ -2077,7 +2082,7 @@ needs fixing
 
 
 
-        
+
 
 
 
