@@ -2075,7 +2075,7 @@ needs fixing
             }
 
 
-
+            WeaponDamage(attacker,defender,weapon,hits);
 
 
 
