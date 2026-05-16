@@ -1823,7 +1823,7 @@ log(weaponArray);
         //run through weapons
         for (let w=0;w<weaponArray.length;w++) {
             let weapon = weaponArray[w];
-            let hitRolls = [],missRolls = [], hits = 0;
+            let hitRolls = [],missRolls = [], hits = 0; extraHits = 0;
             let relentless = 0,surge = 0, furious = 0,predator = 0,butcher = 0;
             let notes = [];
             let needed = attacker.quality;
@@ -1990,6 +1990,7 @@ needs fixing
                             let roll = randomInteger(6);
                             rolls.push(roll);
                             if (roll >= needed) {
+                                extraHits++;
                                 hits++;
                             }
                         }
@@ -2031,14 +2032,18 @@ needs fixing
                 s = (surge === 1) ? "":"s";
                 hitTip += "<br>Surge added " + surge + " hit" + s;
             }
+            extraHits += butcher + furious + relentless + surge;
+
 
 
             if (blast > 0 && hits > 0) {
                 let blastHits = Math.min(defenderModels,blast);
                 if (blastHits > 1) {
                     //if 1 model, blast does no extra hits
-                    hitTip += "<br>Blast adds " + ((blastHits-1) * hits) + " hits"
-                    hits *= blastHits;
+                    let extra = (blastHits - 1) * hits;
+                    extraHits += extra;
+                    hitTip += "<br>Blast adds " + extra + " hits"
+                    hits += extra;
                 }
             }
 
@@ -2046,6 +2051,10 @@ needs fixing
             missRolls = (missRolls.length > 0) ? missRolls.sort().reverse():"Nil";
             finalTip = "Hit Rolls: " + hitRolls.toString();
             finalTip += "<br>Miss Rolls: " + missRolls.toString();
+            if (extraHits > 0) {
+                finalTip += "<br>Extra Hits: " + extraHits;
+            }
+            finalTip += "<br>----------------";
             finalTip += "<br>Target: " + needed + "+" + neededTip + hitTip;
             let weaponOut;
             if (hits > 0) {
