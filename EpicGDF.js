@@ -2065,6 +2065,8 @@ log(c)
                     SetTT2(attacker,"Fired " + weapon.name);
                 }
 
+
+                //Saves
                 let saveTarget = defender.defense;
                 let critMod = 0;
                 let saveTip = "<br>Defense: " + saveTarget + "+";
@@ -2120,7 +2122,7 @@ log(c)
                     saveTarget++;
                     saveTip += "<br>Thrust +1 AP";
                 }
-                    
+                /*
                 if ('Versatile Attack +1 AP') {
                     saveTarget++;
                     saveTip += "<br>Versatile Attack +1AP";
@@ -2138,9 +2140,39 @@ log(c)
                     saveTip += "<br>Versatile Defense +1 Defense";
                 }
 
+                */
+
+                let saves = 0; critFails = 0;
+                let savePass = [];
+                let saveFail = [];
+                do {
+                    let saveRoll = randomInteger(6);
+                    let target = saveTarget;
+                    if (crit > 0) {
+                        target += critMod;
+                    }
+                    target = Math.min(6,Math.max(2,target));
+                    if (saveRoll >= target) {
+                        if (saveRoll === 6) {
+                            
 
 
 
+
+                        }
+
+
+
+                    }
+
+
+
+
+
+
+                    hits--;
+                    crits--;
+                } while (hits > 0);
 
 
 
