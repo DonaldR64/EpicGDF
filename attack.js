@@ -19,7 +19,8 @@
         let attackerTT = attacker.TTip();
         let defenderAuras = defender.Auras();
         let defenderTT = defender.TTip();
-
+        let defenderModels = Math.ceil(parseInt(defender.token.get("bar1_value"))/defender.toughness);
+        if (defender.Hero()) {defenderModels++};
 
         //error checks
         let errorMsg = [];
@@ -78,8 +79,8 @@
         for (let w=0;w++;w<weaponArray.length) {
             let weapon = weaponArray[w];
             let rolls = [], hits = 0, crits = 0
-        let relentless = 0,surge = 0, furious = 0,predator = 0,butcher = 0;
-        let notes = [];
+            let relentless = 0,surge = 0, furious = 0,predator = 0,butcher = 0;
+            let notes = [];
             let needed = attacker.quality;
             let neededTip = "<br>Quality: " + quality + "+";
 
@@ -215,8 +216,108 @@
                 }
             }
 
+/*
+needs fixing
+            if (weapon.name === "Impact" && defender.keywords.includes("Counter")) {
+                attacks -= defender.models;
+            }
+*/
+
+            needed = Math.min(6,Math.max(2,needed)); //1 is always a miss, 6 a hit
+
+            do {
+                let roll = randomInteger(6);
+                rolls.push(roll);
+                if (roll >= needed) {
+                    hits++;
+                    if (roll === 6) {
+                        crits++;
+                        if ((weapon.keywords.includes("Relentless") || attackerAuras.includes("Relentless")) && losResult.distance > 4) {
+                            relentless++;
+                        }
+                        if (weapon.keywords.includes("Surge")) {
+                            surge++;
+                        }
+                        if (attacker.keywords.includes("Furious") || attackerAuras.includes("Furious")) {
+                            furious++;
+                        }
+                        if (attacker.keywords.includes("Predator Fighter")) {
+                            predator++;
+                            let roll = randomInteger(6);
+                            rolls.push(roll);
+                            if (roll >= needed) {
+                                hits++;
+                            }
+                        }
+                        if (weapon.keywords.includes("Butcher")) {
+                            butcher++;
+                        }
 
 
+                    }
+                } else {
+                    //misses hit terrain here
+                }
+                attacks--;
+            } while (attacks > 0);
+
+            let s;
+            if (predator > 0) {
+                s = (predator === 1) ? "":"s";
+                hitTip += "<br<Predator Fighter added " + predator + " Attack" + s;
+            }
+            if (butcher > 0) {
+                s = (butcher === 1) ? "":"s";
+                hits += butcher;
+                hitTip += "<br<Butcher added " + butcher + " hit" + s;
+            }
+            if (furious > 0) {
+                hits += furious;
+                s = (furious === 1) ? "":"s";
+                hitTip += "<br>Furious added " + furious + " hit" + s;
+            }
+            if (relentless > 0) {
+                hits += relentless;
+                s = (relentless === 1) ? "":"s";
+                hitTip += "<br>Relentless added " + relentless + " hit" + s;
+            }
+            if (surge > 0) {
+                hits += surge;
+                s = (surge === 1) ? "":"s";
+                hitTip += "<br>Surge added " + surge + " hit" + s;
+            }
+
+
+            if (blast > 0 && hits > 0) {
+                let blastHits = Math.min(defenderModels,blast);
+                if (blastHits > 1) {
+                    //if 1 model, blast does no extra hits
+                    hitTip += "<br>Blast adds " + ((blastHits-1) * hits) + " hits"
+                    hits *= blastHits;
+                }
+            }
+
+            rolls = rolls.sort((a,b)=> b-a);
+
+            hitTip = "Rolls: " + rolls.toString() + " vs. " + needed + "+" + neededTip + hitTip;
+            let noun = (weapon.number === 1) ? " Misses":" Miss"
+            if (hits > 0) {
+                let s = (hits === 1) ? "":"s";
+                tip = '[' + hits + '](#" class="showtip" title="' + hitTip + ')';
+                weaponOut = tip + ' hit' + s + ' with ' + weapon.name ;
+
+
+                
+            } else {
+                tip = '[' + noun + '](#" class="showtip" title="' + hitTip + ')';
+                outputCard.body.push(weapon.name + tip);
+            }
+
+
+
+            if (weapon.keywords.includes("Limited")) {
+                SetTT2(attacker,"Fired " + weapon.name);
+            }
 
 
 
