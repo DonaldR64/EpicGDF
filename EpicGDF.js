@@ -1716,6 +1716,18 @@ log(c)
 
         let attackerHex = HexMap[attacker.hexLabel];
         let defenderHex = HexMap[defender.hexLabel];
+        let friendly = false;
+        //due to overlap, check if accidentally clicked own unit
+        if (attacker.faction === defender.faction) {
+            friendly = true;
+            _.each(defenderHex.tokenIDs,tokenID => {
+                let unit2 = UnitArray[tokenID];
+                if (unit2.faction !== attacker.faction) {
+                    defender = unit2;
+                    friendly = false;
+                }
+            })
+        } 
         //if hero, check if shuld be a normal unit, if so change
         if (defender.type === "Hero" && defenderHex.tokenIDs.length > 1 && weaponType !== "Sniper") {
             _.each(defenderHex.tokenIDs,tokenID => {
@@ -1724,7 +1736,7 @@ log(c)
                     defender = unit2;
                 }
             })
-        }       
+        }   
 
         let attackerAuras = attacker.Auras();
         let attackerTT = attacker.TTip();
@@ -1732,25 +1744,48 @@ log(c)
         let defenderTT = defender.TTip();
         let defenderModels = Math.ceil(parseInt(defender.token.get("bar1_value"))/defender.toughness);
         if (defender.Hero()) {defenderModels++};
-
+log(attacker.weapons)
         //error checks
         let errorMsg = [];
-        //check attacking enemy
-        if (attacker.faction === defender.faction) {
+        if (friendly === true) {
             errorMsg.push("Friendly Fire!");
         }     
+
         //Weapons - los, ranges, limited
         let losResult = LOS(attacker,defender);
         let combatType = (losResult.distance === 0) ? "Melee":"Ranged";
+
+        //check if firing into Melee    
+        let meleeFlag = false;
+        if (defenderHex.tokenIDs.length > 1 && combatType === "Ranged") {
+            _.each(defenderHex.tokenIDs,tokenID => {
+                let unit2 = UnitArray[tokenID];
+                if (unit2.faction !== defender.id) {
+                    meleeFlag = true;
+                }
+            })            
+        }
+        if (meleeFlag === true) {errorMsg.push("Cannot Fire into Melee")};
+
         let weaponArray = [];
         let notEligible = []; //weapons not eligible for various reasons
         for (let i=0;i<attacker.weapons.length;i++) {
             let weapon = DeepCopy(attacker.weapons[i]);
             let notE;
             if (weapon.type !== weaponType) {continue};
-            if ((weapon.name === "Impact" && attacker.token.get(SM.fatigue) === true) || attacker.id !== state.Epic.activeID) {
-                notE = weapon.name + " not eligible";
+            if (weapon.name === "Impact" && attacker.id !== state.Epic.activeID) {
+                notE = weapon.name + " only for Charging Unit";
             }
+            if (weapon.name === "Impact" && attacker.token.get(SM.fatigue) === true) {
+                notE = "Fatigue limits Impact";
+            }
+            if (attacker.id !== state.Epic.activeID && combatType !== "Melee") {
+                notE = "Can only fire Ranged Weapons if Active Unit";
+            } 
+            if (combatType === "Melee" && weapon.type !== "CCW") {
+                notE = "Cannot fire Ranged Weapon in Close Combat";
+            }
+
             if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
                 notE = weapon.name + " - no LOS";
             }
@@ -1761,11 +1796,11 @@ log(c)
             if (attacker.keywords.includes("Increased Shooting Range") || attackerAuras.includes("Increased Shooting Range")) {
                 range += 3;
             }
-            if (losResult.distance > range && combatType === "Ranged") {
+            if (losResult.distance > range && combatType === "Ranged" && weapon.type !== "CCW") {
                 notE = weapon.name + " - lacks Range";
             }
-            if (weapon.type === "CC" && combatType === "Ranged") {
-                notE = weapon.name + " is CC Only";
+            if (weapon.type === "CCW" && combatType === "Ranged") {
+                notE = weapon.name + " is CCW Only";
             }
             if (notE) {
                 notEligible.push(notE)
@@ -1779,7 +1814,6 @@ log(c)
             }
         }
         if (weaponArray.length === 0) {
-            errorMsg.push("No Weapons with LOS or Range");
             errorMsg = errorMsg.concat(notEligible);
         }
         if (ErrorMsg(errorMsg) === true) {
@@ -1789,7 +1823,7 @@ log(weaponArray);
         //run through weapons
         for (let w=0;w<weaponArray.length;w++) {
             let weapon = weaponArray[w];
-            let rolls = [], hits = 0, crits = 0
+            let hitRolls = [],missRolls = [], hits = 0;
             let relentless = 0,surge = 0, furious = 0,predator = 0,butcher = 0;
             let notes = [];
             let needed = attacker.quality;
@@ -1926,7 +1960,7 @@ log(weaponArray);
                     neededTip += "<br>Unit Damaged -1 to Hit";
                 }
             }
-
+            let attDisplay = attacks;
 /*
 needs fixing
             if (weapon.name === "Impact" && defender.keywords.includes("Counter")) {
@@ -1938,11 +1972,10 @@ needs fixing
 
             do {
                 let roll = randomInteger(6);
-                rolls.push(roll);
                 if (roll >= needed) {
+                    hitRolls.push(roll);
                     hits++;
                     if (roll === 6) {
-                        crits++;
                         if ((weapon.keywords.includes("Relentless") || attackerAuras.includes("Relentless")) && losResult.distance > 4) {
                             relentless++;
                         }
@@ -1967,6 +2000,7 @@ needs fixing
 
                     }
                 } else {
+                    missRolls.push(roll);
                     //misses hit terrain here
                 }
                 attacks--;
@@ -2008,18 +2042,24 @@ needs fixing
                 }
             }
 
-            rolls = rolls.sort((a,b)=> b-a);
-
-            hitTip = "Rolls: " + rolls.toString() + " vs. " + needed + "+" + neededTip + hitTip;
+            hitRolls = (hitRolls.length > 0) ? hitRolls.sort().reverse():"Nil";
+            missRolls = (missRolls.length > 0) ? missRolls.sort().reverse():"Nil";
+            finalTip = "Hit Rolls: " + hitRolls.toString();
+            finalTip += "<br>Miss Rolls: " + missRolls.toString();
+            finalTip += "<br>Target: " + needed + "+" + neededTip + hitTip;
+            let weaponOut;
             if (hits > 0) {
-                let s = (hits === 1) ? "":"s";
-                tip = '[' + hits + '](#" class="showtip" title="' + hitTip + ')';
-                weaponOut = tip + ' hit' + s + ' with ' + weapon.name ;
+                s = (hits === 1) ? "":"s";
+                tip = '[' + hits + '](#" class="showtip" title="' + finalTip + ')';
+                weaponOut = 'hit ' + tip + " time" + s;
             } else {
-                let noun = (weapon.number === 1) ? " Misses":" Miss"
-                tip = '[' + noun + '](#" class="showtip" title="' + hitTip + ') with ' + weapon.name;
+                weaponOut = '[Missed](#" class="showtip" title="' + finalTip + ')';
             }
-            outputCard.body.push(tip);
+            
+            let attWord = (combatType === "Ranged") ? " shot":" strike";
+            s = (attDisplay === 1) ? "":"s";
+            outputCard.body.push(attacker.name + " takes " + attDisplay + attWord + s)
+            outputCard.body.push(defender.name + " is " + weaponOut);
 
 
 
@@ -2033,6 +2073,11 @@ needs fixing
 
 
 
+
+
+
+
+        
 
 
 
