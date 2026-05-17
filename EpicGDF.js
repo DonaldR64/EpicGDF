@@ -2142,11 +2142,13 @@ log(c)
 
                 */
 
-                let wounds = 0; critFails = 0;
+
+                let hp = parseInt(defender.token.get("bar1_value"));
+                let totalWounds = 0; critFails = 0; wounds = 0;
                 let savePass = [];
                 let saveFail = [];
                 let bane = 0, shred = 0, slam = 0;
-                do {
+                for (let i=0;i<hits;i++) {
                     let saveRoll = randomInteger(6);
                     let target = saveTarget;
                     if (crit > 0) {
@@ -2166,25 +2168,29 @@ log(c)
                         savePass.push(saveRoll);
                     } else {
                         saveFail.push(saveRoll);
-                        wounds++;
+                        let deadly = weapon.keywords.find((e) => e.includes("Deadly")) || 1;
+                        deadly = parseInt(deadly.replace(/\D/g,''));
+
+                        wounds = Math.min(deadly,defender.toughness);
                         if (((weapon.keywords.includes("Shred") && combatType === "Melee") || (weapon.keywords.includes("Shred when Shooting") && combatType === "Ranged")) && saveRoll === 1) {
                             shred++;
+                            wounds++;
                         }
-
-
                         if (weapon.keywords.includes("Slam") && saveRoll === 1) {
                             slam++;
+                            wounds++;
                         }
 
+                        totalWounds += wounds;
+                        hp -= wounds;
+
+                        if (hp <= 0) {
+                            break;
+                        }
                     }
 
-
-
-
-
-                    hits--;
-                    crits--;
-                } while (hits > 0);
+                    crit--;
+                } 
 
 
 
