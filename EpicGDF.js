@@ -2142,9 +2142,10 @@ log(c)
 
                 */
 
-                let saves = 0; critFails = 0;
+                let wounds = 0; critFails = 0;
                 let savePass = [];
                 let saveFail = [];
+                let bane = 0, shred = 0, slam = 0;
                 do {
                     let saveRoll = randomInteger(6);
                     let target = saveTarget;
@@ -2152,19 +2153,30 @@ log(c)
                         target += critMod;
                     }
                     target = Math.min(6,Math.max(2,target));
+                    if (saveRoll === 6) {
+                        if (weapon.keywords.includes("Bane")) {
+                            saveRoll = randomInteger(6);
+                            bane++;
+                        }
+                    }
+
+
+
                     if (saveRoll >= target) {
-                        if (saveRoll === 6) {
-                            
-
-
-
-
+                        savePass.push(saveRoll);
+                    } else {
+                        saveFail.push(saveRoll);
+                        wounds++;
+                        if (((weapon.keywords.includes("Shred") && combatType === "Melee") || (weapon.keywords.includes("Shred when Shooting") && combatType === "Ranged")) && saveRoll === 1) {
+                            shred++;
                         }
 
 
+                        if (weapon.keywords.includes("Slam") && saveRoll === 1) {
+                            slam++;
+                        }
 
                     }
-
 
 
 
