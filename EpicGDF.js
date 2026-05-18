@@ -958,7 +958,7 @@ const Main = (() => {
 
         Killed() {
             this.token.set({
-                "status_dead": true,
+                "statusmarkers": "dead",
                 "layer": "map",
             })
             delete UnitArray[this.id];
@@ -1713,7 +1713,7 @@ log(c)
             }
 
             if (weapon.ap !== 0) {
-                saveTip += "<br>Weapon AP: " + weapon.ap;
+                saveTip += "<br>Weapon: AP " + weapon.ap;
                 let defenderAuras = "";
                 if ((defender.keywords.includes("Fortified") || (defender.Auras().includes("Fortified")) && weapon.ap > 0)) {
                     saveTip += "<br>Fortified -1 to AP";
@@ -2011,8 +2011,8 @@ log(c)
 
             hitRolls = (hitRolls.length > 0) ? hitRolls.sort().reverse():"Nil";
             missRolls = (missRolls.length > 0) ? missRolls.sort().reverse():"Nil";
-            finalTip = "Hit Rolls: " + hitRolls.toString();
-            finalTip += "<br>Miss Rolls: " + missRolls.toString();
+            finalTip = "Hits: " + hitRolls.toString();
+            finalTip += "<br>Misses: " + missRolls.toString();
             if (extraHits > 0) {
                 finalTip += "<br>Extra Hits: " + extraHits;
             }
@@ -2114,9 +2114,10 @@ log(c)
                 saveFail = (saveFail.length > 0) ? saveFail.sort().reverse():"Nil";
 
                 finalTip = "Saves: " + savePass.toString();
-                finalTip += "<br>Failed Saves: " + saveFail.toString();
+                finalTip += "<br>Failed: " + saveFail.toString();
                 finalTip += "<br>----------------";
-                finalTip += "<br>Target: " + Math.min(6,Math.max(2,saveInfo.saveTarget)); + "+" + saveTip;
+                finalTip += "<br>Target: " + Math.min(6,Math.max(2,saveInfo.saveTarget)) + "+";
+                finalTip += saveTip;
 
                 meleeWounds += totalWounds;
                 if (totalWounds > 0) {
@@ -2133,7 +2134,7 @@ log(c)
 
                 if (hp > 0) {
                     defender.token.set("bar1_value",hp);
-                    if (hp < Math.floor(defender.wounds/2)) {
+                    if (hp <= Math.floor(defender.wounds/2)) {
                         defender.token.set(SM.halfStr,true);
                         if (defender.type !== "Hero") {
                             moraleCheck = true;
@@ -2168,10 +2169,6 @@ log(c)
         SetupCard(attacker.name,"Attack",attacker.faction);
         let weaponType = Tag[3]; //CCW, Rifle etc
         let weapon;
-        defender.Debuffs("Combat");
-        //extend to hero
-
-        attacker.Buffs("Combat");
 
         let attackerHex = HexMap[attacker.hexLabel];
         let defenderHex = HexMap[defender.hexLabel];
@@ -2219,6 +2216,7 @@ log(c)
 
         //Weapons - los, ranges, limited
         let losResult = LOS(attacker,defender);
+log(losResult)
         let combatType = (losResult.distance === 0) ? "Melee":"Ranged";
 
         let weaponArray = [];
@@ -2271,6 +2269,7 @@ log(c)
             errorMsg = errorMsg.concat(notEligible);
         }
         if (ErrorMsg(errorMsg) === true) {
+            PrintCard();
             return;
         }
 
@@ -3280,9 +3279,9 @@ log(playerID);
                     }
                 }
                 //if there a unit in the hex
-                if (interHex.tokenIDs.length > 0) {
+                if (interHex.tokenIDs.length > 0 && interHex.label !== targetHex.label) {
                     los[side] = false;
-                    losReason[side] = "Unit";
+                    losReason[side] = UnitArray[interHex.tokenIDs[0]].name;
                     break;
                 }
 
