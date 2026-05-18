@@ -705,6 +705,7 @@ const Main = (() => {
             this.defense = parseInt(aa.defense);
             this.toughness = parseInt(aa.toughness) || 1;
             this.wounds = parseInt(aa.wounds) || 1;
+            this.models = this.wounds/this.toughness;
             this.type = aa.type;
             this.size = (aa.type === "Titan") ? 2:1;
 
@@ -771,14 +772,14 @@ const Main = (() => {
             let ravage = keywords.find((e) => e.includes("Ravage")) || "0";
             ravage = parseInt(ravage.replace(/\D/g,''));
             if (ravage > 0) {
-                let weapon = {name: "Ravage",type: "CCW",range: 0,attacks: ravage,ap: 0,keywords: [""],fx: "",sound: "Growl"};
+                let weapon = {name: "Ravage",number: this.models,type: "CCW",range: 0,attacks: ravage,ap: 0,keywords: [""],fx: "",sound: "Growl"};
                 weapons.push(weapon);
             }
 
             let impact = keywords.find((e) => e.includes("Impact")) || "0";
             impact = parseInt(impact.replace(/\D/g,''));
             if (impact > 0) {
-                let weapon = {name: "Impact",type: "CCW",range: 0,attacks: impact,ap: 0,keywords: [""],fx: "",sound: ""};
+                let weapon = {name: "Impact",number: this.models,type: "CCW",range: 0,attacks: impact,ap: 0,keywords: [""],fx: "",sound: ""};
                 weapons.push(weapon);
             }
 
@@ -917,7 +918,7 @@ const Main = (() => {
             _.each(hex.tokenIDs,tokenID => {
                 if (tokenID !== this.id) {
                     let unit2 = UnitArray[tokenID];
-                    if (unit2.type === "Hero") {
+                    if (unit2.faction === this.faction && unit2.type === "Hero") {
                         return unit2;
                     }
                 }
@@ -2009,10 +2010,8 @@ log(c)
                 }
             }
 
-            hitRolls = (hitRolls.length > 0) ? hitRolls.sort().reverse():"Nil";
-            missRolls = (missRolls.length > 0) ? missRolls.sort().reverse():"Nil";
-            finalTip = "Hits: " + hitRolls.toString();
-            finalTip += "<br>Misses: " + missRolls.toString();
+            finalTip = hitRolls.length + " Hits: " + hitRolls.sort().reverse().toString();
+            finalTip += "<br>" + missRolls.length + " Misses: " + missRolls.sort().reverse().toString();
             if (extraHits > 0) {
                 finalTip += "<br>Extra Hits: " + extraHits;
             }
@@ -2047,6 +2046,15 @@ log(c)
                 let savePass = [];
                 let saveFail = [];
                 let bane = 0, shred = 0, slam = 0, rending = 0;
+                let regen = 0,plaguebound = 0,protected = 0,resist = 0;
+                let regenRolls = [],pbRolls = [],protRolls = [],resistRolls = [];
+                let regenTarget = 5,pbTarget = 6,protTarget = 6,resistTarget = 6;
+                let ignoreRegenList = ["Bane","Butcher","Rending","Unstoppable"];
+                let ignoreRegen = ignoreRegenList.find((e) => weapon.keywords.includes(e));
+                if (ignoreRegen) {
+                    saveInfo.saveTip += "<br>Regeneration ignored due to " + ignoreRegen;
+                }
+
 
                 do {
                     let wounds = 0;
@@ -2082,6 +2090,52 @@ log(c)
                             wounds++;
                         }
 
+                        //regen and other 'saves' on wounds
+                        if (defender.keywords.includes("Regeneration") && !ignoreRegen) {
+                            for (let r=0;r<wounds;r++) {
+                                let regenRoll = randomInteger(6);
+                                regenRolls.push(regenRoll);
+                                if (regenRoll >= regenTarget) {
+                                    regen++;
+                                    wounds--;
+                                }
+                            }
+                        }
+                        if (defender.keywords.includes("Plaguebound")) {
+                            if (defender.keywords.includes("Plaguebound Boost") || defender.Auras().includes("Plaguebound Boost")) {
+                                pbTarget = 5;
+                            }
+                            for (let r=0;r<wounds;r++) {
+                                let pbRoll = randomInteger(6);
+                                pbRolls.push(pbRoll);
+                                if (pbRoll >= pbTarget) {
+                                    plaguebound++;
+                                    wounds--;
+                                }
+                            }
+                        }
+                        if (defender.keywords.includes("Protected")) {
+                            for (let r=0;r<wounds;r++) {
+                                let protRoll = randomInteger(6);
+                                protRolls.push(protRoll);
+                                if (protRoll >= protTarget) {
+                                    protected++;
+                                    wounds--;
+                                }
+                            }
+                        }
+                        if (defender.keywords.includes("Resistance") || defender.Auras().includes("Resistance")) {
+                            if (weapon.type === "Spell") {resistTarget = 2};
+                            for (let r=0;r<wounds;r++) {
+                                let resRoll = randomInteger(6);
+                                resistRolls.push(resRoll);
+                                if (resRoll >= resTarget) {
+                                    resist++;
+                                    wounds--;
+                                }
+                            }
+                        }
+
                         totalWounds += wounds;
                         hp -= wounds;
 
@@ -2107,17 +2161,46 @@ log(c)
                 }
                 if (slam > 0) {
                     s = (slam === 1) ? "":"s";
-                    saveTip += "<br>Shred added " + slam + " Wound" + s;
+                    saveTip += "<br>Slam added " + slam + " Wound" + s;
                 }
 
 
-                //display results, adjust hp of defender
-                savePass = (savePass.length > 0) ? savePass.sort().reverse():"Nil";
-                saveFail = (saveFail.length > 0) ? saveFail.sort().reverse():"Nil";
 
-                finalTip = "Saves: " + savePass.toString();
-                finalTip += "<br>Failed: " + saveFail.toString();
+
+                //display results, adjust hp of defender
+                finalTip = savePass.length + " Saves: " + savePass.sort().reverse().toString();
+                finalTip += '<br>' + saveFail.length + " Failed: " + saveFail.sort().reverse().toString();
                 finalTip += "<br>vs. Target: " + Math.min(6,Math.max(2,saveInfo.saveTarget)) + "+";
+
+                if (regenRolls.length > 0) {
+                    finalTip += "<br>----------------";
+                    s = (regen === 1) ? "":"s";
+                    regen = (regen === 0) ? "No":regen;
+                    finalTip += "<br>Regeneration removed " + regen + " Wound" + s;
+                    finalTip += '<br>Rolls: ' + regenRolls.sort().reverse().toString() + " vs. " + regenTarget + "+";
+                }
+                if (pbRolls.length > 0) {
+                    finalTip += "<br>----------------";
+                    s = (plaguebound === 1) ? "":"s";
+                    plaguebound = (plaguebound === 0) ? "No":plaguebound;                    
+                    finalTip += "<br>Plaguebound removed " + plaguebound + " Wound" + s;
+                    finalTip += '<br>Rolls: ' + pbRolls.sort().reverse().toString() + " vs. " + pbTarget + "+";
+                }
+                if (protRolls.length > 0) {
+                    finalTip += "<br>----------------";
+                    s = (protected === 1) ? "":"s";
+                    protected = (protected === 0) ? "No":protected;
+                    finalTip += "<br>Protected stopped " + protected + " Wound" + s;
+                    finalTip += '<br>Rolls: ' + protRolls.sort().reverse().toString() + " vs. " + protTarget + "+";
+
+                }
+                if (resistRolls.length > 0) {
+                    finalTip += "<br>----------------";
+                    s = (resist === 1) ? "":"s";
+                    resist = (resist === 0) ? "No":resist;
+                    finalTip += "<br>Resistance stopped " + resist + " Wound" + s;
+                    finalTip += '<br>Rolls: ' + resistRolls.sort().reverse().toString() + " vs. " + resistTarget + "+";
+                }
                 finalTip += "<br>----------------";
                 finalTip += saveTip;
 
@@ -2144,7 +2227,10 @@ log(c)
                     }
                 } else {
                     defender.Killed();
-                    let verb = (defender.type === "Infantry" || defender.type === "Hero") ? " was killed.":" was destroyed";
+                    defendersAliveFlag[d] = false;
+log("D: " + d)
+log(defendersAliveFlag)
+                    let verb = (defender.type === "Infantry" || defender.type === "Hero") ? " was killed":" was destroyed";
                     outputCard.body.push(defender.name + verb);
                     moraleCheck = false;
                 }
@@ -2204,11 +2290,13 @@ log(c)
 
         defender.Debuffs("Combat");
         let defenders = [defender];
+        let defendersAliveFlag = [true];
         let defenderHero = defender.Hero();
         if (defenderHero !== false) {
             defenderModels++
             defenderHero.Debuffs("Combat");
             defenders.push(defenderHero)
+            defendersAliveFlag.push(true);
         }
         //error checks
         let errorMsg = [];
@@ -2282,15 +2370,23 @@ log(losResult)
             moraleCheck = defender.token.get(SM.halfStr);
         }
 
+log("Defender Alive Flag: " + defendersAliveFlag)
+log(defendersAliveFlag.find((e)=> e === true))
+
+
         _.each(weaponArray,weapon => {
-            WeaponAttack(weapon);
+log(weapon.name)
+log(defendersAliveFlag)
+            if (defendersAliveFlag.some((e) => e === true)) {
+                WeaponAttack(weapon);
+                outputCard.body.push("[hr]");
+            }
         })
 
-        if (moraleCheck === true && combatType === "Ranged") {
+        if (moraleCheck === true && combatType === "Ranged" && defendersAliveFlag.some((e)=> e === true)) {
             outputCard.body.push("The unit must take a Morale Check");
         }
-        if (combatType === "Melee") {
-            outputCard.body.push("[hr]");
+        if (combatType === "Melee" && defendersAliveFlag.some((e)=> e === true)) {
             let fear = attacker.keywords.find((e) => e.includes("Fear")) || "0";
             fear = parseInt(fear.replace(/\D/g,''));
             if (fear > 0) {
