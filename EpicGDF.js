@@ -2228,8 +2228,6 @@ log(c)
                 } else {
                     defender.Killed();
                     defendersAliveFlag[d] = false;
-log("D: " + d)
-log(defendersAliveFlag)
                     let verb = (defender.type === "Infantry" || defender.type === "Hero") ? " was killed":" was destroyed";
                     outputCard.body.push(defender.name + verb);
                     moraleCheck = false;
@@ -2370,13 +2368,7 @@ log(losResult)
             moraleCheck = defender.token.get(SM.halfStr);
         }
 
-log("Defender Alive Flag: " + defendersAliveFlag)
-log(defendersAliveFlag.find((e)=> e === true))
-
-
         _.each(weaponArray,weapon => {
-log(weapon.name)
-log(defendersAliveFlag)
             if (defendersAliveFlag.some((e) => e === true)) {
                 WeaponAttack(weapon);
                 outputCard.body.push("[hr]");
