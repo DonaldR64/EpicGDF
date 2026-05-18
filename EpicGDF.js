@@ -956,10 +956,12 @@ const Main = (() => {
             }
         }
 
-        Damage(wounds) {
-
-
-
+        Killed() {
+            this.token.set({
+                "status_dead": true,
+                "layer": "map",
+            })
+            delete UnitArray[this.id];
         }
 
         Debuffs(phase) {
@@ -1700,7 +1702,87 @@ log(c)
     }
 
     const Attack = (msg) => {
-        const WeaponAttack = () => {
+
+        DefenderSave = function(defender) {
+            let saveTarget = defender.defense;
+            let critMod = 0;
+            let saveTip = "<br>Defense: " + saveTarget + "+";
+
+            if (losResult.building === true) {
+                saveTarget--;
+                saveTip += "<br>Building +1 Defense";
+            }
+
+            if (weapon.ap !== 0) {
+                saveTip += "<br>Weapon AP: " + weapon.ap;
+                if ((defender.keywords.includes("Fortified") || defenderAuras.includes("Fortified")) && weapon.ap > 0) {
+                    saveTip += "<br>Fortified -1 to AP";
+                    saveTarget += (weapon.ap -1);
+                } else {
+                    saveTarget += weapon.ap;
+                }
+            }
+            if (weapon.keywords.includes("Decimate") && defender.defense > 1 && defender.defense < 4) {
+                saveTarget += 2;
+                saveTip += "<br>Decimate +2AP vs Defense 2-3";
+            }
+
+            if ((attacker.keywords.includes("Ranged Slayer") || attackerAura.includes("Ranged Slayer")) && combatType === "Ranged" && defender.toughness > 2) {
+                saveTarget += 2;
+                saveTip += "<br>Ranged Slayer +2AP vs Tough 3+";
+            }
+            if ((attacker.keywords.includes("Slayer") || attackerAura.includes("Slayer")) && defender.toughness > 2) {
+                if ((attacker.keywords.includes("Ranged Slayer") || attackerAura.includes("Ranged Slayer"))) {
+                    if (combatType === "Ranged") {
+                        saveTarget += 2;
+                        saveTip += "<br>Ranged Slayer +2AP vs Tough 3+";
+                    }
+                } else {
+                    saveTarget += 2;
+                    saveTip += "<br>Slayer +2AP vs Tough 3+";
+                }
+            }
+
+            if (defender.keywords.includes("Shielded") && weapon.type !== "Spell") {
+                saveTarget--;
+                saveTip += "<br>Shielded +1 Defense";
+            }
+
+            if (weapon.keywords.includes("Thrust") && attacker.id === state.Epic.activeID && combatType === "Melee") {
+                saveTarget++;
+                saveTip += "<br>Thrust +1 AP";
+            }
+            /*
+            if ('Versatile Attack +1 AP') {
+                saveTarget++;
+                saveTip += "<br>Versatile Attack +1AP";
+            }
+            if ('Unpredictable +1 AP') {
+                saveTarget++;
+                saveTip += "<br>Unpredictable Attack +1AP";
+            }
+            if ('Unpredictable FIghter +1 AP') {
+                saveTarget++;
+                saveTip += "<br>Unpredictable Attack +1AP";
+            }
+            if ('Versatile Defense +1 Defense or the aura') {
+                saveTarget--;
+                saveTip += "<br>Versatile Defense +1 Defense";
+            }
+
+            */
+
+
+            let saveInfo = {
+                saveTarget: saveTarget,
+                saveTip: saveTip,
+            }
+
+            return saveInfo
+        }
+
+
+        WeaponAttack = function() {
             let attackerHex = HexMap[attacker.hexLabel];
             let defenderHex = HexMap[defender.hexLabel];
             let friendly = false;
@@ -1730,7 +1812,9 @@ log(c)
             let defenderAuras = defender.Auras();
             let defenderTT = defender.TTip();
             let defenderModels = Math.ceil(parseInt(defender.token.get("bar1_value"))/defender.toughness);
-            if (defender.Hero()) {defenderModels++};
+            let defenderHero = defender.Hero();
+            if (defenderHero !== false) {defenderModels++}
+            let defenders = [defender,defenderHero]; //used in saves
             log(attacker.weapons)
             //error checks
             let errorMsg = [];
@@ -2025,8 +2109,6 @@ log(c)
                 }
                 extraHits += butcher + furious + relentless + surge;
 
-
-
                 if (blast > 0 && hits > 0) {
                     let blastHits = Math.min(defenderModels,blast);
                     if (blastHits > 1) {
@@ -2065,152 +2147,136 @@ log(c)
                     SetTT2(attacker,"Fired " + weapon.name);
                 }
 
+                let meleeWounds = 0;
 
-                //Saves
-                let saveTarget = defender.defense;
-                let critMod = 0;
-                let saveTip = "<br>Defense: " + saveTarget + "+";
+                for (let d=0;d<2;d++) {
+                    defender = defenders[d];
+                    if (hits === 0) {continue};
+                    let saveInfo = DefenderSave(defender);
+                    let hp = parseInt(defender.token.get("bar1_value"));
+                    let totalWounds = 0;
+                    let savePass = [];
+                    let saveFail = [];
+                    let bane = 0, shred = 0, slam = 0, rending = 0;
 
-                if (losResult.building === true) {
-                    saveTarget--;
-                    saveTip += "<br>Building +1 Defense";
-                }
+                    do {
+                        let wounds = 0;
+                        let saveRoll = randomInteger(6);
+                        let target = saveInfo.saveTarget;
+                        if (crit > 0) {
+                            if (weapon.keywords.includes("Rending")) {
+                                rending++;
+                                target += 4;
+                            }
+                        }
+                        target = Math.min(6,Math.max(2,target));
+                        if (saveRoll === 6) {
+                            if (weapon.keywords.includes("Bane")) {
+                                saveRoll = randomInteger(6);
+                                bane++;
+                            }
+                        }
 
-                if (weapon.ap !== 0) {
-                    saveTip += "<br>Weapon AP: " + weapon.ap;
-                    if ((defender.keywords.includes("Fortified") || defenderAuras.includes("Fortified")) && weapon.ap > 0) {
-                        saveTip += "<br>Fortified -1 to AP";
-                        saveTarget += (weapon.ap -1);
+                        if (saveRoll >= target) {
+                            savePass.push(saveRoll);
+                        } else {
+                            saveFail.push(saveRoll);
+                            let deadly = weapon.keywords.find((e) => e.includes("Deadly")) || 1;
+                            deadly = parseInt(deadly.replace(/\D/g,''));
+                            wounds = Math.min(deadly,defender.toughness);
+                            if (((weapon.keywords.includes("Shred") && combatType === "Melee") || (weapon.keywords.includes("Shred when Shooting") && combatType === "Ranged")) && saveRoll === 1) {
+                                shred++;
+                                wounds++;
+                            }
+                            if (weapon.keywords.includes("Slam") && saveRoll === 1) {
+                                slam++;
+                                wounds++;
+                            }
+
+                            totalWounds += wounds;
+                            hp -= wounds;
+
+                        }
+
+                        crits--;
+                        hits--;
+                    } while (hits > 0 && hp > 0);
+
+                    let saveTip = saveInfo.saveTip;
+                    let s;
+                    if (rending > 0) {
+                        s = (rending === 1) ? "":"s";
+                        saveTip += "<br>Rending affected " + rending + " Save" + s;
+                    }
+                    if (bane > 0) {
+                        s = (bane === 1) ? "":"s";
+                        saveTip += "<br>Bane caused " + bane + " Save Reroll" + s;
+                    }
+                    if (shred > 0) {
+                        s = (shred === 1) ? "":"s";
+                        saveTip += "<br>Shred added " + shred + " Wound" + s;
+                    }
+                    if (slam > 0) {
+                        s = (slam === 1) ? "":"s";
+                        saveTip += "<br>Shred added " + slam + " Wound" + s;
+                    }
+
+
+                    //display results, adjust hp of defender
+                    savePass = (savePass.length > 0) ? savePass.sort().reverse():"Nil";
+                    saveFail = (saveFail.length > 0) ? saveFail.sort().reverse():"Nil";
+
+                    finalTip = "Saves: " + savePass.toString();
+                    finalTip += "<br>Failed Saves: " + saveFail.toString();
+                    finalTip += "<br>----------------";
+                    finalTip += "<br>Target: " + saveTarget + "+" + saveTip;
+
+                    meleeWounds += totalWounds;
+                    if (totalWounds > 0) {
+                        s = (totalWounds) ? "":"s";
+                        saveOut = '[' + totalWounds + '](#" class="showtip" title="' + finalTip + ')';
                     } else {
-                        saveTarget += weapon.ap;
+                        saveOut = '[Zero](#" class="showtip" title="' + finalTip + ')';
                     }
-                }
-                if (weapon.keywords.includes("Decimate") && defender.defense > 1 && defender.defense < 4) {
-                    saveTarget += 2;
-                    saveTip += "<br>Decimate +2AP vs Defense 2-3";
-                }
 
-                if ((attacker.keywords.includes("Ranged Slayer") || attackerAura.includes("Ranged Slayer")) && combatType === "Ranged" && defender.toughness > 2) {
-                    saveTarget += 2;
-                    saveTip += "<br>Ranged Slayer +2AP vs Tough 3+";
-                }
-                if ((attacker.keywords.includes("Slayer") || attackerAura.includes("Slayer")) && defender.toughness > 2) {
-                    if ((attacker.keywords.includes("Ranged Slayer") || attackerAura.includes("Ranged Slayer"))) {
-                        if (combatType === "Ranged") {
-                            saveTarget += 2;
-                            saveTip += "<br>Ranged Slayer +2AP vs Tough 3+";
+                    if (d===1) {
+                        outputCard.body.push("[hr]");
+                    }
+                    outputCard.body.push(defender.name + ' takes ' + saveOut + " Wounds");
+                    let moraleCheck = defender.token.get(SM.halfStr);
+                    if (hp > 0) {
+                        defender.token.set("bar1_value",hp);
+                        if (hp < Math.floor(defender.wounds/2)) {
+                            defender.token.set(SM.halfStr,true);
                         }
                     } else {
-                        saveTarget += 2;
-                        saveTip += "<br>Slayer +2AP vs Tough 3+";
+                        defender.Killed();
+                        let verb = (defender.type === "Infantry" || defender.type === "Hero") ? " was killed.":" was destroyed";
+                        outputCard.body.push(defender.name + verb);
+                        moraleCheck = false;
                     }
-                }
-
-
-
-
-                if (weapon.keywords.includes("Rending") && crits > 0) {
-                    critMod += 4;
-                    saveTip += "<br>Crits have +4 AP due to Rending";
-                }
-                if (defender.keywords.includes("Shielded") && weapon.type !== "Spell") {
-                    saveTarget--;
-                    saveTip += "<br>Shielded +1 Defense";
-                }
-
-                if (weapon.keywords.includes("Thrust") && attacker.id === state.Epic.activeID && combatType === "Melee") {
-                    saveTarget++;
-                    saveTip += "<br>Thrust +1 AP";
-                }
-                /*
-                if ('Versatile Attack +1 AP') {
-                    saveTarget++;
-                    saveTip += "<br>Versatile Attack +1AP";
-                }
-                if ('Unpredictable +1 AP') {
-                    saveTarget++;
-                    saveTip += "<br>Unpredictable Attack +1AP";
-                }
-                if ('Unpredictable FIghter +1 AP') {
-                    saveTarget++;
-                    saveTip += "<br>Unpredictable Attack +1AP";
-                }
-                if ('Versatile Defense +1 Defense or the aura') {
-                    saveTarget--;
-                    saveTip += "<br>Versatile Defense +1 Defense";
-                }
-
-                */
-
-
-                let hp = parseInt(defender.token.get("bar1_value"));
-                let totalWounds = 0; critFails = 0; wounds = 0;
-                let savePass = [];
-                let saveFail = [];
-                let bane = 0, shred = 0, slam = 0;
-                for (let i=0;i<hits;i++) {
-                    let saveRoll = randomInteger(6);
-                    let target = saveTarget;
-                    if (crit > 0) {
-                        target += critMod;
-                    }
-                    target = Math.min(6,Math.max(2,target));
-                    if (saveRoll === 6) {
-                        if (weapon.keywords.includes("Bane")) {
-                            saveRoll = randomInteger(6);
-                            bane++;
-                        }
+                    if (moraleCheck === true && combatType === "Ranged") {
+                        outputCard.body.push("The unit must take a Morale Check");
                     }
 
+                    //if hits are > 0 then will apply them to hero if there is one
+                    //if hits are 0 then will hit the continue above
+                } //end defenders loop
 
-
-                    if (saveRoll >= target) {
-                        savePass.push(saveRoll);
+                if (combatType === "Melee") {
+                    outputCard.body.push("[hr]");
+                    let fear = attacker.keywords.find((e) => e.includes("Fear")) || 0;
+                    fear = parseInt(fear.replace(/\D/g,''));
+                    if (fear > 0) {
+                        fear = " + Fear " + fear;
                     } else {
-                        saveFail.push(saveRoll);
-                        let deadly = weapon.keywords.find((e) => e.includes("Deadly")) || 1;
-                        deadly = parseInt(deadly.replace(/\D/g,''));
-
-                        wounds = Math.min(deadly,defender.toughness);
-                        if (((weapon.keywords.includes("Shred") && combatType === "Melee") || (weapon.keywords.includes("Shred when Shooting") && combatType === "Ranged")) && saveRoll === 1) {
-                            shred++;
-                            wounds++;
-                        }
-                        if (weapon.keywords.includes("Slam") && saveRoll === 1) {
-                            slam++;
-                            wounds++;
-                        }
-
-                        totalWounds += wounds;
-                        hp -= wounds;
-
-                        if (hp <= 0) {
-                            break;
-                        }
+                        fear = "";
                     }
-
-                    crit--;
-                } 
-
-
-
-
-
-
-                
-
-            } 
-        } 
-
-
-
-
-
-
-
-
-
-
+                    outputCard.body.push("For Purpose of Combat Resolution");
+                    outputCard.body.push("This Unit caused " + meleeWounds + fear);
+                }
+            } //end weapon loop
+        } //end WeaponAttack
 
 
 
