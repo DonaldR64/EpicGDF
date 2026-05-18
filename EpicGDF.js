@@ -2305,7 +2305,6 @@ log(c)
 
         //Weapons - los, ranges, limited
         let losResult = LOS(attacker,defender);
-log(losResult)
         let combatType = (losResult.distance === 0) ? "Melee":"Ranged";
 
         let weaponArray = [];
