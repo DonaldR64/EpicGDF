@@ -3279,6 +3279,14 @@ log(playerID);
                         interCover[side] = true;
                     }
                 }
+                //if there a unit in the hex
+                if (interHex.tokenIDs.length > 0) {
+                    los[side] = false;
+                    losReason[side] = "Unit";
+                    break;
+                }
+
+
             }
         }
 
