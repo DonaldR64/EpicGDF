@@ -2016,8 +2016,9 @@ log(c)
             if (extraHits > 0) {
                 finalTip += "<br>Extra Hits: " + extraHits;
             }
+            finalTip += "<br>vs. Target: " + needed + "+";
             finalTip += "<br>----------------";
-            finalTip += "<br>Target: " + needed + "+" + neededTip + hitTip;
+            finalTip += neededTip + hitTip;
             let weaponOut;
             if (hits > 0) {
                 s = (hits === 1) ? "":"s";
@@ -2030,6 +2031,7 @@ log(c)
             let attWord = (combatType === "Ranged") ? " shot":" strike";
             s = (attDisplay === 1) ? "":"s";
             outputCard.body.push(attacker.name + " takes " + attDisplay + attWord + s)
+            outputCard.body.push("with " + weapon.name);
             outputCard.body.push(defender.name + " is " + weaponOut);
 
             if (weapon.keywords.includes("Limited")) {
@@ -2115,8 +2117,8 @@ log(c)
 
                 finalTip = "Saves: " + savePass.toString();
                 finalTip += "<br>Failed: " + saveFail.toString();
+                finalTip += "<br>vs. Target: " + Math.min(6,Math.max(2,saveInfo.saveTarget)) + "+";
                 finalTip += "<br>----------------";
-                finalTip += "<br>Target: " + Math.min(6,Math.max(2,saveInfo.saveTarget)) + "+";
                 finalTip += saveTip;
 
                 meleeWounds += totalWounds;
@@ -2167,6 +2169,7 @@ log(c)
 
         if (!attacker || !defender) {return};
         SetupCard(attacker.name,"Attack",attacker.faction);
+        toFront(attacker.token);
         let weaponType = Tag[3]; //CCW, Rifle etc
         let weapon;
 
@@ -2288,15 +2291,15 @@ log(losResult)
         }
         if (combatType === "Melee") {
             outputCard.body.push("[hr]");
-            let fear = attacker.keywords.find((e) => e.includes("Fear")) || 0;
+            let fear = attacker.keywords.find((e) => e.includes("Fear")) || "0";
             fear = parseInt(fear.replace(/\D/g,''));
             if (fear > 0) {
-                fear = " + Fear " + fear;
+                fear = " + Fear " + fear + " = " + (fear + meleeWounds);
             } else {
                 fear = "";
             }
             outputCard.body.push("For Purpose of Combat Resolution");
-            outputCard.body.push("This Unit caused " + meleeWounds + fear);
+            outputCard.body.push(attacker.name + " caused " + meleeWounds + fear + " Wounds");
         }
 
         PrintCard();
@@ -2384,6 +2387,7 @@ log(losResult)
         let order = Tag[2];
         let unit = UnitArray[id];
         if (!unit) {return};
+        toFront(unit.token);
         if (unit.token.get("aura1_color") === "#000000") {
             SetupCard(unit.name,"Change Order ?",unit.faction);
             outputCard.body.push("Unit has Activated already, ?Redo")
@@ -3210,7 +3214,6 @@ log(playerID);
         let Tag = msg.content.split(";");
         let shooter = UnitArray[Tag[1]];
         let target = UnitArray[Tag[2]];
-        let targetHex = HexMap[target.label];
 
         if (!shooter) {
             sendChat("","Not valid shooter");
@@ -3220,6 +3223,10 @@ log(playerID);
             sendChat("","Not valid target");
             return;
         }
+
+        let targetHex = HexMap[target.label];
+
+
         SetupCard(shooter.name,"LOS",shooter.faction);
 
         let losResult = LOS(shooter,target);
