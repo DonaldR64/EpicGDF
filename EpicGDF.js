@@ -123,6 +123,7 @@ const Main = (() => {
         fatigue: "status_brown",
         halfStr: "status_Blood::2006465",
         spotter: "status_Bullseye::2006535",
+        dangerous: "status_Tentacle::7757514",
 
     }
 
@@ -1001,7 +1002,9 @@ const Main = (() => {
         }
 
         Dangerous() {
+            this.token.set(SM.dangerous,false);
             let hp = parseInt(this.token.get("bar1_value")) || 1;
+            let fullStr = (hp > this.wounds/2) ? true:false;
             let rolls = [];
             let wounds = 0;
             for (let i=0;i<hp;i++) {
@@ -1021,10 +1024,13 @@ const Main = (() => {
                 outputCard.body.push(this.name + verb);
             } else {
                 this.token.set("bar1_value",hp);
-                if (hp <= (this.wounds/2) && wounds !== "No") {
+                if (hp <= (this.wounds/2)) {
                     this.token.set(SM.halfStr,true);
-                    let verb = (this.type === "Infantry") ? " has now taken heavy casualties!": " is now badly injured/damaged!";
-                    outputCard.body.push(this.name + verb);
+                    if (fullStr === true) {
+                        let verb = (this.type === "Infantry") ? " has now taken heavy casualties!": " is now badly injured/damaged!";
+                        outputCard.body.push(this.name + verb);
+                    }
+                    outputCard.body.push("The Unit must take a Morale Test");
                 }
             }
         }
@@ -2811,11 +2817,9 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 let target = targets[i];
                 if (i>0) {outputCard.body.push("[hr]")};
 //place a debuff on target, need to check that when/if moves
-
-
-
-                outputCard.body.push(target.name + " takes a Dangerous Terrain Test");
-                target.Dangerous();
+                target.token.set(SM.dangerous,true);
+                outputCard.body.push(target.name + " now has a Dangerous Terrain Debuff");
+                outputCard.body.push("The next time it moves, it will have to take a Dangerous Terrain Test");
                 FX("burst-slime",unit,target);
                 
 //squelch sound
@@ -3481,6 +3485,18 @@ log(playerID);
             if (newHex.tokenIDs.includes(tok.id) === false) {
                 newHex.tokenIDs.push(tok.id);
             }
+            if (unit.token.get(SM.dangerous) === true) {
+                SetupCard(unit.name,"Dangerous Debuff",unit.faction);
+                outputCard.body.push("The Unit must take a Dangerous Terrain Test");
+                PrintCard();
+            }
+            if (newHex.type === "Dangerous" || prevHex.type === "Dangerous") {
+                SetupCard(unit.name,"Dangerous Terrain",unit.faction);
+                outputCard.body.push("The Unit must take a (single) Dangerous Terrain Test");
+                PrintCard();
+            }
+
+
 
         }
 
