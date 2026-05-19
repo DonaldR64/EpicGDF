@@ -27,11 +27,9 @@ const Keywords = {
 
     "Dangerous Terrain Debuff": "Once per activation, before attacking, pick one enemy unit within 9 Hexes in LOS, which must immediately take a Dangerous Terrain test.",
 
-    "Deadly(X)": "Assign each wound to one model, and multiply it by X. Hits from Deadly must be resolved first, and these wounds don’t carry over to other models if the original target is killed.",
-
+    "Deadly(X)": "Hits from Deadly are resolved first. Each hit from Deadly does X wounds, to a max of the target Unit's toughness.",
 
     "Decimate": "Ignores Cover and has AP+2 vs Defense 2 or 3",
-
 
     "Evasive": "Enemies get -1 to hit",
 

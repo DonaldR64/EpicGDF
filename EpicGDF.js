@@ -893,7 +893,7 @@ const Main = (() => {
                         this.Killed();
                     } else {
                         outputCard.body.push("Failure! Unit is Shaken");
-                        unit.token.set("tint_color","#ff0000");
+                        this.token.set("tint_color","#ff0000");
                         if (this.token.get(SM.halfStr) === true) {
                             outputCard.body.push("If this was a Melee, Remove the Unit as it Routs!");
                         }                        
@@ -1000,6 +1000,40 @@ const Main = (() => {
 
         }
 
+        Dangerous() {
+            let hp = parseInt(this.token.get("bar1_value")) || 1;
+            let rolls = [];
+            let wounds = 0;
+            for (let i=0;i<hp;i++) {
+                let roll = randomInteger(6);
+                rolls.push(roll);
+                if (roll === 1) {wounds++};
+            }
+            SetupCard(this.name,"Dangerous Test",this.faction);
+            let tip = "Rolls: " + rolls.sort().reverse().toString() + "<br>Takes Wounds on Rolls of 1";
+            hp -= wounds;
+            if (wounds === 0) {wounds = "No"}; 
+            let s = (wounds === 1) ? "":"s";
+            tip = '[' + wounds + '](#" class="showtip" title="' + tip + ')';
+            outputCard.body.push("Unit takes " + tip + " Wound" +s);
+            if (hp <= 0) {
+                this.Killed();
+                let verb = (this.type === "Hero" || this.type === "Infantry") ? " was killed!": " was destroyed!";
+                outputCard.body.push(this.name + verb);
+            } else {
+                this.token.set("bar1_value",hp);
+                if (hp <= (this.wounds/2) && wounds !== "No") {
+                    this.token.set(SM.halfStr,true);
+                    let verb = (this.type === "Infantry") ? " has now taken heavy casualties!": " is now badly injured/damaged!";
+                    outputCard.body.push(this.name + verb);
+                }
+            }
+            PrintCard();
+        }
+
+
+
+
 
 
     }
@@ -1105,9 +1139,9 @@ const Main = (() => {
         }
 
         //activation 
-        let orders = ";?{Order|Hold|Advance|Charge/Rush}";
-        if (unit.type === "Aircraft") {orders = ";Advance"};
-        if (unit.keywords.includes("Artillery") || unit.keywords.includes("Immobile")) {orders = ";Hold"}
+        let orders = ";?{Order|Hold|Advance|Charge/Rush|Rally}";
+        if (unit.type === "Aircraft") {orders = ";?{Order|Advance|Rally}"};
+        if (unit.keywords.includes("Artillery") || unit.keywords.includes("Immobile")) {orders = ";Hold|Rally"}
 
         action = "!Activate;@{selected|token_id}" + orders;
         AddAbility("Activate",action,unit.charID);
@@ -1137,8 +1171,10 @@ const Main = (() => {
         })
 
 
-
-
+        //morale
+        AddAbility("Morale","!Morale",unit.charID);
+        //Dangerous
+        AddAbility("Dangerous","!DangerousTest",unit.charID);
 
 
 
@@ -2462,8 +2498,8 @@ log(c)
 
 
     const Morale = (msg) => {
-        let Tag = msg.content.split(";");
-        let unit = UnitArray[Tag[1]];
+        let id = msg.selected[0]._id;
+        let unit = UnitArray[id];
         if (!unit) {return};
         unit.Morale();
     }
@@ -2724,41 +2760,13 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         unit.SetTT(tip);
     }
 
-    const Dangerous = (unit) => {
-        let token = unit.token;
-        if (!token) {return}
-        let dice = parseInt(token.get("bar1_value")) || 1;
-        let rolls = [];
-        let wounds = 0;
-        for (let i=0;i<dice;i++) {
-            let roll = randomInteger(6);
-            rolls.push(roll);
-            if (roll === 1) {wounds++};
-        }
-        rolls = rolls.sort((a,b)=> a-b);
-        let tip = "Rolls: " + rolls + "<br>Takes Wounds on Rolls of 1";
-        if (wounds === 0) {wounds = "No"}; 
-        unit.Damage(wounds);
-        let s = (wounds === 1) ? "":"s";
-        tip = '[' + wounds + '](#" class="showtip" title="' + tip + ')';
-        outputCard.body.push("Unit takes " + tip + " Wound" +s);
-    }
+
 
     const DangerousTest = (msg) => {
-        if (!msg.selected) {
-            sendChat("","Select a Unit");
-            return;
-        }
         let id = msg.selected[0]._id;
         let unit = UnitArray[id];
-        if (unit) {
-            SetupCard(unit.name,"Dangerous Terrain Test",unit.faction);
-            Dangerous(unit);
-            PrintCard();
-        } else {
-            sendChat("","Not in Unit Array")
-        }
-
+        if (!unit) {return};
+        unit.Dangerous();
     }
 
     const Special = (msg) => {
