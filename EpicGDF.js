@@ -1009,7 +1009,6 @@ const Main = (() => {
                 rolls.push(roll);
                 if (roll === 1) {wounds++};
             }
-            SetupCard(this.name,"Dangerous Test",this.faction);
             let tip = "Rolls: " + rolls.sort().reverse().toString() + "<br>Takes Wounds on Rolls of 1";
             hp -= wounds;
             if (wounds === 0) {wounds = "No"}; 
@@ -1028,7 +1027,6 @@ const Main = (() => {
                     outputCard.body.push(this.name + verb);
                 }
             }
-            PrintCard();
         }
 
 
@@ -2766,7 +2764,9 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         let id = msg.selected[0]._id;
         let unit = UnitArray[id];
         if (!unit) {return};
+        SetupCard(unit.name,"Dangerous Test",unit.faction);
         unit.Dangerous();
+        PrintCard();
     }
 
     const Special = (msg) => {
@@ -2774,7 +2774,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         let specialName = Tag[1];
         let range = Tag[2]
         let unit = UnitArray[Tag[3]];
-        let unitHex = HexMap[unit.hexLabel()];
+        let unitHex = HexMap[unit.hexLabel];
         let targets = [];
         let errorMsg = [];
         for (let i=4;i<Tag.length;i++) {
@@ -2788,38 +2788,48 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 errorMsg.push(target.name + " is not in LOS");
             }
             targets.push(target);
-            let associated = Associated(target);
-            if (associated !== false) {
-                targets.push(associated);
+            let targetHex = HexMap[target.hexLabel];
+            if (targetHex.tokenIDs.length > 1) {
+                _.each(targetHex.tokenIDs,tokenID => {
+                    if (tokenID !== target.id) {
+                        targets.push(UnitArray[tokenID]);
+                    }
+                })
             }
         }
 
 
         let flavour = unit.flavours[specialName] || specialName;
         SetupCard(unit.name,flavour,unit.faction);
-        if (errorMsg.length > 0) {
-            _.each(errorMsg,error => {
-                outputCard.body.push(error);
-            })
+        if (ErrorMsg(errorMsg) === true) {
             PrintCard();
             return;
         }
 
-
-
-
         if (specialName === "Dangerous Terrain Debuff") {
-            _.each(targets,target => {
-                Dangerous(target);
+            for (let i=0;i<targets.length;i++) {
+                let target = targets[i];
+                if (i>0) {outputCard.body.push("[hr]")};
+                outputCard.body.push(target.name + " takes a Dangerous Terrain Test");
+                target.Dangerous();
                 FX("burst-slime",unit,target);
+                
 //squelch sound
-            })
+            }
         }
         if (specialName === "Mend") {
             let roll = randomInteger(3);
             let s = (roll === 1) ? "":"s";
-            targets[0].Damage(-roll);
-            outputCard.body.push(targets[0].name + " is healed/repaired for " + roll + " Wound" + s);
+            let hp = parseInt(targets[0].token.get("bar1_value"));
+            let max = targets[0].wounds - hp;
+            let healed = Math.min(max,roll);
+            hp += healed;
+            targets[0].token.set("bar1_value",hp);
+            if (hp === targets[0].wounds) {
+                outputCard.body.push(targets[0].name + " has been fully healed/repaired");
+            } else {
+                outputCard.body.push(targets[0].name + " is healed/repaired for " + healed + " Wound" + s);
+            }
 //holy sound
         }
         if (specialName === "Piercing Shooting Mark") {

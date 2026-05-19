@@ -25,7 +25,7 @@ const Keywords = {
     "Counter-Attack": "Strikes first when charged",
     "Counter-Attack Aura": "[Aura] = Strikes first when charged",
 
-    "Dangerous Terrain Debuff": "Once per activation, before attacking, pick one enemy unit within 9 Hexes in LOS, which must immediately take a Dangerous Terrain test.",
+    "Dangerous Terrain Debuff": "Once per activation, before attacking, pick one enemy unit within 9 Hexes in LOS, it (and any associated hero) must immediately take a Dangerous Terrain test.",
 
     "Deadly(X)": "Hits from Deadly are resolved first. Each hit from Deadly does X wounds, to a max of the target Unit's toughness.",
 
