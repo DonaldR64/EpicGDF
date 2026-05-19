@@ -804,7 +804,7 @@ const Main = (() => {
             let target = this.quality;
             let tip = "Quality: " + target;
 
-            let hero = Hero(this);
+            let hero = this.Hero();
             if (hero && hero !== false) {
                 if (hero.quality < target) {
                     tip = "Hero's Quality: " + hero.quality;
@@ -831,8 +831,8 @@ const Main = (() => {
                 }
             }
 
-            target = Math.max(2,target);
-            let success = (moraleRoll >= target || moraleRoll === 6) ? true:false;
+            target = Math.min(6,Math.max(2,target));
+            let success = (moraleRoll >= target) ? true:false;
 
             //fearless
             if (this.keywords.includes("Fearless") && success === false) {
@@ -843,37 +843,40 @@ const Main = (() => {
                 } else {
                     tip += "<br>Unit is not Fearless!";
                 }
-                tip += + " [Roll " + fearlessRoll + "]"
+                tip += + " [Roll: " + fearlessRoll + "]"
             }
 
             //after failure changes - automatic
-            extra = [];
+            let extra = [];
             if (this.keywords.includes("No Retreat") && success === false) {
                 success = true;
                 extra.push("The Test is still Passed due to No Retreat");
                 let hp = parseInt(this.token.get("bar1_value"));
                 let wounds = 0;
                 let noRRolls = [];
-                _.each(hp,e => {
+                for (let i=0;i<hp;i++) {
                     let roll = randomInteger(6);
                     noRRolls.push(roll);
                     if (roll < 4) {wounds++};
-                })
+                }
                 noRRolls = noRRolls.sort((a,b) => b-a);
                 let wtip = "Rolls: " + noRRolls.toString() + " vs. 4+";
                 wtip = '[' + wounds + '](#" class="showtip" title="' + wtip + ')';
                 extra.push("No Retreat causes " + wtip + " Wounds");
-                let destroyed = this.Damage(wounds);
-                if (destroyed === true) {
-                    extra.push(this.name + " is Destroyed!");
+                hp = Math.max(0,hp - wounds);
+                if (hp <= 0) {
+                    this.Killed();
+                    outputCard.body(this.name + " is Destroyed!");
+                } else {
+                    this.token.set("bar1_value",hp);
                 }
             }
 
             tip = '[' + target + '](#" class="showtip" title="' + tip + ')';
 
-            SetupCard(unit.name,"Morale",unit.faction);
+            SetupCard(this.name,"Morale",this.faction);
 
-            outputCard.body.push("Morale Roll: " + DisplayDice(moraleRoll,Factions[this.faction].dice,24) + "vs. " + tip + "+");
+            outputCard.body.push("Morale Roll: " + DisplayDice(moraleRoll,this.faction,24) + "vs. " + tip + "+");
             outputCard.body.push("[hr]");
 
             if (extra.length > 0) {
@@ -887,7 +890,7 @@ const Main = (() => {
                     outputCard.body.push("Failure!");
                     if (shaken === true) {
                         outputCard.body.push("Shaken Unit Routs!");
-                        this.Destroyed();
+                        this.Killed();
                     } else {
                         outputCard.body.push("Failure! Unit is Shaken");
                         unit.token.set("tint_color","#ff0000");
@@ -3244,6 +3247,7 @@ log(playerID);
 
         state.Epic = {
             playerIDs: [],
+            players: {},
             factions: [],
             turn: 0,
             activeID: "",
