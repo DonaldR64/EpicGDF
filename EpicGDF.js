@@ -2816,13 +2816,11 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             for (let i=0;i<targets.length;i++) {
                 let target = targets[i];
                 if (i>0) {outputCard.body.push("[hr]")};
-//place a debuff on target, need to check that when/if moves
                 target.token.set(SM.dangerous,true);
                 outputCard.body.push(target.name + " now has a Dangerous Terrain Debuff");
                 outputCard.body.push("The next time it moves, it will have to take a Dangerous Terrain Test");
                 FX("burst-slime",unit,target);
-                
-//squelch sound
+                PlaySound("Squelch");
             }
         }
         if (specialName === "Mend") {
