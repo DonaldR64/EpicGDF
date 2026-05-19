@@ -2825,10 +2825,12 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             let healed = Math.min(max,roll);
             hp += healed;
             targets[0].token.set("bar1_value",hp);
+            let tip = "Roll: " + roll;
+            tip = '[' + targets[0].name + '](#" class="showtip" title="' + tip + ')';
             if (hp === targets[0].wounds) {
-                outputCard.body.push(targets[0].name + " has been fully healed/repaired");
+                outputCard.body.push(tip + " has been fully healed/repaired");
             } else {
-                outputCard.body.push(targets[0].name + " is healed/repaired for " + healed + " Wound" + s);
+                outputCard.body.push(tip + " is healed/repaired for " + healed + " Wound" + s);
             }
 //holy sound
         }
