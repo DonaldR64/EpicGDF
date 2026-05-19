@@ -131,6 +131,7 @@ const Keywords = {
 
 
     "Steadfast": "If the unit is Shaken, at the beginning of the round, on a 4+ it stops being Shaken",
+    "Steadfast Aura": "[Aura] - If the unit is Shaken, at the beginning of the round, on a 4+ it stops being Shaken",
     "Steadfast Buff": "Once per activation, before attacking, pick one friendly unit within 6 hexes and in LOS, which gets Steadfast once (next time the effect would apply)",
 
 

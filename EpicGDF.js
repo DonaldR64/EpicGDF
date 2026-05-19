@@ -1982,7 +1982,7 @@ log(c)
                     hits++;
                     if (roll === 6) {
                         crits++;
-                        if ((weapon.keywords.includes("Relentless") || attackerAuras.includes("Relentless")) && losResult.distance > 4) {
+                        if ((attacker.keywords.includes("Relentless") || attackerAuras.includes("Relentless")) && losResult.distance > 4) {
                             relentless++;
                         }
                         if (weapon.keywords.includes("Surge")) {
@@ -2613,7 +2613,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             ignoreDifficult = true;
             outputCard.body.push("Unit is an Aircraft and Ignores Units and Terrain");
         }
-
+ 
         if (addBreak === true) {
             outputCard.body.push("[hr]");
         }
