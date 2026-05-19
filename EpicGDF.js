@@ -906,7 +906,7 @@ const Main = (() => {
 
         Auras() {
             ///checks if model or assoc hero has an active aura and returns their names
-            let auras = this.keywords.filter((e) => e.includes("Aura"));
+            let auras = this.keywords.filter((e) => e.includes("Aura")) || [];
             let hero = this.Hero();
             if (hero && hero !== false) {
                 auras = auras.concat(hero.keywords.filter((e) => e.includes("Aura")));
@@ -919,15 +919,16 @@ const Main = (() => {
         Hero() {
             if (this.size === 2) {return false}; //heros cannot boost Titans
             let hex = HexMap[this.hexLabel];
+            let hero = false;
             _.each(hex.tokenIDs,tokenID => {
                 if (tokenID !== this.id) {
                     let unit2 = UnitArray[tokenID];
                     if (unit2.faction === this.faction && unit2.type === "Hero") {
-                        return unit2;
+                        hero = unit2;
                     }
                 }
             })
-            return false;
+            return hero;
         }
 
         TTip() {
@@ -1751,7 +1752,7 @@ log(c)
             let saveTarget = defender.defense;
             let saveTip = "<br>Defense: " + saveTarget + "+";
 
-            if (losResult.building === true) {
+            if (losResult.building === true && combatType !== "Melee") {
                 saveTarget--;
                 saveTip += "<br>Building +1 Defense";
             }
@@ -2094,9 +2095,10 @@ log(c)
                 let regenTarget = 5,pbTarget = 6,protTarget = 6,resistTarget = 6;
                 let ignoreRegenList = ["Bane","Butcher","Rending","Unstoppable"];
                 let ignoreRegen = ignoreRegenList.find((e) => weapon.keywords.includes(e));
-                if (ignoreRegen) {
+                if (ignoreRegen && defender.keywords.includes("Regeneration")) {
                     saveInfo.saveTip += "<br>Regeneration ignored due to " + ignoreRegen;
                 }
+                let pbE = "",resE = "";
 
 
                 do {
@@ -2112,7 +2114,7 @@ log(c)
                     target = Math.min(6,Math.max(2,target));
                     if (saveRoll === 6) {
                         if (weapon.keywords.includes("Bane")) {
-                            saveRoll = randomInteger(6);
+                            saveRoll = randomInteger(6); //take 2nd roll regardless
                             bane++;
                         }
                     }
@@ -2147,6 +2149,7 @@ log(c)
                         if (defender.keywords.includes("Plaguebound")) {
                             if (defender.keywords.includes("Plaguebound Boost") || defender.Auras().includes("Plaguebound Boost")) {
                                 pbTarget = 5;
+                                pbE = " Boost";
                             }
                             for (let r=0;r<wounds;r++) {
                                 let pbRoll = randomInteger(6);
@@ -2168,7 +2171,10 @@ log(c)
                             }
                         }
                         if (defender.keywords.includes("Resistance") || defender.Auras().includes("Resistance")) {
-                            if (weapon.type === "Spell") {resistTarget = 2};
+                            if (weapon.type === "Spell") {
+                                resistTarget = 2
+                                resE = " vs Spells"
+                            };
                             for (let r=0;r<wounds;r++) {
                                 let resRoll = randomInteger(6);
                                 resistRolls.push(resRoll);
@@ -2226,7 +2232,7 @@ log(c)
                     finalTip += "<br>----------------";
                     s = (plaguebound === 1) ? "":"s";
                     plaguebound = (plaguebound === 0) ? "No":plaguebound;                    
-                    finalTip += "<br>Plaguebound removed " + plaguebound + " Wound" + s;
+                    finalTip += "<br>Plaguebound" + pbE +" removed " + plaguebound + " Wound" + s;
                     finalTip += '<br>Rolls: ' + pbRolls.sort().reverse().toString() + " vs. " + pbTarget + "+";
                 }
                 if (protRolls.length > 0) {
@@ -2241,7 +2247,7 @@ log(c)
                     finalTip += "<br>----------------";
                     s = (resist === 1) ? "":"s";
                     resist = (resist === 0) ? "No":resist;
-                    finalTip += "<br>Resistance stopped " + resist + " Wound" + s;
+                    finalTip += "<br>Resistance" + resE + " stopped " + resist + " Wound" + s;
                     finalTip += '<br>Rolls: ' + resistRolls.sort().reverse().toString() + " vs. " + resistTarget + "+";
                 }
                 finalTip += "<br>----------------";
@@ -2325,7 +2331,11 @@ log(c)
             })
         }   
 
+log(attacker.name)
+log(attacker.keywords)
+
         let attackerAuras = attacker.Auras();
+log(attackerAuras)
         let attackerTT = attacker.TTip();
         let defenderModels = Math.ceil(parseInt(defender.token.get("bar1_value"))/defender.toughness);
 
@@ -2537,10 +2547,12 @@ log(c)
         let shaken = (unit.token.get("tint_color") === "#ff0000") ? true:false;
         RemoveDead();
         state.Epic.activeID = unit.id;
+        let boundMove = false;
 
         if ((unit.keywords.includes("Bounding") || unitAuras.includes("Bounding")) && order !== "Rally") {
-            let roll = random(2);
-            outputCard.body.push("The Unit may immediately be placed anywhere within " + roll + " Hexes")
+            let roll = randomInteger(2);
+            boundMove = true;
+            outputCard.body.push("Bound - The Unit may immediately be placed anywhere within " + roll + " Hexes")
         }
 
         outputCard.subtitle = order;
@@ -2628,23 +2640,61 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 outputCard.body.push("Unit stays in Place and may Fire");
                 break;
             case 'Advance':
-                if (situation === 1) { //open
-                    outputCard.body.push("Advance is " + move + " Hexes");
-                    if (difMove !== move) {
-                        outputCard.body.push("Entering or Crossing Difficult Terrain limits Advance to " + difMove + " Hexes");
-                    }
+                if (situation === 3) {
+                    outputCard.body.push("Unit starts in a Building");
+                    outputCard.body.push("Advance is " + difMove + " Hexes, to a maximum of 3 Hexes from any part of the Building");
                 }
                 if (situation === 2) { //difficult
                     outputCard.body.push("Unit starts in Difficult Ground");
                     outputCard.body.push("Advance is " + difMove + " Hexes");
                 }
-                if (situation === 3) {
-                    outputCard.body.push("Unit starts in a Building");
-                    outputCard.body.push("Advance is " + difMove + " Hexes, to a maximum of 3 Hexes from any part of the Building");
+                if (situation === 1 || boundMove === true) { //open
+                    if (boundMove === true && situation !== 1) {
+                        let line = "If the Unit bounded out of the ";
+                        if (situation === 3) {
+                            line += "Building: "
+                        } else if (situation === 2) {
+                            line += "Difficult Ground:";
+                        }
+                        outputCard.body.push(line);
+                    }
+                    outputCard.body.push("Advance is " + move + " Hexes");
+                    if (difMove !== move) {
+                        outputCard.body.push("Entering or Crossing Difficult Terrain limits Advance to " + difMove + " Hexes");
+                    }
                 }
                 break;
             case 'Charge/Rush':
-                if (situation === 1) {
+                if (situation === 3) {
+                    outputCard.body.push("Unit starts in a Building");
+                    if (difCharge !== difRush) {
+                        outputCard.body.push("Charge is " + difCharge + " Hexes");
+                        outputCard.body.push("Rush is " + difRush + " Hexes");
+                    } else {
+                        outputCard.body.push("Charge/Rush is " + difCharge + " Hexes");
+                    }
+                    outputCard.body.push("To a maximum of 3 Hexes from any part of the Building");
+                }
+                if (situation === 2) {
+                    outputCard.body.push("Unit starts in Difficult Ground");
+                    if (difCharge !== difRush) {
+                        outputCard.body.push("Charge is " + difCharge + " Hexes");
+                        outputCard.body.push("Rush is " + difRush + " Hexes");
+                    } else {
+                        outputCard.body.push("Charge/Rush is " + difCharge + " Hexes");
+                    }
+                }
+
+                if (situation === 1 || boundMove === true) {
+                    if (boundMove === true && situation !== 1) {
+                        let line = "If the Unit bounded out of the ";
+                        if (situation === 3) {
+                            line += "Building: "
+                        } else if (situation === 2) {
+                            line += "Difficult Ground:";
+                        }
+                        outputCard.body.push(line);
+                    }
                     if (charge === rush) {
                         outputCard.body.push("Charge/Rush is " + charge + " Hexes");
                     } else {
@@ -2658,28 +2708,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                         }
                     }
                 }
-                if (situation === 2) {
-                    outputCard.body.push("Unit starts in Difficult Ground");
-                    if (difCharge !== difRush) {
-                        outputCard.body.push("Charge is " + difCharge + " Hexes");
-                        outputCard.body.push("Rush is " + difRush + " Hexes");
-                    } else {
-                        outputCard.body.push("Charge/Rush is " + difCharge + " Hexes");
-                    }
-                }
-                if (situation === 3) {
-                    outputCard.body.push("Unit starts in a Building");
-                    if (difCharge !== difRush) {
-                        outputCard.body.push("Charge is " + difCharge + " Hexes");
-                        outputCard.body.push("Rush is " + difRush + " Hexes");
-                    } else {
-                        outputCard.body.push("Charge/Rush is " + difCharge + " Hexes");
-                    }
-                    outputCard.body.push("To a maximum of 3 Hexes from any part of the Building");
 
-
-
-                }
 
                 if ((unit.keywords.includes("Hit & Run Shooter")) || unitAuras.includes("Hit & Run Shooter")) {
                     outputCard.body.push("The Unit may move up to 2 Hexes after Shooting");
@@ -3183,11 +3212,8 @@ log(state.Epic.heroes)
         let id = Tag[1];
         let unit = UnitArray[id];
         if (!unit) {return};
-log(unit)
         let label = unit.hexLabel;
         let hex = HexMap[label];
-
-log(hex)
         SetupCard(unit.name,"Info",unit.faction);
         outputCard.body.push("Hex Label: " + label);
         outputCard.body.push("Terrain: " + hex.terrain);
@@ -3196,6 +3222,9 @@ log(hex)
         outputCard.body.push("Cover: " + hex.cover);
         outputCard.body.push("Blocks LOS: " + hex.blockLOS);
         outputCard.body.push("Movement: " + hex.type);
+        outputCard.body.push("Keywords: " + unit.keywords.toString());
+        outputCard.body.push("Auras: " + unit.Auras().toString());
+
         PrintCard();
     }
 

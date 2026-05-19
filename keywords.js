@@ -6,7 +6,7 @@ const Keywords = {
 
     "Artillery": "May only use Hold actions. When this model shoots at enemies over 4 hexes away, it gets +1 to hit rolls. When enemy units shoot at this model from over 4 hexes away, they get -2 to hit rolls.",
 
-    "Bane": "Ignores Regeneration, and the target must re-roll unmodified Defense results of 6. Note that a die roll may only be re-rolled once, so if another 6 is rolled after re-rolling Defense, then the hit is blocked.",
+    "Bane": "Ignores Regeneration, and the target must re-roll unmodified Defense results of 6, taking the 2nd roll.",
 
     "Blast(X)": "Ignores cover, and after resolving other special rules, each hit is multiplied by X, where X is up to as many hits as models in the target unit.",
 
