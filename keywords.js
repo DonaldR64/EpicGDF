@@ -1,7 +1,6 @@
 const Keywords = {
 
-    "Ambush": "May be set aside before deployment. At the start of any round after the first, may be deployed anywhere over 4 hexes away from enemy units. Players alternate in placing Ambushers, starting with the player that activates next. Units that deploy via Ambush can’t seize or contest objectives on the round they deploy.",
-
+    "Ambush": "May be set aside before deployment. At the start of any round after the first, may be deployed anywhere 5 hexes or more away from enemy units. Players alternate in placing Ambushers, starting with the player that activates next. Units that deploy via Ambush can’t seize or contest objectives on the round they deploy.",
 
     "Ambush Beacon": "Friendly Units using Ambush may ignore Distance restrictions if deployed within 3 hexes of this model",
 
