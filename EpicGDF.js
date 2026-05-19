@@ -2810,6 +2810,10 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             for (let i=0;i<targets.length;i++) {
                 let target = targets[i];
                 if (i>0) {outputCard.body.push("[hr]")};
+//place a debuff on target, need to check that when/if moves
+
+
+
                 outputCard.body.push(target.name + " takes a Dangerous Terrain Test");
                 target.Dangerous();
                 FX("burst-slime",unit,target);
