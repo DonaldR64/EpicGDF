@@ -907,9 +907,11 @@ const Main = (() => {
         Auras() {
             ///checks if model or assoc hero has an active aura and returns their names
             let auras = this.keywords.filter((e) => e.includes("Aura")) || [];
+            auras = auras.concat(this.TTip().filter((e) => e.includes("Aura")));
             let hero = this.Hero();
             if (hero && hero !== false) {
                 auras = auras.concat(hero.keywords.filter((e) => e.includes("Aura")));
+                auras = auras.concat(hero.TTip().filter((e) => e.includes("Aura")));
             }
             auras = auras.map((e) => e.replace(" Aura",""));
             auras = [...new Set(auras)];
@@ -943,6 +945,7 @@ const Main = (() => {
             if (tooltip !== "") {tooltip += ","};
             tooltip += TT[tip];
             this.token.set("tooltip",tooltip);
+            sendChat("",tip + " selected");
         }
 
         RemoveTTip(tip) {
@@ -1749,74 +1752,87 @@ log(c)
     const Attack = (msg) => {
 
         const DefenderSave = (defender,weapon) => {
-            let saveTarget = defender.defense;
-            let saveTip = "<br>Defense: " + saveTarget + "+";
+            let defense = defender.defense;
+            let defenseTip = "<br>Defense: " + defense + "+";
+            let weaponAP = weapon.ap;
+            let apTip = "<br>Weapon: AP " + weapon.ap;
 
-            if (losResult.building === true && combatType !== "Melee") {
-                saveTarget--;
-                saveTip += "<br>Building +1 Defense";
-            }
-
-            if (weapon.ap !== 0) {
-                saveTip += "<br>Weapon: AP " + weapon.ap;
-                let defenderAuras = "";
-                if ((defender.keywords.includes("Fortified") || (defender.Auras().includes("Fortified")) && weapon.ap > 0)) {
-                    saveTip += "<br>Fortified -1 to AP";
-                    saveTarget += (weapon.ap -1);
-                } else {
-                    saveTarget += weapon.ap;
-                }
-            }
             if (weapon.keywords.includes("Decimate") && defender.defense > 1 && defender.defense < 4) {
-                saveTarget += 2;
-                saveTip += "<br>Decimate +2AP vs Defense 2-3";
+                weaponAP += 2;
+                apTip += "<br>Decimate +2AP vs Defense 2-3";
             }
 
             if ((attacker.keywords.includes("Ranged Slayer") || attackerAuras.includes("Ranged Slayer")) && combatType === "Ranged" && defender.toughness > 2) {
-                saveTarget += 2;
-                saveTip += "<br>Ranged Slayer +2AP vs Tough 3+";
+                weaponAP += 2;
+                apTip += "<br>Ranged Slayer +2 AP vs Tough 3+";
             }
             if ((attacker.keywords.includes("Slayer") || attackerAuras.includes("Slayer")) && defender.toughness > 2) {
                 if ((attacker.keywords.includes("Ranged Slayer") || attackerAuras.includes("Ranged Slayer"))) {
                     if (combatType === "Ranged") {
-                        saveTarget += 2;
-                        saveTip += "<br>Ranged Slayer +2AP vs Tough 3+";
+                        weaponAP += 2;
+                        apTip += "<br>Ranged Slayer +2AP vs Tough 3+";
                     }
                 } else {
-                    saveTarget += 2;
-                    saveTip += "<br>Slayer +2AP vs Tough 3+";
+                    weaponAP += 2;
+                    apTip += "<br>Slayer +2AP vs Tough 3+";
                 }
             }
 
-            if (defender.keywords.includes("Shielded") && weapon.type !== "Spell") {
-                saveTarget--;
-                saveTip += "<br>Shielded +1 Defense";
-            }
 
             if (weapon.keywords.includes("Thrust") && attacker.id === state.Epic.activeID && combatType === "Melee") {
-                saveTarget++;
-                saveTip += "<br>Thrust +1 AP";
+                weaponAP++;
+                apTip += "<br>Thrust +1 AP";
             }
-            /*
-            if ('Versatile Attack +1 AP') {
-                saveTarget++;
-                saveTip += "<br>Versatile Attack +1AP";
+            //versatile attack +1AP
+            let vaapFlag = false;
+            if (attackerTT.includes(TT.vAAP)) {
+                weaponAP++;
+                apTip += "<br>" + TT.vAAP;
+                vaapFlag = true;
             }
-            if ('Unpredictable +1 AP') {
-                saveTarget++;
-                saveTip += "<br>Unpredictable Attack +1AP";
+            if (attackerAuras.includes("Versatile Attack") && vaapFlag === false) {
+                let aH = attacker.Hero();
+                if (aH && aH !== false) {
+                    if (aH.TTip().includes(TT.vAAP)) {
+                        weaponAP++;
+                        apTip += "<br>" + TT.vAAP + " [Aura]";
+                    }
+                }
             }
-            if ('Unpredictable FIghter +1 AP') {
-                saveTarget++;
-                saveTip += "<br>Unpredictable Attack +1AP";
-            }
-            if ('Versatile Defense +1 Defense or the aura') {
-                saveTarget--;
-                saveTip += "<br>Versatile Defense +1 Defense";
-            }
+            if (weapon.keywords.includes("Unstoppable") === false) {
+                //versatile defense +1 defense
+                let vddFlag = false;
+                if (defender.TTip().includes(TT.vDD)) {
+                    defense--;
+                    defenseTip += "<br>" + TT.vDD;
+                    vddFlag = true;
+                }
+                if (defender.Auras().includes("Versatile Defense") && vddFlag === false) {
+                    let dH = defender.Hero();
+                    if (dH && dH !== false) {
+                        if (dH.TTip().includes(TT.vDD)) {
+                            defense--;
+                            defenseTip += "<br>" + TT.vDD + " [Aura]";
+                        }
+                    }
+                }
+                if (losResult.building === true && combatType !== "Melee") {
+                    defense--;
+                    defenseTip += "<br>Building +1 Defense";
+                }
+                if (defender.keywords.includes("Shielded") && weapon.type !== "Spell") {
+                    defense--;
+                    defenseTip += "<br>Shielded +1 Defense";
+                }
 
-            */
+                if (weapon.ap > 0 && (defender.keywords.includes("Fortified") || defender.Auras().includes("Fortified"))) {
+                    apTip += "<br>Fortified -1 to AP";
+                    weaponAP += (weapon.ap -1);
+                }
+            } 
 
+            let saveTarget = defense + weaponAP;
+            let saveTip = defenseTip + apTip;
 
             let saveInfo = {
                 saveTarget: saveTarget,
@@ -1886,10 +1902,24 @@ log(c)
                 needed -= 1;
                 neededTip += "<br>Unpredictable +1 to Hit";
             }
+            //versatile attack +1 to hit
+            let vathFlag = false;
             if (attackerTT.includes(TT.vATH)) {
                 needed -= 1;
                 neededTip += "<br>" + TT.vATH;
+                vathFlag = true;
             }
+            if (attackerAuras.includes("Versatile Attack") && vathFlag === false) {
+                let aH = attacker.Hero();
+                if (aH && aH !== false) {
+                    if (aH.TTip().includes(TT.vATH)) {
+                        needed--;
+                        neededTip += "<br>" + TT.vATH + " [Aura]";
+                    }
+                }
+            }
+
+
             if (attacker.tokenID === state.Epic.activeID && combatType === "Melee" && weapon.keywords.includes("Thrust")) {
                 weapon.ap++;
                 notes.push("Thrust");
@@ -1937,10 +1967,24 @@ log(c)
                     needed += 1;
                     neededTip += "<br>Stealth -1 to Hit";
                 }
+                //versatile defense -1 to hit
+                let vdthFlag = false;
                 if (defender.TTip().includes(TT.vDTH)) {
                     needed += 1;
                     neededTip += "<br>" + TT.vDTH;
+                    vdthFlag = true;
                 }
+                if (defender.Auras().includes("Versatile Defense") && vdthFlag === false) {
+                    let dH = defender.Hero();
+                    if (dH && dH !== false) {
+                        if (dH.TTip().includes(TT.vDTH)) {
+                            needed += 1;
+                            neededTip += "<br>" + TT.vDTH  + " [Aura]";
+                        }
+                    }
+                }
+
+
                 if (attacker.keywords.includes("Evasive")) {
                     needed++;
                     neededTip += "<br>Evasive -1 to Hit";
@@ -2735,29 +2779,31 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         }
 
 
-        if (unit.keywords.includes("Versatile Attack") || unitAuras.includes("Versatile Attack")) {
-            outputCard.body.push("Unit has Versatile Attack")
+        if (unit.keywords.includes("Versatile Attack") || unit.keywords.includes("Versatile Attack Aura")) {
+            let aur = (unit.keywords.includes("Versatile Attack Aura")) ? " Aura":"";
+            outputCard.body.push("Unit has Versatile Attack" + aur);
             let buttons = [];
             buttons.push({
                 phrase: "Choose +1 AP",
-                action: "!SetTT;" + unit.tokenID + ";vAAP",
+                action: "!SetTT;" + unit.id + ";vAAP",
             })
             buttons.push({
                 phrase: "Choose +1 to Hit",
-                action: "!SetTT;" + unit.tokenID + ";vATH",
+                action: "!SetTT;" + unit.id + ";vATH",
             })
             outputCard.body.push(InlineButtons(buttons));
         }
-        if (unit.keywords.includes("Versatile Defense") || unitAuras.includes("Versatile Defense")) {
-            outputCard.body.push("Unit has Versatile Defense")
+        if (unit.keywords.includes("Versatile Defense") || unit.keywords.includes("Versatile Defense Aura")) {
+            let aur = (unit.keywords.includes("Versatile Defense Aura")) ? " Aura":"";
+            outputCard.body.push("Unit has Versatile Defense" + aur);
             let buttons = [];
             buttons.push({
                 phrase: "Choose +1 Defense",
-                action: "!SetTT;" + unit.tokenID + ";vDD",
+                action: "!SetTT;" + unit.id + ";vDD",
             })
             buttons.push({
                 phrase: "Choose -1 to Hit",
-                action: "!SetTT;" + unit.tokenID + ";vDTH",
+                action: "!SetTT;" + unit.id + ";vDTH",
             })
             outputCard.body.push(InlineButtons(buttons));
         }
@@ -3224,7 +3270,7 @@ log(state.Epic.heroes)
         outputCard.body.push("Movement: " + hex.type);
         outputCard.body.push("Keywords: " + unit.keywords.toString());
         outputCard.body.push("Auras: " + unit.Auras().toString());
-
+        outputCard.body.push("Tips: " + unit.TTip().toString());
         PrintCard();
     }
 
