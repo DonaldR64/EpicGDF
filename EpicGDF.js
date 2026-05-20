@@ -124,7 +124,8 @@ const Main = (() => {
         halfStr: "status_Blood::2006465",
         spotter: "status_Bullseye::2006535",
         dangerous: "status_Tentacle::7757514",
-
+        AP1: "status_Green-01::2006603", //+1 AP
+        TH1: "status_Red-01::2006626", //+1 TH
     }
 
     const TT = {
@@ -941,12 +942,23 @@ const Main = (() => {
         }
 
         SetTT(tip) {
+            //sets one of the standard tooltips
             let tooltip = this.token.get("tooltip") || "";
             if (tooltip !== "") {tooltip += ","};
             tooltip += TT[tip];
             this.token.set("tooltip",tooltip);
-            sendChat("",tip + " selected");
+            sendChat("",TT[tip] + " selected by " + this.name);
         }
+
+        SetTT2(note) {
+            //sets a specific note
+            let tooltip = this.token.get("tooltip") || "";
+            if (tooltip !== "") {tooltip += ","};
+            tooltip += note;
+            this.token.set("tooltip",tooltip);
+        }
+
+
 
         RemoveTTip(tip) {
             let tooltip = this.token.get("tooltip") || "";
@@ -983,27 +995,7 @@ const Main = (() => {
 
         }
 
-        Buffs(phase) {
-            if (phase === "Combat") {
-    /*
-                if (randomInteger(6) < 4) {
-                    this.upAP = true;
-                    this.upTH = false;
-                } else {
-                    this.upAP = false;
-                    this.upTH = true;
-                }
-    */
 
-
-
-            }
-
-
-
-
-
-        }
 
         Dangerous() {
             this.token.set(SM.dangerous,false);
@@ -1666,12 +1658,12 @@ log(unit.name)
             unitAuras = unit.Auras();
 
             //Steadfast
-            if ((unit.keywords.includes("Steadfast") || unitAuras.includes("Steadfast") || unitTT.includes("steadfast")) && (unit.token.get("tint_color") === "#ffff00")) {
+            if ((unit.keywords.includes("Steadfast") || unitAuras.includes("Steadfast") || unitTT.includes("steadfast")) && (unit.token.get("tint_color") === "#ff0000")) {
                 let steadRoll = randomInteger(6);
                 if (steadRoll > 3) {
                     unit.token.set("tint_color","transparent");
                     if (unitTT.includes("steadfast")) {
-                        RemoveTip(unit,TT.steadfast);
+                        unit.RemoveTTip("steadfast")
                         notes.push(unit.name + ": Rallies with Steadfast Buff");
                     } else {
                         notes.push(unit.name + ": Rallies with Steadfast");
@@ -1760,6 +1752,10 @@ log(c)
             if (weapon.keywords.includes("Decimate") && defender.defense > 1 && defender.defense < 4) {
                 weaponAP += 2;
                 apTip += "<br>Decimate +2AP vs Defense 2-3";
+            }
+            if (attacker.token.get(SM.AP1) === true) {
+                weaponAP ++;
+                apTip += "<br>Unpredictable +1 AP";
             }
 
             if ((attacker.keywords.includes("Ranged Slayer") || attackerAuras.includes("Ranged Slayer")) && combatType === "Ranged" && defender.toughness > 2) {
@@ -1898,7 +1894,7 @@ log(c)
                 needed -= 1;
                 neededTip += "<br>Artillery at Range +1 to Hit";
             }
-            if (attacker.upTH === true) {
+            if (attacker.token.get(SM.TH1) === true) {
                 needed -= 1;
                 neededTip += "<br>Unpredictable +1 to Hit";
             }
@@ -2122,7 +2118,7 @@ log(c)
             outputCard.body.push(defender.name + " is " + weaponOut);
 
             if (weapon.keywords.includes("Limited")) {
-                SetTT2(attacker,"Fired " + weapon.name);
+                attacker.SetTT2("Fired " + weapon.name);
             }
 
             for (let d=0;d<defenders.length;d++) {
@@ -2170,13 +2166,23 @@ log(c)
                         let deadly = weapon.keywords.find((e) => e.includes("Deadly")) || '1';
                         deadly = parseInt(deadly.replace(/\D/g,''));
                         wounds = Math.min(deadly,defender.toughness);
-                        if (((weapon.keywords.includes("Shred") && combatType === "Melee") || (weapon.keywords.includes("Shred when Shooting") && combatType === "Ranged")) && saveRoll === 1) {
-                            shred++;
-                            wounds++;
-                        }
-                        if (weapon.keywords.includes("Slam") && saveRoll === 1) {
-                            slam++;
-                            wounds++;
+
+                        if (saveRoll === 1) {
+                            if (weapon.keywords.includes("Shred")) {
+                                shred++;
+                                wounds++;
+                            }
+                            if (weapon.keywords.includes("Shred when Shooting") && combatType === "Ranged") {
+                                shred++;
+                                wounds++;
+                            }
+                            if (weapon.keywords.includes("Slam")) {
+                                slam++;
+                                wounds++;
+                            }
+
+
+
                         }
 
                         //regen and other 'saves' on wounds
@@ -2190,6 +2196,7 @@ log(c)
                                 }
                             }
                         }
+
                         if (defender.keywords.includes("Plaguebound")) {
                             if (defender.keywords.includes("Plaguebound Boost") || defender.Auras().includes("Plaguebound Boost")) {
                                 pbTarget = 5;
@@ -2398,11 +2405,19 @@ log(attackerAuras)
         if (friendly === true) {
             errorMsg.push("Friendly Fire!");
         }     
-        attacker.Buffs("Combat");
 
         //Weapons - los, ranges, limited
         let losResult = LOS(attacker,defender);
         let combatType = (losResult.distance === 0) ? "Melee":"Ranged";
+
+        if (attacker.keywords.includes("Unpredictable") || (attacker.keywords.includes("Unpredictable Fighter") && combatType === "Melee")) {
+            let roll = randomInteger(6);
+            if (roll > 3) {
+                attacker.token.set(SM.AP1,true);
+            } else {
+                attacker.token.set(SM.TH1,true);
+            }
+        }
 
         let weaponArray = [];
         let notEligible = []; //weapons not eligible for various reasons
@@ -2427,7 +2442,7 @@ log(attackerAuras)
                 notE = weapon.name + " - no LOS";
             }
             if (attackerTT.includes("Fired " + weapon.name)) {
-                notE = weapon.name + " Limited and Fired";
+                notE = weapon.name + " is Limited and has been Fired";
             }
             let range = (defender.type === "Aircraft" && weapon.keywords.includes("Unstoppable") === false) ? weapon.range - 6:weapon.range;
             if (attacker.keywords.includes("Increased Shooting Range") || attackerAuras.includes("Increased Shooting Range")) {
@@ -2485,6 +2500,12 @@ log(attackerAuras)
             outputCard.body.push("For Purpose of Combat Resolution");
             outputCard.body.push(attacker.name + " caused " + meleeWounds + fear + " Wounds");
         }
+
+        //remove these things
+        let things = ["AP1","TH1"];
+        _.each(things,thing => {
+            attacker.token.set(SM[thing],false);
+        })
 
         PrintCard();
     }
