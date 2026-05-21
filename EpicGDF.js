@@ -951,7 +951,7 @@ const Main = (() => {
         }
 
         Hero() {
-            if (this.size === 2) {return false}; //heros cannot boost Titans
+            if (this.type !== "Infantry") {return false}; //heros cannot boost
             let hex = HexMap[this.hexLabel];
             let hero = false;
             _.each(hex.tokenIDs,tokenID => {
@@ -2988,24 +2988,17 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             }
 //holy sound
         }
-        if (specialName === "Piercing Shooting Mark") {
-            SetTT2(targets[0],TT.piercing);
-            outputCard.body.push("Piercing Shooting Mark placed on " + targets[0].name);
+
+        //just placing the special name in tooltip
+        let tipList = ["Bane in Melee Buff"];
+        if (tipList.includes(specialName)) {
+            _.each(targets,target => {
+                target.SetTT2(specialName);
+                sendChat("",target.name + " now has " + specialName);
+            })
         }
-        if (specialName === "Precision Spotter") {
-            let token = targets[0].token;
-            if (token) {
-                let num = (token.get(SM.spotter) === false) ? 0:(parseInt(token.get(SM.spotter)) > 1) ? parseInt(token.get(SM.spotter)):0;
-                num = (num === 0) ? true:num+1;
-                token.set(SM.spotter,num);
-//sound
-            }
-        }
-        if (specialName === "Steadfast Buff") {
-            SetTT2(targets[0],TT.steadfast);
-            outputCard.body.push("Steadfast Buff placed on " + targets[0].name);
-//sound
-        }
+
+
 
 
 
