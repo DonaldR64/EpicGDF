@@ -995,7 +995,7 @@ const Main = (() => {
             let tooltip = this.token.get("tooltip") || "";
             tooltip = tooltip.split(",");
             tooltip = tooltip.map((e) => e.trim());
-            tip = TT[tip];
+            tip = TT[tip] || tip;
             let index = tooltip.indexOf(tip);
             if (index > -1) {
                 tooltip.splice(index,1);
@@ -1179,7 +1179,7 @@ const Main = (() => {
 
 
        //special ability macros
-        let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6}];
+        let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6}];
 
         _.each(specials,special => {
             let t = "";
@@ -1804,7 +1804,10 @@ log(c)
                     apTip += "<br>Slayer +2AP vs Tough 3+";
                 }
             }
-
+            if (attacker.keywords.includes("Piercing Assault") && attacker.id === state.Epic.activeID && combatType === "Melee") {
+                weaponAP++;
+                apTip += "<br>Piercing Assault +1 AP";
+            }
 
             if (weapon.keywords.includes("Thrust") && attacker.id === state.Epic.activeID && combatType === "Melee") {
                 weaponAP++;
@@ -1879,7 +1882,7 @@ log(c)
         const WeaponAttack = (weapon) => {
             let hitRolls = [],missRolls = [], hits = 0; extraHits = 0; crits = 0;
             let relentless = 0,surge = 0, furious = 0,predator = 0,butcher = 0;
-            let devout = 0;
+            let devout = 0,ferocious = 0;
             let notes = [];
             let needed = attacker.quality;
             let neededTip = "<br>Quality: " + attacker.quality + "+";
@@ -1953,13 +1956,15 @@ log(c)
                 }
             }
 
-
+/*
             if (attacker.tokenID === state.Epic.activeID && combatType === "Melee" && weapon.keywords.includes("Thrust")) {
                 weapon.ap++;
                 notes.push("Thrust");
                 needed -= 1;
                 neededTip += "<br>Thrust/Charge +1 to Hit";
             }
+*/
+
             if (attacker.keywords.includes("Precise")) {
                 needed -= 1;
                 neededTip += "<br>Precise +1 to Hit";
@@ -2027,6 +2032,14 @@ log(c)
                     needed += 2;
                     neededTip += "<br>Artillery being shot at > 4 hexes";
                 }
+
+                if (attacker.keywords.includes("Bad Shot") && combatType === "Ranged") {
+                    needed++;
+                    neededTip += "<br>Bad Shot -1 to Hit";
+                }
+
+
+
             }
 
             //Number of Attacks
@@ -2087,9 +2100,24 @@ log(c)
                         if (weapon.keywords.includes("Butcher")) {
                             butcher++;
                         }
+                        if (attacker.keywords.includes("Ferocious")) {
+                            ferocious++;
+                        }
+                    }
+                    if (roll === 5) {
+                        if (attacker.keywords.includes("Ferocious") && attacker.keywords.includes("Ferocious Boost")) {
+                            ferocious++;
+                        }
+
+
 
 
                     }
+
+
+
+
+
                 } else {
                     missRolls.push(roll);
                     //misses hit terrain here
@@ -2169,6 +2197,8 @@ log(c)
             outputCard.body.push("with " + weapon.name);
             outputCard.body.push(defender.name + " is " + weaponOut);
 
+
+
             if (weapon.keywords.includes("Limited")) {
                 attacker.SetTT2("Fired " + weapon.name);
             }
@@ -2187,6 +2217,11 @@ log(c)
                 let regenTarget = 5,pbTarget = 6,protTarget = 6,resistTarget = 6;
                 let ignoreRegenList = ["Bane","Butcher","Rending","Unstoppable"];
                 let ignoreRegen = ignoreRegenList.find((e) => weapon.keywords.includes(e));
+
+                if (defender.TTip().includes("Rending Mark")) {
+                    ignoreRegen = "Rending Mark";
+                    RemoveTTip("Rending Mark");
+                }
                 if (ignoreRegen && defender.keywords.includes("Regeneration")) {
                     saveInfo.saveTip += "<br>Regeneration ignored due to " + ignoreRegen;
                 }
@@ -2198,7 +2233,7 @@ log(c)
                     let saveRoll = randomInteger(6);
                     let target = saveInfo.saveTarget;
                     if (crits > 0) {
-                        if (weapon.keywords.includes("Rending")) {
+                        if (weapon.keywords.includes("Rending") || ignoreRegen === "Rending Mark") {
                             rending++;
                             target += 4;
                         }
@@ -2990,7 +3025,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         }
 
         //just placing the special name in tooltip
-        let tipList = ["Bane in Melee Buff"];
+        let tipList = ["Bane in Melee Buff","Rending Mark"];
         if (tipList.includes(specialName)) {
             _.each(targets,target => {
                 target.SetTT2(specialName);

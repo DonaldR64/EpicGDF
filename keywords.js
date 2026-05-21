@@ -1,10 +1,17 @@
 const Keywords = {
 
+    "Agile": "When Rushing or Charging, may move 1 extra hex",
+
+
     "Ambush": "May be set aside before deployment. At the start of any round after the first, may be deployed anywhere 5 hexes or more away from enemy units. Players alternate in placing Ambushers, starting with the player that activates next. Units that deploy via Ambush can’t seize or contest objectives on the round they deploy.",
 
     "Ambush Beacon": "Friendly Units using Ambush may ignore Distance restrictions if deployed within 3 hexes of this model",
 
     "Artillery": "May only use Hold actions. When this model shoots at enemies over 4 hexes away, it gets +1 to hit rolls. When enemy units shoot at this model from over 4 hexes away, they get -2 to hit rolls.",
+
+    "Bad Shot": "This unit gets -1 to hit rolls when shooting",
+
+
 
     "Bane": "Ignores Regeneration, and the target must re-roll unmodified Defense results of 6, taking the 2nd roll.",
     "Bane in Melee Buff": 'Once per activation, before attacking, pick one friendly unit within 6", which gets Bane in melee once (next time the effect would apply)',
@@ -43,6 +50,9 @@ const Keywords = {
 
 
     "Fearless": "When this unit fails a morale test, roll one die. On a 4+ it counts as passed instead.",
+    
+    "Ferocious": "When attacking, unmodified results of 6 to hit deal 1 extra hit (only the original hit counts as a 6 for special rules).",
+    "Ferocious Boost": "If this unit has Ferocious, it deals extra hits on successful unmodified hit results of 5-6 from Ferocious (instead of only on 6)",
 
 
     "Fortified": "Hits count as having AP -1 to a min of AP 0",
@@ -85,7 +95,7 @@ const Keywords = {
 
 
 
-
+    "Piercing Assault": "This model gets AP(+1) when charging",
     "Piercing Shooting Mark": 'Once per activation, pick one enemy unit within 9 Hexes and in LOS. The next shot against that unit gets AP +1',
 
     "Plaguebound": "Wounds are ignored on a roll of 6",
@@ -113,12 +123,17 @@ const Keywords = {
     "Regeneration": "When a unit where all models have this rule takes wounds, roll one die for each. On a 5+ it is ignored.",
 
 
+
     "Relentless": "When this model shoots at enemies over 4 hexes away, unmodified results of 6 to hit deal 1 extra hit (only the original hit counts as a 6 for special rules).",
     "Relentless Aura": "[Aura] - When this model shoots at enemies over 4 hexes away, unmodified results of 6 to hit deal 1 extra hit (only the original hit counts as a 6 for special rules).",
 
     "Reliable": "Models attacks at Quality 2+ with this weapon. Note that Reliable only changes the Quality value, so the roll can still be modified, Fatigue still applies, etc.",
 
     "Rending": "Ignores Regeneration, and on unmodified results of 6 to hit, those hits get AP(+4).",
+    "Rending Mark": "Once per activation, before attacking, pick one enemy unit within 9 hexes in line of sight, which a friendly unit gets Rending against the next time the effect would apply.",
+
+
+
 
     "Resistance": "Wounds are ignored on a roll of 6; if from a spell ignored on a 2+ instead",
     "Resistance Aura": "[Aura] - Wounds are ignored on a roll of 6; if from a spell ignored on a 2+ instead",
