@@ -76,7 +76,7 @@ input[type="hidden"][name="attr_faction"][value="Skitarii"] ~ .mysheet {
 input[type="hidden"][name="attr_faction"][value="Drukhari"] ~ .mysheet {
   background-color: #000000;
 }
-input[type="hidden"][name="attr_faction"][value="Adeptus Sororitas"] ~ .mysheet {
+input[type="hidden"][name="attr_faction"][value="Blessed Sisters"] ~ .mysheet {
   background-color: #0072bb;
 }
 input[type="hidden"][name="attr_faction"][value="Kroot"] ~ .mysheet {

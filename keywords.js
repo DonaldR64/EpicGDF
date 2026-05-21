@@ -30,6 +30,8 @@ const Keywords = {
 
     "Decimate": "Ignores Cover and has AP+2 vs Defense 2 or 3",
 
+    "Devout": "When attacking, unmodified results of 6 to hit deal 1 extra hit (only the original hit counts as a 6 for special rules).",
+
     "Evasive": "Enemies get -1 to hit",
 
     "Fast": "Models with this special rule move +1 Hex when using Advance and +2 Hexes when using Rush/Charge.",
@@ -56,6 +58,8 @@ const Keywords = {
     "Hit & Run Fighter Aura": "[Aura] - May Move up to 2 Squares after melee",
     "Hit & Run Shooter": "May Move up to 2 Squares after shooting",
     "Hit & Run Shooter Aura": "[Aura] - May Move up to 2 Squares after shooting",
+
+    "Hold the Line": "Units get +1 to Morale triggered by Shooting or Melee",
 
     "Immobile": "Models with this special rule may only use Hold actions.",
 

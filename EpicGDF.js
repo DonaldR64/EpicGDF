@@ -125,6 +125,15 @@ const Main = (() => {
             "borderColour": "#000000",
             "borderStyle": "5px groove",
         },
+        "Blessed Sisters": {
+            "image": "https://s3.amazonaws.com/files.d20.io/images/378405665/zZCv4Z4TRaEkLeveAhLAiQ/thumb.png?1706900477",
+            "dice": "Sororitas",
+            "backgroundColour": "#0072bb",
+            "titlefont": "Arial",
+            "fontColour": "#FFFFFF",
+            "borderColour": "#be0b07",
+            "borderStyle": "3px groove",
+        },
 
 
     };
