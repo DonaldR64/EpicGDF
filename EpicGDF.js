@@ -134,6 +134,17 @@ const Main = (() => {
             "borderColour": "#be0b07",
             "borderStyle": "3px groove",
         },
+        "Adeptus Custodes": {
+            "image": "https://files.d20.io/images/487769356/hvkxqPn9i5zD5TDnhrEoeg/thumb.png?1779330819",
+            "dice": "Custodes",
+            "backgroundColour": "#d4af37",
+            "titlefont": "Arial",
+            "fontColour": "#000000",
+            "borderColour": "#000000",
+            "borderStyle": "5px ridge",
+        },
+
+
 
 
     };
