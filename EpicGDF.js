@@ -143,7 +143,15 @@ const Main = (() => {
             "borderColour": "#000000",
             "borderStyle": "5px ridge",
         },
-
+        "Orks": {
+            "image": "https://s3.amazonaws.com/files.d20.io/images/366987627/gNuK1M5Vx2b-oNvQ4kSQOg/thumb.png?1699583671",
+            "dice": "Orks",
+            "backgroundColour": "#3a8000",
+            "titlefont": "Goblin One",
+            "fontColour": "#000000",
+            "borderColour": "#3a8000",
+            "borderStyle": "5px ridge",  
+        },
 
 
 
