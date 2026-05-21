@@ -1788,6 +1788,12 @@ log(c)
                 weaponAP ++;
                 apTip += "<br>Unpredictable +1 AP";
             }
+            if (weapon.keywords.includes("Tear") && defender.toughness > 8) {
+                weaponAP += 4;
+                apTip += "<br>Tear +4 AP";
+            }
+
+
 
             if ((attacker.keywords.includes("Ranged Slayer") || attackerAuras.includes("Ranged Slayer")) && combatType === "Ranged" && defender.toughness > 2) {
                 weaponAP += 2;
@@ -1808,6 +1814,12 @@ log(c)
                 weaponAP++;
                 apTip += "<br>Piercing Assault +1 AP";
             }
+            if (attackerAuras.includes("Piercing Fighting") && combatType === "Melee") {
+                weaponAP++;
+                apTip += "<br>Piercing Fighting +1 AP";
+            }
+
+
 
             if (weapon.keywords.includes("Thrust") && attacker.id === state.Epic.activeID && combatType === "Melee") {
                 weaponAP++;
@@ -1956,6 +1968,12 @@ log(c)
                 }
             }
 
+
+
+
+
+
+            
 /*
             if (attacker.tokenID === state.Epic.activeID && combatType === "Melee" && weapon.keywords.includes("Thrust")) {
                 weapon.ap++;
@@ -1964,6 +1982,12 @@ log(c)
                 neededTip += "<br>Thrust/Charge +1 to Hit";
             }
 */
+            if (attackerAuras.includes("Precision Charge") && attacker.tokenID === state.Epic.activeID && combatType === "Melee") {
+                needed -= 1;
+                neededTip += "<br>Precision Charge +1 to Hit";
+            }
+
+
 
             if (attacker.keywords.includes("Precise")) {
                 needed -= 1;
@@ -2105,7 +2129,7 @@ log(c)
                         }
                     }
                     if (roll === 5) {
-                        if (attacker.keywords.includes("Ferocious") && attacker.keywords.includes("Ferocious Boost")) {
+                        if (attacker.keywords.includes("Ferocious") && (attacker.keywords.includes("Ferocious Boost") || attackerAuras.includes("Ferocious Boost"))) {
                             ferocious++;
                         }
 
@@ -2222,7 +2246,7 @@ log(c)
                     ignoreRegen = "Rending Mark";
                     RemoveTTip("Rending Mark");
                 }
-                if (ignoreRegen && defender.keywords.includes("Regeneration")) {
+                if (ignoreRegen && (defender.keywords.includes("Regeneration") || defender.Aura().includes("Regeneration"))) {
                     saveInfo.saveTip += "<br>Regeneration ignored due to " + ignoreRegen;
                 }
                 let pbE = "",resE = "";
@@ -2273,7 +2297,7 @@ log(c)
                         }
 
                         //regen and other 'saves' on wounds
-                        if (defender.keywords.includes("Regeneration") && !ignoreRegen) {
+                        if ((defender.keywords.includes("Regeneration") || defender.Auras().includes("Regeneration")) && !ignoreRegen) {
                             for (let r=0;r<wounds;r++) {
                                 let regenRoll = randomInteger(6);
                                 regenRolls.push(regenRoll);
@@ -2537,6 +2561,9 @@ log(attackerAuras)
             }
             if (losResult.distance > range && combatType === "Ranged" && weapon.type !== "CCW") {
                 notE = weapon.name + " - lacks Range";
+                if (losResult.notes.length > 1 && losResult.notes.includes("Ranged Shrouding")) {
+                    notE += "[Ranged Shrouding in effect]";
+                }
             }
             if (weapon.type === "CCW" && combatType === "Ranged") {
                 notE = weapon.name + " is CCW Only";
@@ -3523,6 +3550,9 @@ log(playerID);
         SetupCard(shooter.name,"LOS",shooter.faction);
 
         let losResult = LOS(shooter,target);
+        if (losResult.notes.length > 0) {
+            outputCard.body.push("Ranged Shrouding adds 3 Hexes to Distance");
+        }
         outputCard.body.push("Distance: " + losResult.distance + " Hexes");
         if (losResult.los === false) {
             outputCard.body.push("No LOS to Target");
@@ -3542,9 +3572,16 @@ log(playerID);
 
 
     const LOS = (shooter,target) => {
+        let notes = [];
         let shooterHex = HexMap[shooter.hexLabel];
         let targetHex = HexMap[target.hexLabel];
         let distance = targetHex.cube.distance(shooterHex.cube);
+
+        if ((target.Auras().includes("Ranged Shrouding") || target.keywords.includes("Ranged Shrouding")) && distance > 3) {
+            distance += 3;
+            notes.push("Ranged Shrouding");
+        }
+
         let finalLOS = true;
         let interCoverFinal = false;
         let hexCover = false;
@@ -3625,6 +3662,7 @@ log(playerID);
             hexCover: hexCover,
             interCover: interCoverFinal,
             building: targetHex.building,
+            notes: notes,
         }
 
         return result;

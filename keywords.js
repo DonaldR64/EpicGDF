@@ -53,7 +53,7 @@ const Keywords = {
     
     "Ferocious": "When attacking, unmodified results of 6 to hit deal 1 extra hit (only the original hit counts as a 6 for special rules).",
     "Ferocious Boost": "If this unit has Ferocious, it deals extra hits on successful unmodified hit results of 5-6 from Ferocious (instead of only on 6)",
-
+    "Ferocious Boost Aura": "[Aura] - If this unit has Ferocious, it deals extra hits on successful unmodified hit results of 5-6 from Ferocious (instead of only on 6)",
 
     "Fortified": "Hits count as having AP -1 to a min of AP 0",
     "Fortified Aura": "[Aura] - Hits count as having AP -1 to a min of AP 0",
@@ -68,12 +68,12 @@ const Keywords = {
 
     "Good Shot": "+1 to Hit when Shooting",
 
-    "Hit & Run": "May Move up to 2 Squares after shooting or melee",
-    "Hit & Run Aura": "[Aura] - May Move up to 2 Squares after shooting or melee",
-    "Hit & Run Fighter": "May Move up to 2 Squares after melee",
-    "Hit & Run Fighter Aura": "[Aura] - May Move up to 2 Squares after melee",
-    "Hit & Run Shooter": "May Move up to 2 Squares after shooting",
-    "Hit & Run Shooter Aura": "[Aura] - May Move up to 2 Squares after shooting",
+    "Hit & Run": "May Move up to 2 Hexes after shooting or melee",
+    "Hit & Run Aura": "[Aura] - May Move up to 2 Hexes after shooting or melee",
+    "Hit & Run Fighter": "May Move up to 2 Hexes after melee",
+    "Hit & Run Fighter Aura": "[Aura] - May Move up to 2 Hexes after melee",
+    "Hit & Run Shooter": "May Move up to 2 Hexes after shooting",
+    "Hit & Run Shooter Aura": "[Aura] - May Move up to 2 Hexes after shooting",
 
     "Hold the Line": "Units get +1 to Morale triggered by Shooting or Melee",
 
@@ -97,6 +97,9 @@ const Keywords = {
 
     "Piercing Assault": "This model gets AP(+1) when charging",
     "Piercing Shooting Mark": 'Once per activation, pick one enemy unit within 9 Hexes and in LOS. The next shot against that unit gets AP +1',
+    "Piercing Fighting Aura": "[Aura] - This model and its unit get AP(+1) in melee.",
+
+
 
     "Plaguebound": "Wounds are ignored on a roll of 6",
     "Plaguebound Boost": "Wounds are ignored on a roll of 5+",
@@ -107,6 +110,11 @@ const Keywords = {
 
     "Precision Spotter": "Once per activation, pick one enemy unit within 18 hexes and in LOS. On a 4+ a Spotting Marker is placed. The next shot against that unit get +1 to hit per marker",
 
+
+    "Precision Charge Aura": "[Aura] - This model and its unit get +1 to hit rolls when charging.",
+
+    "Ranged Shrouding": "Range to this unit is increased by 3 hexes, if the range is more than 3 hexes",
+    "Ranged Shrouding Aura": "[Aura] - Range to this unit is increased by 3 hexes, if the range is more than 3 hexes",
 
 
 
@@ -120,8 +128,8 @@ const Keywords = {
     "Rapid Rush": "Unit moves +3 Hexes when Rushing",
     "Rapid Rush Aura": "[Aura] - Unit moves +3 Hexes when Rushing",
 
-    "Regeneration": "When a unit where all models have this rule takes wounds, roll one die for each. On a 5+ it is ignored.",
-
+    "Regeneration": "When the unit takes wounds, roll one die for each. On a 5+ it is ignored.",
+    "Regeneration Aura": "[Aura] - When the unit takes wounds, roll one die for each. On a 5+ it is ignored.",
 
 
     "Relentless": "When this model shoots at enemies over 4 hexes away, unmodified results of 6 to hit deal 1 extra hit (only the original hit counts as a 6 for special rules).",
@@ -132,7 +140,7 @@ const Keywords = {
     "Rending": "Ignores Regeneration, and on unmodified results of 6 to hit, those hits get AP(+4).",
     "Rending Mark": "Once per activation, before attacking, pick one enemy unit within 9 hexes in line of sight, which a friendly unit gets Rending against the next time the effect would apply.",
 
-
+    "Repel Ambushers": "Enemy units using Ambush must be set up over 7 hexes or more from this model's unit.",
 
 
     "Resistance": "Wounds are ignored on a roll of 6; if from a spell ignored on a 2+ instead",
@@ -177,6 +185,8 @@ const Keywords = {
 
 
     "Targeting Visor": "Shooting at Enemies over 4 hexes away gets +1 to Hit",
+
+    "Tear": "Against units where most models have Tough(9) or higher, this weapon gets AP(+4).",
 
     "Thrust": "When charging, gets +1 to hit rolls and AP(+1) in melee.",
 
