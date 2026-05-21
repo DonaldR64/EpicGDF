@@ -50,6 +50,9 @@ const Keywords = {
 
     "Flying": "Models with this special rule may move through units and terrain, and ignore terrain effects whilst moving.",
 
+    "Guardian": "Hits count as having AP -1 to a min of AP 0",
+
+
     "Good Shot": "+1 to Hit when Shooting",
 
     "Hit & Run": "May Move up to 2 Squares after shooting or melee",

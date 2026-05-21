@@ -1845,6 +1845,12 @@ log(c)
                     apTip += "<br>Fortified -1 to AP";
                     weaponAP += (weapon.ap -1);
                 }
+                if (weapon.ap > 0 && (defender.keywords.includes("Guardian") || defender.Auras().includes("Guardian"))) {
+                    apTip += "<br>Guardian -1 to AP";
+                    weaponAP += (weapon.ap -1);
+                }
+
+
             } 
 
             let saveTarget = defense + weaponAP;
@@ -1862,6 +1868,7 @@ log(c)
         const WeaponAttack = (weapon) => {
             let hitRolls = [],missRolls = [], hits = 0; extraHits = 0; crits = 0;
             let relentless = 0,surge = 0, furious = 0,predator = 0,butcher = 0;
+            let devout = 0;
             let notes = [];
             let needed = attacker.quality;
             let neededTip = "<br>Quality: " + attacker.quality + "+";
@@ -2048,6 +2055,9 @@ log(c)
                         if (weapon.keywords.includes("Surge")) {
                             surge++;
                         }
+                        if (attacker.keywords.includes("Devout")) {
+                            devout++;
+                        }
                         if (attacker.keywords.includes("Furious") || attackerAuras.includes("Furious")) {
                             furious++;
                         }
@@ -2101,6 +2111,17 @@ log(c)
                 s = (surge === 1) ? "":"s";
                 hitTip += "<br>Surge added " + surge + " hit" + s;
             }
+            if (devout > 0) {
+                hits += devout;
+                s = (devout === 1) ? "":"s";
+                hitTip += "<br>Devout added " + devout + " hit" + s;
+            }
+
+
+
+
+
+
             extraHits += butcher + furious + relentless + surge;
 
             if (blast > 0 && hits > 0) {
