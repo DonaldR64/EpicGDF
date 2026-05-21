@@ -161,6 +161,8 @@ const Keywords = {
 
     "Slow": "This unit has -1 Hex in Advance, and -2 for Charge/Rush",
 
+    "Speed Feat": "Once per game, this unit may move +1 hex on Advance or +2 hexes on Rush/Charge",
+    "Speed Feat Aura": "[Aura] - Once per game, this unit may move +1 hex on Advance or +2 hexes on Rush/Charge",
 
 
     "Steadfast": "If the unit is Shaken, at the beginning of the round, on a 4+ it stops being Shaken",
@@ -195,6 +197,12 @@ const Keywords = {
 
     "Unpredictable": "When attacking, on a 1-3 the unit gets AP(+1), and on a 4-6 the unit gets +1 to hit rolls instead.",
     "Unpredictable Fighter": "When in melee, on a 1-3 the unit gets AP(+1), and on a 4-6 the unit gets +1 to hit rolls instead.",
+    "Unpredictable Fighter Aura": "[Aura] - When in melee, on a 1-3 the unit gets AP(+1), and on a 4-6 the unit gets +1 to hit rolls instead.",
+    "Unpredictable Shooter": "When shooting, on a 1-3 the unit gets AP(+1), and on a 4-6 the unit gets +1 to hit rolls instead.",
+    "Unpredictable Shooter Aura": "[Aura] - When shooting, on a 1-3 the unit gets AP(+1), and on a 4-6 the unit gets +1 to hit rolls instead.",
+
+
+
 
     "Unstoppable": "Ignores Regeneration, and ignores all negative modifiers to this weapon.",
 

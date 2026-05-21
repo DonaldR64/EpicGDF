@@ -1179,7 +1179,7 @@ const Main = (() => {
 
 
        //special ability macros
-        let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6}];
+        let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6},{name: "Speed Feat", targets: 1, range: 0},{name: "Speed Feat Aura", targets: 2, range: 0}];
 
         _.each(specials,special => {
             let t = "";
@@ -2521,7 +2521,14 @@ log(attackerAuras)
         let losResult = LOS(attacker,defender);
         let combatType = (losResult.distance === 0) ? "Melee":"Ranged";
 
-        if (attacker.keywords.includes("Unpredictable") || (attacker.keywords.includes("Unpredictable Fighter") && combatType === "Melee")) {
+        let unpredictable = (attacker.keywords.includes("Unpredictable")) ? true:false;
+        if (combatType === "Melee" && (attacker.keywords.includes("Unpredictable Fighter") || attackerAura.includes("Unpredictable Fighter"))) {
+            unpredictable = true;
+        }
+        if (combatType === "Ranged" && (attacker.keywords.includes("Unpredictable Shooter") || attackerAura.includes("Unpredictable Shooter"))) {
+            unpredictable = true;
+        }
+        if (unpredictable === true) {
             let roll = randomInteger(6);
             if (roll > 3) {
                 attacker.token.set(SM.AP1,true);
@@ -2756,6 +2763,10 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             outputCard.body.push("Unit has Slow and has -1 to Move");
         }
 
+
+
+
+
     //other modifiers
 
         let charge = move * 2;
@@ -2792,7 +2803,18 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             ignoreDifficult = true;
             outputCard.body.push("Unit is an Aircraft and Ignores Units and Terrain");
         }
- 
+        if (unit.token.get(SM.speedFeat) === true) {
+            addBreak = true;
+            outputCard.body.push("The Unit has Speed Feat Active and Added");
+            move += 1;
+            charge += 1, rush+= 1;
+            unit.token.set(SM.speedFeat,false);
+            unit.SetTT2("Speed Feat Used");
+        }
+
+
+
+
         if (addBreak === true) {
             outputCard.body.push("[hr]");
         }
@@ -3059,6 +3081,18 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 sendChat("",target.name + " now has " + specialName);
             })
         }
+        if (specialName.includes("Speed Feat")) {
+            _.each(targets,target => {
+                let tt = target.TTip();
+                if (tt.includes("Speed Feat Used")) {
+                    sendChat("",target.name + " Has already Used Speed Feat this game");
+                } else {
+                    target.token.set(SM.speedFeat,true);
+                }
+            })
+        }
+
+
 
 
 
