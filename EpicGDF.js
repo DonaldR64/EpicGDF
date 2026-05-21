@@ -165,6 +165,7 @@ const Main = (() => {
         dangerous: "status_Tentacle::7757514",
         AP1: "status_Green-01::2006603", //+1 AP
         TH1: "status_Red-01::2006626", //+1 TH
+        speedFeat: "status_Fast-or-Haste::2006485"
     }
 
     const TT = {
