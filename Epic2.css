@@ -96,6 +96,12 @@ input[type="hidden"][name="attr_faction"][value="Thousand Sons"] ~ .mysheet {
     background-color: #F1B94C;
   }
   
+  input[type="hidden"][name="attr_faction"][value="Adeptus Custodes"] ~ .mysheet {
+    background-color: #d4af37;
+  }
+  
+
+
 
 
 
@@ -491,7 +497,7 @@ input[type="hidden"][value="Equipped"].weapon10-status ~ .weapon10{
   color: white;
 }
 
-input[type="hidden"][name="attr_faction"]:is([value="Plague Disciples"],[value="Space Wolves"],[value="Grey Knights"],[value="Ratlings"],[value="Goblins"],[value="Slaanesh"],[value="Infected Colony"],[value="Eldar"]) ~ .spheader h2 {
+input[type="hidden"][name="attr_faction"]:is([value="Plague Disciples"],[value="Space Wolves"],[value="Grey Knights"],[value="Ratlings"],[value="Goblins"],[value="Slaanesh"],[value="Infected Colony"],[value="Eldar"],[value="Adeptus Custodes"]) ~ .spheader h2 {
   color: black;
 }
 input[type="hidden"][name="attr_faction"]:is([value="Necron"]) ~ .spheader h2 {
@@ -502,7 +508,7 @@ input[type="hidden"][name="attr_faction"]:is([value="Necron"]) ~ .spheader h2 {
 .spbody h4 {
   color: white;
 }
-input[type="hidden"][name="attr_faction"]:is([value="Plague Disciples"],[value="Space Wolves"],[value="Grey Knights"],[value="Ratlings"],[value="Goblins"],[value="Slaanesh"],[value="Infected Colony"],[value="Eldar"]) ~ .spbody {
+input[type="hidden"][name="attr_faction"]:is([value="Plague Disciples"],[value="Space Wolves"],[value="Grey Knights"],[value="Ratlings"],[value="Goblins"],[value="Slaanesh"],[value="Infected Colony"],[value="Eldar"],[value="Adeptus Custodes"]) ~ .spbody {
   color: black;
 }
 input[type="hidden"][name="attr_faction"]:is([value="Necron"]) ~ .spbody {
