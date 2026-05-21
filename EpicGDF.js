@@ -2188,13 +2188,17 @@ log(c)
                 s = (devout === 1) ? "":"s";
                 hitTip += "<br>Devout added " + devout + " hit" + s;
             }
+            if (ferocious > 0) {
+                hits += ferocious;
+                s = (ferocious === 1) ? "":"s";
+                hitTip += "<br>Ferocious added " + ferocious + " hit" + s;
+            }
 
 
 
 
 
-
-            extraHits += butcher + furious + relentless + surge;
+            extraHits += butcher + furious + relentless + surge + devout + ferocious;
 
             if (blast > 0 && hits > 0) {
                 let blastHits = Math.min(defenderModels,blast);
@@ -2210,7 +2214,7 @@ log(c)
             finalTip = hitRolls.length + " Hits: " + hitRolls.sort().reverse().toString();
             finalTip += "<br>" + missRolls.length + " Misses: " + missRolls.sort().reverse().toString();
             if (extraHits > 0) {
-                finalTip += "<br>Extra Hits: " + extraHits;
+                finalTip += "<br>Total Extra Hits: " + extraHits;
             }
             finalTip += "<br>vs. Target: " + needed + "+";
             finalTip += "<br>----------------";
@@ -2531,10 +2535,10 @@ log(attackerAuras)
         let combatType = (losResult.distance === 0) ? "Melee":"Ranged";
 
         let unpredictable = (attacker.keywords.includes("Unpredictable")) ? true:false;
-        if (combatType === "Melee" && (attacker.keywords.includes("Unpredictable Fighter") || attackerAura.includes("Unpredictable Fighter"))) {
+        if (combatType === "Melee" && (attacker.keywords.includes("Unpredictable Fighter") || attackerAuras.includes("Unpredictable Fighter"))) {
             unpredictable = true;
         }
-        if (combatType === "Ranged" && (attacker.keywords.includes("Unpredictable Shooter") || attackerAura.includes("Unpredictable Shooter"))) {
+        if (combatType === "Ranged" && (attacker.keywords.includes("Unpredictable Shooter") || attackerAuras.includes("Unpredictable Shooter"))) {
             unpredictable = true;
         }
         if (unpredictable === true) {
