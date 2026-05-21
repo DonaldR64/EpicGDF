@@ -115,6 +115,17 @@ const Main = (() => {
             "borderColour": "#be0b07",
             "borderStyle": "5px groove",
         },
+        "Human Defense Force": {
+            "image": "https://s3.amazonaws.com/files.d20.io/images/354557308/CrRWn51EJHMtijUM1wqB-g/thumb.webp?1691958030",
+            "dice": "IG",
+            "backgroundColour": "#ffffff",
+            "objColour": "#000000",
+            "titlefont": "Arial",
+            "fontColour": "#000000",
+            "borderColour": "#000000",
+            "borderStyle": "5px groove",
+        },
+
 
     };
 

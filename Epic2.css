@@ -40,7 +40,7 @@ input[type="hidden"][name="attr_faction"][value="Blood Angels"] ~ .mysheet {
 input[type="hidden"][name="attr_faction"][value="Dao Union"] ~ .mysheet {
   background-color: #be0b07;
 }
-input[type="hidden"][name="attr_faction"]:is([value="Imperial Guard"],[value="Inquisition"]) ~ .mysheet {
+input[type="hidden"][name="attr_faction"]:is([value="Human Defense Force"],[value="Inquisition"]) ~ .mysheet {
     background-color: black;
   }
 input[type="hidden"][name="attr_faction"][value="Space Wolves"] ~ .mysheet {
