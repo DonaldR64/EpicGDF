@@ -845,6 +845,7 @@ const Main = (() => {
         Morale() {
             let target = this.quality;
             let tip = "Quality: " + target;
+            let extra = [];
 
             let hero = this.Hero();
             if (hero && hero !== false) {
@@ -879,17 +880,17 @@ const Main = (() => {
             //fearless
             if (this.keywords.includes("Fearless") && success === false) {
                 let fearlessRoll = randomInteger(6);
+                let ftip = "Fearless Roll: " + fearlessRoll + " vs 4+";
                 if (fearlessRoll > 3) {
-                    tip += "<br>Unit is Fearless!";
+                    ftip = '[Fearless](#" class="showtip" title="' + ftip + ')';
                     success = true;
                 } else {
-                    tip += "<br>Unit is not Fearless!";
+                    ftip = '[Not Fearless](#" class="showtip" title="' + ftip + ')';
                 }
-                tip += + " [Roll: " + fearlessRoll + "]"
+                extra.push(ftip);
             }
 
             //after failure changes - automatic
-            let extra = [];
             if (this.keywords.includes("No Retreat") && success === false) {
                 success = true;
                 extra.push("The Test is still Passed due to No Retreat");
@@ -914,32 +915,31 @@ const Main = (() => {
                 }
             }
 
-            tip = '[' + target + '](#" class="showtip" title="' + tip + ')';
-
             SetupCard(this.name,"Morale",this.faction);
 
-            outputCard.body.push("Morale Roll: " + DisplayDice(moraleRoll,this.faction,24) + "vs. " + tip + "+");
+            outputCard.body.push("Morale Roll: " + DisplayDice(moraleRoll,this.faction,24) + "vs. " + target + "+");
             outputCard.body.push("[hr]");
 
             if (extra.length > 0) {
                 _.each(extra,line => {
                     outputCard.body.push(line);
                 })
+            }
+            if (success === true) {
+                tip = '[Success!](#" class="showtip" title="' + tip + ')';
+                outputCard.body.push(tip);
             } else {
-                if (success === true) {
-                    outputCard.body.push("Success!");
+                tip = '[Failure!](#" class="showtip" title="' + tip + ')';
+                outputCard.body.push(tip);
+                if (shaken === true) {
+                    outputCard.body.push("Shaken Unit Routs!");
+                    this.Killed();
                 } else {
-                    outputCard.body.push("Failure!");
-                    if (shaken === true) {
-                        outputCard.body.push("Shaken Unit Routs!");
-                        this.Killed();
-                    } else {
-                        outputCard.body.push("Failure! Unit is Shaken");
-                        this.token.set("tint_color","#ff0000");
-                        if (this.token.get(SM.halfStr) === true) {
-                            outputCard.body.push("If this was a Melee, Remove the Unit as it Routs!");
-                        }                        
-                    }
+                    outputCard.body.push("Unit is Shaken");
+                    this.token.set("tint_color","#ff0000");
+                    if (this.token.get(SM.halfStr) === true) {
+                        outputCard.body.push("If this was a Melee, Remove the Unit as it Routs!");
+                    }                        
                 }
             }
             PrintCard();
@@ -3340,12 +3340,15 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                     continue;
                 }
             }
+            let auraShape = true;
             if (unit.type === "Hero") {
                 let name = HeroNames(unit);
                 unit.name = name;
                 unit.token.set("name",name);
                 toFront(unit.token);
+                auraShape = false;
             } else {
+                name = name.split("//")[0].trim();
                 if (names[name]) {
                     names[name]++;
                     unit.name = name + " " + names[name];
@@ -3354,6 +3357,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                     names[name] = 1;
                 }
             }
+            
             unit.token.set({
                 bar1_value: unit.wounds,
                 bar1_max: unit.wounds,
@@ -3366,6 +3370,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 showplayers_tooltip: true,
                 showplayers_name: true,
                 statusmarkers: "",
+                aura1_square: auraShape,
                 tint_color: "transparent",
             })
             if (unit.keywords.includes("Melee Shrouding") || unit.keywords.includes("Melee Shrouding Aura")) {
