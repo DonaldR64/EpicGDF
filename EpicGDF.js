@@ -1035,6 +1035,12 @@ const Main = (() => {
 
         }
 
+        Rotate(hex2) {
+            let angle = Angle(HexMap[this.hexLabel].cube.angle(hex2.cube))
+            this.token.set("rotation",angle);
+        }
+
+
 
 
         Dangerous() {
@@ -2640,6 +2646,8 @@ log(attackerAuras)
             attacker.token.set(SM[thing],false);
         })
 
+        attacker.Rotate(defenderHex);
+
         PrintCard();
     }
 
@@ -3762,9 +3770,8 @@ log(playerID);
                 outputCard.body.push("The Unit must take a (single) Dangerous Terrain Test");
                 PrintCard();
             }
-
-
-
+            let angle = Angle(newHex.cube.angle(prevHex.cube));
+            tok.set("rotation",angle);
         }
 
 
