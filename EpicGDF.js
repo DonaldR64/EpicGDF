@@ -1904,6 +1904,7 @@ log(c)
             let hitRolls = [],missRolls = [], hits = 0; extraHits = 0; crits = 0;
             let relentless = 0,surge = 0, furious = 0,predator = 0,butcher = 0;
             let devout = 0,ferocious = 0;
+            let ferBoost = false;
             let notes = [];
             let needed = attacker.quality;
             let neededTip = "<br>Quality: " + attacker.quality + "+";
@@ -2140,6 +2141,7 @@ log(c)
                     if (roll === 5) {
                         if (attacker.keywords.includes("Ferocious") && (attacker.keywords.includes("Ferocious Boost") || attackerAuras.includes("Ferocious Boost"))) {
                             ferocious++;
+                            ferBoost = true;
                         }
 
 
@@ -2190,8 +2192,10 @@ log(c)
             }
             if (ferocious > 0) {
                 hits += ferocious;
+                let add = "";
                 s = (ferocious === 1) ? "":"s";
-                hitTip += "<br>Ferocious added " + ferocious + " hit" + s;
+                if (ferBoost === true) {add = " Boost"};
+                hitTip += "<br>Ferocious" + add + " added " + ferocious + " hit" + s;
             }
 
 
@@ -2477,7 +2481,6 @@ log(c)
 
         if (!attacker || !defender) {return};
         SetupCard(attacker.name,"Attack",attacker.faction);
-        toFront(attacker.token);
         let weaponType = Tag[3]; //CCW, Rifle etc
         let weapon;
 
@@ -2532,7 +2535,7 @@ log(attackerAuras)
 
         //Weapons - los, ranges, limited
         let losResult = LOS(attacker,defender);
-        let combatType = (losResult.distance === 0) ? "Melee":"Ranged";
+        let combatType = (weaponType === "CCW") ? "Melee":"Ranged";
 
         let unpredictable = (attacker.keywords.includes("Unpredictable")) ? true:false;
         if (combatType === "Melee" && (attacker.keywords.includes("Unpredictable Fighter") || attackerAuras.includes("Unpredictable Fighter"))) {
@@ -2565,10 +2568,9 @@ log(attackerAuras)
             if (attacker.id !== state.Epic.activeID && combatType !== "Melee") {
                 notE = "Can only fire Ranged Weapons if Active Unit";
             } 
-            if (combatType === "Melee" && weapon.type !== "CCW") {
-                notE = "Cannot fire Ranged Weapon in Close Combat";
+            if (weapon.type === "CCW" && losResult.distance > 1) {
+                notE = "Not in Melee Range";
             }
-
             if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
                 notE = weapon.name + " - no LOS";
             }
@@ -2584,9 +2586,6 @@ log(attackerAuras)
                 if (losResult.notes.length > 1 && losResult.notes.includes("Ranged Shrouding")) {
                     notE += "[Ranged Shrouding in effect]";
                 }
-            }
-            if (weapon.type === "CCW" && combatType === "Ranged") {
-                notE = weapon.name + " is CCW Only";
             }
             if (notE) {
                 notEligible.push(notE)
@@ -2756,6 +2755,9 @@ log(attackerAuras)
 
         outputCard.subtitle = order;
         unit.token.set("aura1_color","#000000");
+        if (unit.type === "Hero") {
+            toFront(unit.token);
+        }
 
 unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
 
@@ -3342,6 +3344,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 let name = HeroNames(unit);
                 unit.name = name;
                 unit.token.set("name",name);
+                toFront(unit.token);
             } else {
                 if (names[name]) {
                     names[name]++;
@@ -3412,11 +3415,11 @@ log(state.Epic.heroes)
         if (unit.keywords.includes("Ethereal Elder")) {name = "Ethereal "};
         if (charName.includes("Captain")) {name = "Captain "};
         if (charName.includes("Boss")) {name = "Boss "};
-        if (charName === "Warboss") {name = "Warboss "};
+        if (charName.includes("Warboss")) {name = "Warboss "};
 
 
 
-        let number = state.Epic.heroes[unit.player].length - 1 || 0;//0 ordered array
+        let number = state.Epic.heroes[unit.player].length - 1;//0 ordered array
         let factionName = "Unknown";
         if (number > 0) {
             let pos = randomInteger(number);
