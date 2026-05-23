@@ -1134,10 +1134,6 @@ const Main = (() => {
     const AddAbilities2 = (unit) => {
         let keywordList = unit.keywords;
 
-        unit.token.set({
-            disableSnapping: true,
-        })
-
         let abilityName,action;
         let abilArray = findObjs({_type: "ability", _characterid: unit.charID});
         //clear old abilities
@@ -3360,10 +3356,11 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 if (names[name]) {
                     names[name]++;
                     unit.name = name + " " + names[name];
-                    unit.token.set("name",unit.name); 
                 } else {
+                    unit.name = name;
                     names[name] = 1;
                 }
+                unit.token.set("name",unit.name); 
             }
             
             unit.token.set({
@@ -3380,6 +3377,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 statusmarkers: "",
                 aura1_square: auraShape,
                 tint_color: "transparent",
+                disableSnapping: false,
             })
             if (unit.keywords.includes("Melee Shrouding") || unit.keywords.includes("Melee Shrouding Aura")) {
                 unit.token.set({
@@ -3751,6 +3749,9 @@ log(playerID);
         if (newLabel !== prevLabel && unit) {
             log(unit.name + " is Moving");
             unit.hexLabel = newLabel;
+            if (unit.type === "Hero") {
+                toFront(unit.token);
+            }
             let newHex = HexMap[newLabel];
             let prevHex = HexMap[prevLabel];
             let index = prevHex.tokenIDs.indexOf(tok.id);
@@ -3770,7 +3771,7 @@ log(playerID);
                 outputCard.body.push("The Unit must take a (single) Dangerous Terrain Test");
                 PrintCard();
             }
-            let angle = Angle(newHex.cube.angle(prevHex.cube));
+            let angle = Angle(prevHex.cube.angle(newHex.cube));
             tok.set("rotation",angle);
         }
 
