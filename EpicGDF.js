@@ -3401,14 +3401,6 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             "Orks": ["Blaktoof","Teef Pulla", "Klawfist","Ghazghkull", "Grimgor", "Grotsnik", "Gorgutz", "Zodgrod", "Spleenrippa", "Ironfist", "Bugslaya", "Headsnagga"],
         }
 
-        if (state.Epic.heroes[unit.player].length === 0) {
-            _.each(factionNames[unit.faction], name => {
-                state.Epic.heroes[unit.player].push(name);
-            })
-        } 
-
-log(state.Epic.heroes)
-
         if (charName.includes("Champion")) {name = "Champion "};
         if (charName.includes("Lord")) {name = "Lord "};
         if (unit.faction === "Dao Union") {name = "Commander "};
@@ -3417,18 +3409,15 @@ log(state.Epic.heroes)
         if (charName.includes("Boss")) {name = "Boss "};
         if (charName.includes("Warboss")) {name = "Warboss "};
 
-
-
-        let number = state.Epic.heroes[unit.player].length - 1;//0 ordered array
-        let factionName = "Unknown";
-        if (number > 0) {
-            let pos = randomInteger(number);
-            factionName = state.Epic.heroes[unit.player][pos];
-            state.Epic.heroes[unit.player].splice(pos,1);
+        let names = state.Epic.heroes[unit.player];
+        if (names === "" || !names) {
+            names = factionNames[unit.faction];
         }
-        name += factionName;
 
-log(state.Epic.heroes)
+        let num = randomInteger(names.length) - 1;
+        name += names[num];
+        names.splice(num,1);
+        state.Epic.heroes[unit.player] = names;
 
         return name;
     }
@@ -3537,8 +3526,14 @@ log(playerID);
             activeID: "",
             deployLines: [],
             losLines: [],
-            heroes: [[],[]],
+            heroes: ["",""],
         }
+
+        
+
+
+
+
 
         sendChat("","Cleared State/Arrays");
     }
