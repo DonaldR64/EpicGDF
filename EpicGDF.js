@@ -3395,6 +3395,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             "Plague Disciples": ["Blight","Pustus","Bilegore","Cachexis","Clotticus","Colathrax","Corpulux","Poxmaw","Dragan","Festardius","Fethius","Fugaris","Gangrous","Rotheart","Glauw","Leprus","Kholerus","Malarrus","Necrosius","Phage"],
             "Dao Union": ["Shi'ur","Por'o","Kai","Vor","Shi","Ru","Ni","Chi-Ha","Tor-lak"],
             "Alien Hives": ["Swarmlord","Deathleaper","Old One-Eye","The Doom of Vasta","Razor"],
+            "Orks": ["Blaktoof","Teef Pulla", "Klawfist","Ghazghkull", "Grimgor", "Grotsnik", "Gorgutz", "Zodgrod", "Spleenrippa", "Ironfist", "Bugslaya", "Headsnagga"],
         }
 
         if (state.Epic.heroes[unit.player].length === 0) {
@@ -3410,9 +3411,13 @@ log(state.Epic.heroes)
         if (unit.faction === "Dao Union") {name = "Commander "};
         if (unit.keywords.includes("Ethereal Elder")) {name = "Ethereal "};
         if (charName.includes("Captain")) {name = "Captain "};
+        if (charName.includes("Boss")) {name = "Boss "};
+        if (charName === "Warboss") {name = "Warboss "};
 
-        let number = state.Epic.heroes[unit.player].length - 1; //0 ordered array
-        let factionName = "Unknown"
+
+
+        let number = state.Epic.heroes[unit.player].length - 1 || 0;//0 ordered array
+        let factionName = "Unknown";
         if (number > 0) {
             let pos = randomInteger(number);
             factionName = state.Epic.heroes[unit.player][pos];
