@@ -1754,7 +1754,7 @@ log(unit.name)
         PrintCard();
     }
 
-
+/////
     const ObjectiveCheck = (objective) => {
 log("Objective Check");
 log(objective.name)
@@ -2920,8 +2920,8 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                     } else {
                         outputCard.body.push("Charge is " + charge + " Hexes, Rush is " + rush + " Hexes");
                     }
-                    if (difMove !== move) {
-                        if (charge === rush) {
+                    if (difCharge !== charge || difRush !== rush) {
+                        if (difCharge === difRush) {
                             outputCard.body.push("Entering or Crossing Difficult Terrain limits Charge/Rush to " + difCharge + " Hexes");
                         } else {
                             outputCard.body.push("Entering/Crossing Difficult Terrain limits Charge to " + difCharge + " Hexes and Rush to " + difRush + " Hexes");
@@ -3773,6 +3773,18 @@ log(playerID);
             }
             let angle = Angle(prevHex.cube.angle(newHex.cube));
             tok.set("rotation",angle);
+            unit.moved = true;
+            if (newHex.tokenIDs.length > 1) {
+                if (unit.type === "Hero") {
+                    toFront(unit.token);
+                } else {
+                    toBack(unit.token);
+                }
+            }
+
+
+
+
         }
 
 
