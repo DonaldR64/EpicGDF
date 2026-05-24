@@ -748,7 +748,7 @@ const Main = (() => {
             this.toughness = parseInt(aa.toughness) || 1;
             this.wounds = parseInt(aa.wounds) || 1;
             this.models = this.wounds/this.toughness;
-            this.type = aa.type;
+            this.type = aa.type || "Objective";
             this.size = (aa.type === "Titan") ? 2:1;
 
 
@@ -797,7 +797,7 @@ const Main = (() => {
                     let keywords = key.map((e) => e.trim()) || [""];
 
                     let weapon = {
-                        number: aa["weapon" + i + "number"],
+                        number: parseInt(aa["weapon" + i + "number"]) || 1,
                         name: aa["weapon" + i + "name"],
                         type: aa["weapon" + i + "type"],
                         range: parseInt(aa["weapon" + i + "range"]) || 0,
@@ -1072,7 +1072,9 @@ const Main = (() => {
                         let verb = (this.type === "Infantry") ? " has now taken heavy casualties!": " is now badly injured/damaged!";
                         outputCard.body.push(this.name + verb);
                     }
-                    outputCard.body.push("The Unit must take a Morale Test");
+                    if (this.token.get("tint_color") === "#ff0000") {
+                        outputCard.body.push("The Unit must take a Morale Test");
+                    }
                 }
             }
         }
@@ -1612,21 +1614,34 @@ const Main = (() => {
             _subtype: "token",
             layer: "objects",
         });
-
-        let c = tokens.length;
-        let s = (1===c?'':'s');     
+        let objectives = findObjs({
+            _pageid: Campaign().get("playerpageid"),
+            _type: "graphic",
+            _subtype: "token",
+            layer: "foreground",
+        });
+        let c = tokens.length + objectives.length;
+        let s = (c===1) ? '':'s';    
         
         tokens.forEach((token) => {
             let character = getObj("character", token.get("represents"));   
             if (character) {
                 let unit = new Unit(token.get("id"));
-
-
-
             }
         });
+        objectives.forEach((token) => {
+            let character = getObj("character", token.get("represents"));   
+            if (character) {
+                let unit = new Unit(token.get("id"));
+            }
+        });
+
+
+
+
         let elapsed = Date.now()-start;
         log(`${c} token${s} checked in ${elapsed/1000} seconds - ` + Object.keys(UnitArray).length + " placed in Unit Array");
+
     }
 
 
@@ -1759,12 +1774,12 @@ log(unit.name)
 log("Objective Check");
 log(objective.name)
         let factions = [];
-        let objHex = HexMap[objective.hexLabel()];
+        let objHex = HexMap[objective.hexLabel];
         _.each(UnitArray, unit => {
-            if (unit.tokenID !== objective.tokenID) {
+            if (unit.id !== objective.id) {
     log(unit.name)
     log(unit.faction)
-                let distance = objHex.distance(HexMap[unit.hexLabel()]);
+                let distance = objHex.distance(HexMap[unit.hexLabel]);
     log("D: "  + distance)
                 if (distance < 2 && factions.includes(unit.faction) === false) {
                     factions.push(unit.faction)
@@ -2077,7 +2092,7 @@ log(c)
 
 
             }
-
+log(weapon)
             //Number of Attacks
             let attacks = weapon.number * weapon.attacks;
             if (attacker.token.get(SM.halfStr) === true) {
@@ -2265,7 +2280,7 @@ log(c)
                     ignoreRegen = "Rending Mark";
                     RemoveTTip("Rending Mark");
                 }
-                if (ignoreRegen && (defender.keywords.includes("Regeneration") || defender.Aura().includes("Regeneration"))) {
+                if (ignoreRegen && (defender.keywords.includes("Regeneration") || defender.Auras().includes("Regeneration"))) {
                     saveInfo.saveTip += "<br>Regeneration ignored due to " + ignoreRegen;
                 }
                 let pbE = "",resE = "";
@@ -3678,9 +3693,12 @@ log(playerID);
                 }
                 //if there a unit in the hex
                 if (interHex.tokenIDs.length > 0 && interHex.label !== targetHex.label) {
-                    los[side] = false;
-                    losReason[side] = UnitArray[interHex.tokenIDs[0]].name;
-                    break;
+                    let u2 = UnitArray[interHex.tokenIDs[0]];
+                    if (u2.type !== "Objective") {
+                        los[side] = false;
+                        losReason[side] = u2.name;
+                        break;
+                    }
                 }
 
 
@@ -3744,6 +3762,9 @@ log(playerID);
 
     const changeGraphic = (tok,prev) => {
         let unit = UnitArray[tok.id];
+        if (!unit && tok.name.includes("Objective")) {
+            unit = new Unit(token.get("id"));
+        }
         let newLabel = new Point(tok.get("left"),tok.get("top")).toCube().label();
         let prevLabel = new Point(prev.left,prev.top).toCube().label();
         if (newLabel !== prevLabel && unit) {
@@ -3751,7 +3772,8 @@ log(playerID);
             unit.hexLabel = newLabel;
             if (unit.type === "Hero") {
                 toFront(unit.token);
-            }
+            } 
+            if (unit.type === "Objective") {return};
             let newHex = HexMap[newLabel];
             let prevHex = HexMap[prevLabel];
             let index = prevHex.tokenIDs.indexOf(tok.id);
