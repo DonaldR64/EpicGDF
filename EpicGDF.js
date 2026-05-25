@@ -89,7 +89,7 @@ const Main = (() => {
             "image": "https://s3.amazonaws.com/files.d20.io/images/353239057/GIITPAhD-JdRRD2D6BREWw/thumb.png?1691112406",
             "dice": "Deathguard",
             "backgroundColour": "#B3CF99",
-            "objColour": "#00ff00",
+            "objColour": "#ffd966",
             "titlefont": "Anton",
             "fontColour": "#000000",
             "borderColour": "#000000",
@@ -129,6 +129,7 @@ const Main = (() => {
             "image": "https://s3.amazonaws.com/files.d20.io/images/378405665/zZCv4Z4TRaEkLeveAhLAiQ/thumb.png?1706900477",
             "dice": "Sororitas",
             "backgroundColour": "#0072bb",
+            "objColour": "#0072bb",
             "titlefont": "Arial",
             "fontColour": "#FFFFFF",
             "borderColour": "#be0b07",
@@ -138,6 +139,7 @@ const Main = (() => {
             "image": "https://files.d20.io/images/487769356/hvkxqPn9i5zD5TDnhrEoeg/thumb.png?1779330819",
             "dice": "Custodes",
             "backgroundColour": "#d4af37",
+            "objColour": "#d4af37",
             "titlefont": "Arial",
             "fontColour": "#000000",
             "borderColour": "#000000",
@@ -147,6 +149,7 @@ const Main = (() => {
             "image": "https://s3.amazonaws.com/files.d20.io/images/366987627/gNuK1M5Vx2b-oNvQ4kSQOg/thumb.png?1699583671",
             "dice": "Orks",
             "backgroundColour": "#3a8000",
+            "objColour": "#00ff00",
             "titlefont": "Goblin One",
             "fontColour": "#000000",
             "borderColour": "#3a8000",
@@ -795,10 +798,12 @@ const Main = (() => {
                 if (aa["weapon" + i + "equipped"] === "Equipped") {
                     let key = (aa["weapon" + i + "special"] || " ").split(",");
                     let keywords = key.map((e) => e.trim()) || [""];
-
+                    let name = aa["weapon" + i + "name"];
+                    let number = parseInt(aa["weapon" + i + "number"]) || 1;
+                    if (number > 1 && name.at(-1) !== "s") {name += "s"};
                     let weapon = {
-                        number: parseInt(aa["weapon" + i + "number"]) || 1,
-                        name: aa["weapon" + i + "name"],
+                        number: number,
+                        name: name,
                         type: aa["weapon" + i + "type"],
                         range: parseInt(aa["weapon" + i + "range"]) || 0,
                         attacks: parseInt(aa["weapon" + i + "attack"]) || 1,
@@ -966,7 +971,7 @@ const Main = (() => {
             _.each(hex.tokenIDs,tokenID => {
                 if (tokenID !== this.id) {
                     let unit2 = UnitArray[tokenID];
-                    if (unit2.faction === this.faction && unit2.type === "Hero") {
+                    if (unit2 && unit2.faction === this.faction && unit2.type === "Hero") {
                         hero = unit2;
                     }
                 }
@@ -1022,6 +1027,10 @@ const Main = (() => {
                 "statusmarkers": "dead",
                 "layer": "map",
             })
+            let index = HexMap[this.hexLabel].tokenIDs.indexOf(this.id);
+            if (index > -1) {
+                HexMap[this.hexLabel].tokenIDs.splice(index,1);
+            }
             delete UnitArray[this.id];
         }
 
@@ -1695,7 +1704,7 @@ const Main = (() => {
                 delete UnitArray[keys[i]];
                 continue;
             }
-            if (token && token.get("aura1_color") === "#00ff00") {
+            if (token && token.get("aura1_color") === Factions[unit.faction].objColour) {
                 sendPing(token.get("left"),token.get("top"), Campaign().get('playerpageid'), null, true); 
                 SetupCard(unit.name,"",unit.faction);
                 outputCard.body.push("Unit has not been activated");
@@ -2701,7 +2710,7 @@ log(attackerAuras)
             persistant = persistant.toString();
             unit.token.set("tooltip",persistant);
             unit.token.set(SM.fatigue,false);
-            unit.token.set("aura1_color","#00ff00");
+            unit.token.set("aura1_color",Factions[unit.faction].objColour);
             if (unit.type === "Hero") {
                 toFront(unit.token);
             }
@@ -3360,12 +3369,14 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 }
             }
             let auraShape = true;
+            let ds = false;
             if (unit.type === "Hero") {
                 let name = HeroNames(unit);
                 unit.name = name;
                 unit.token.set("name",name);
                 toFront(unit.token);
                 auraShape = false;
+                ds = true;
             } else {
                 name = name.split("//")[0].trim();
                 if (names[name]) {
@@ -3382,7 +3393,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 bar1_value: unit.wounds,
                 bar1_max: unit.wounds,
                 showplayers_bar1: true,
-                aura1_color: "#00ff00",
+                aura1_color: Factions[unit.faction].objColour,
                 aura1_radius: 0.05,
                 showplayers_aura1: true,
                 tooltip: "",
@@ -3392,7 +3403,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 statusmarkers: "",
                 aura1_square: auraShape,
                 tint_color: "transparent",
-                disableSnapping: false,
+                disableSnapping: ds,
             })
             if (unit.keywords.includes("Melee Shrouding") || unit.keywords.includes("Melee Shrouding Aura")) {
                 unit.token.set({
@@ -3756,6 +3767,14 @@ log(playerID);
         return true;
     }
 
+    const ToBack = (msg) => {
+        if (!msg.selected) {return};
+        let id = msg.selected[0]._id;
+        let unit = UnitArray[id];  
+        if (!unit) {return}
+        toBack(unit.token);
+    }
+
 
 
 
@@ -3884,6 +3903,11 @@ log(playerID);
             case '!CheckLOS':
                 CheckLOS(msg);
                 break;
+            case '!ToBack':
+                ToBack(msg);
+                break;
+
+
 
             case '!Roll':
                 RollDice(msg);
