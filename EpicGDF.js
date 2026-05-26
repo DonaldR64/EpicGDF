@@ -73,6 +73,9 @@ const Main = (() => {
 
     let UnitArray = {};
 
+    const LargeUnits = ["Vehicle/Monster","Artillery","Titan"]
+
+
     let outputCard = {title: "",subtitle: "",side: "",body: [],buttons: [],};
 
     const Factions = {
@@ -1893,7 +1896,7 @@ log(c)
                         }
                     }
                 }
-                if (losResult.building === true && combatType !== "Melee") {
+                if (losResult.building === true  && ((combatType === "Melee" && LargeUnits.includes(attacker.type)) || combatType === "Ranged")) {
                     defense--;
                     defenseTip += "<br>Building +1 Defense";
                 }
@@ -2054,7 +2057,7 @@ log(c)
 
             //Negative To Hits - removed by Unstoppable
             if (weapon.keywords.includes("Unstoppable") === false) {
-                if (cover === true && combatType === "Ranged") {
+                if (cover === true && (combatType === "Ranged" || (combatType === "Melee" && LargeUnits.includes(attacker.type))))  {
                     needed += 1;
                     neededTip += "<br>Cover -1 to Hit";
                 }
