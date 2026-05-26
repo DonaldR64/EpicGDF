@@ -1165,6 +1165,9 @@ const Main = (() => {
             "CCW": [],
             "Sniper": [],
             "Bomb": [],
+            "Limited": [],
+            "Limited2": [],
+            "Limited3": [],   
         }
   
         for (let i=0;i<unit.weapons.length;i++) {
@@ -1228,7 +1231,7 @@ const Main = (() => {
 
 
         //morale
-        AddAbility("Morale","!Morale",unit.charID);
+        AddAbility("Morale","!Morale;" + unit.id,unit.charID);
         //Dangerous
         AddAbility("Dangerous","!DangerousTest",unit.charID);
 
@@ -1309,9 +1312,8 @@ const Main = (() => {
         return output;
     }
 
-    const ButtonInfo = (phrase,action,inline) => {
+    const ButtonInfo = (phrase,action,inline = false) => {
         //inline - has to be true in any buttons to have them in same line -  starting one to ending one
-        if (!inline) {inline = false};
         let info = {
             phrase: phrase,
             action: action,
@@ -2644,6 +2646,7 @@ log(attackerAuras)
 
         if (moraleCheck === true && combatType === "Ranged" && defendersAliveFlag.some((e)=> e === true)) {
             outputCard.body.push("The unit must take a Morale Check");
+            ButtonInfo("Morale Check","!Morale;" + defender.id)
         }
         if (combatType === "Melee" && defendersAliveFlag.some((e)=> e === true)) {
             let fear = attacker.keywords.find((e) => e.includes("Fear")) || "0";
@@ -2735,7 +2738,7 @@ log(attackerAuras)
 
 
     const Morale = (msg) => {
-        let id = msg.selected[0]._id;
+        let id = msg.content.split(";")[1];
         let unit = UnitArray[id];
         if (!unit) {return};
         unit.Morale();
@@ -3385,12 +3388,15 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 }
                 unit.token.set("name",unit.name); 
             }
+
+            let a1c = Factions[unit.faction].objColour || "#ffffff";
+
             
             unit.token.set({
                 bar1_value: unit.wounds,
                 bar1_max: unit.wounds,
                 showplayers_bar1: true,
-                aura1_color: Factions[unit.faction].objColour,
+                aura1_color: a1c,
                 aura1_radius: 0.05,
                 showplayers_aura1: true,
                 tooltip: "",
@@ -3644,7 +3650,7 @@ log(playerID);
         } else {
             outputCard.body.push("There is LOS to Target");
             if (losResult.cover === true) {
-                outputCard.body.push("Target Has Cover");
+                outputCard.body.push("Target Has   Cover");
             }
             if (losResult.building === true) {
                 outputCard.body.push("Target in Building");
@@ -3657,19 +3663,16 @@ log(playerID);
                 range += 3;
             }
             if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
-                outputCard.body.push(weapon.name + " - no LOS");
+                outputCard.body.push("[#FF0000]" + weapon.name + " - no LOS[/#]");
             } else {
                 if (losResult.distance > range) {
-                    outputCard.body.push(weapon.name + " - not in Range")
+                    outputCard.body.push("[#FF0000]" + weapon.name + " - not in Range[/#]");
+                } else if (losResult.los === false && weapon.keywords.includes("Indirect")) {
+                    outputCard.body.push(weapon.name + " - Indirect and In Range");
+                } else {
+                    outputCard.body.push(weapon.name + " - In LOS and In Range");
                 }
-
-
-
             }
-
-
-
-
         })
 
 
@@ -3804,7 +3807,7 @@ log(playerID);
 
     const changeGraphic = (tok,prev) => {
         let unit = UnitArray[tok.id];
-        if (!unit && tok.name.includes("Objective")) {
+        if (!unit && tok.name && tok.name.includes("Objective")) {
             unit = new Unit(token.get("id"));
         }
         let newLabel = new Point(tok.get("left"),tok.get("top")).toCube().label();
