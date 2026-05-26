@@ -1,5 +1,5 @@
 const Main = (() => {
-    const version = '2026.5.21';
+    const version = '2026.5.25';
     if (!state.Epic) {state.Epic = {}};
 
     const pageInfo = {};
@@ -1954,6 +1954,10 @@ log(c)
                 needed = 2;
                 neededTip = "<br>Reliable: 2+";
             }
+            if (attacker.token.get("tint_color") === "#ff0000") {
+                needed++;
+                neededTip += "<br>Shaken -1";
+            }
 
             let blast = weapon.keywords.find(key => key.includes("Blast")) || "0";
             blast = parseInt(blast.replace(/\D/g,''));
@@ -2006,21 +2010,11 @@ log(c)
                     }
                 }
             }
-
-
-
-
-
-
-            
-/*
             if (attacker.tokenID === state.Epic.activeID && combatType === "Melee" && weapon.keywords.includes("Thrust")) {
-                weapon.ap++;
                 notes.push("Thrust");
                 needed -= 1;
                 neededTip += "<br>Thrust/Charge +1 to Hit";
             }
-*/
             if (attackerAuras.includes("Precision Charge") && attacker.tokenID === state.Epic.activeID && combatType === "Melee") {
                 needed -= 1;
                 neededTip += "<br>Precision Charge +1 to Hit";
@@ -3789,15 +3783,35 @@ log(playerID);
         }
         let newLabel = new Point(tok.get("left"),tok.get("top")).toCube().label();
         let prevLabel = new Point(prev.left,prev.top).toCube().label();
+
+
+
         if (newLabel !== prevLabel && unit) {
+            let newHex = HexMap[newLabel];
+            let prevHex = HexMap[prevLabel];
+
+            let valid = true;
+            if (newHex.type === "Impassable") {
+                valid = false;
+            }
+            if (newHex.building === true && LargeUnits.includes(unit.type)) {
+                valid = false;
+            }
+            if (valid === false) {
+                sendChat("","Cannot move here");
+                newLabel = prevLabel;
+                tok.set({
+                    left: prev.left,
+                    top: prev.top,
+                })
+                return;
+            }
             log(unit.name + " is Moving");
             unit.hexLabel = newLabel;
             if (unit.type === "Hero") {
                 toFront(unit.token);
             } 
             if (unit.type === "Objective") {return};
-            let newHex = HexMap[newLabel];
-            let prevHex = HexMap[prevLabel];
             let index = prevHex.tokenIDs.indexOf(tok.id);
             if (index > -1) {
                 prevHex.tokenIDs.splice(index,1);
@@ -3810,7 +3824,7 @@ log(playerID);
                 outputCard.body.push("The Unit must take a Dangerous Terrain Test");
                 PrintCard();
             }
-            if (newHex.type === "Dangerous" || prevHex.type === "Dangerous") {
+            if ((newHex.type === "Dangerous" || prevHex.type === "Dangerous")) {
                 SetupCard(unit.name,"Dangerous Terrain",unit.faction);
                 outputCard.body.push("The Unit must take a (single) Dangerous Terrain Test");
                 PrintCard();
