@@ -693,6 +693,7 @@ const Main = (() => {
             this.label = offset.label();
             this.elevation = 0;
             this.terrain = "Open";
+            this.offboard = false;
             this.cover = false;
             this.terrainHeight = 0;
             this.blockLOS = false;
@@ -1351,11 +1352,8 @@ const Main = (() => {
 
     const DisplayDice = (roll,faction,size) => {
         roll = roll.toString();
-        let tablename = Factions[faction].dice;
+        tablename = (!Factions[faction]) ? "Neutral":Factions[faction].dice
         let table = findObjs({type:'rollabletable', name: tablename})[0];
-        if (!table) {
-            table = findObjs({type:'rollabletable', name: "Neutral"})[0];
-        }
         let obj = findObjs({type:'tableitem', _rollabletableid: table.id, name: roll })[0];   
         if (!obj) {return "NA"}
         let avatar = obj.get('avatar');
@@ -1542,7 +1540,13 @@ const Main = (() => {
         }
         AddTerrain();    
         AddTokens();
-
+        _.each(HexMap,hex => {
+            if (hex.centre.x >= mapEdge) {
+                hex.offboard = true;
+                hex.terrain = "Offboard";
+                hex.type = "Offboard";
+            }
+        })
 
         let elapsed = Date.now()-startTime;
         log("Hex Map Built in " + elapsed/1000 + " seconds");
@@ -3506,9 +3510,9 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         outputCard.body.push("Cover: " + hex.cover);
         outputCard.body.push("Blocks LOS: " + hex.blockLOS);
         outputCard.body.push("Movement: " + hex.type);
-        outputCard.body.push("Keywords: " + unit.keywords.toString());
-        outputCard.body.push("Auras: " + unit.Auras().toString());
-        outputCard.body.push("Tips: " + unit.TTip().toString());
+        //outputCard.body.push("Keywords: " + unit.keywords.toString());
+        //outputCard.body.push("Auras: " + unit.Auras().toString());
+        //outputCard.body.push("Tips: " + unit.TTip().toString());
         PrintCard();
     }
 
