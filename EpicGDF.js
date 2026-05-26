@@ -3650,6 +3650,32 @@ log(playerID);
                 outputCard.body.push("Target in Building");
             }
         }
+        outputCard.body.push("[hr]");
+        _.each(shooter.weapons,weapon => {
+            let range = (target.type === "Aircraft" && weapon.keywords.includes("Unstoppable") === false) ? weapon.range - 6:weapon.range;   
+            if (shooter.keywords.includes("Increased Shooting Range") || shooter.Auras().includes("Increased Shooting Range")) {
+                range += 3;
+            }
+            if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
+                outputCard.body.push(weapon.name + " - no LOS");
+            } else {
+                if (losResult.distance > range) {
+                    outputCard.body.push(weapon.name + " - not in Range")
+                }
+
+
+
+            }
+
+
+
+
+        })
+
+
+
+
+
         
         PrintCard();
     }
