@@ -92,7 +92,7 @@ const Main = (() => {
             "image": "https://s3.amazonaws.com/files.d20.io/images/353239057/GIITPAhD-JdRRD2D6BREWw/thumb.png?1691112406",
             "dice": "Deathguard",
             "backgroundColour": "#B3CF99",
-            "objColour": "#ffd966",
+            "objColour": "#ffff00",
             "titlefont": "Anton",
             "fontColour": "#000000",
             "borderColour": "#000000",
@@ -819,15 +819,21 @@ const Main = (() => {
                 }
             }
 
-            let ravage = keywords.find((e) => e.includes("Ravage")) || "0";
-            ravage = parseInt(ravage.replace(/\D/g,''));
+            let ravage = 0;
+            let ravageKeys = keywords.filter((e) => e.includes("Ravage")) || [];
+            for (let rv = 0;rv < ravageKeys.length;rv++) {
+                ravage += parseInt(ravageKeys[rv].replace(/\D/g,''));
+            }
             if (ravage > 0) {
                 let weapon = {name: "Ravage",number: this.models,type: "CCW",range: 0,attacks: ravage,ap: 0,keywords: [""],fx: "",sound: "Growl"};
                 weapons.push(weapon);
             }
 
-            let impact = keywords.find((e) => e.includes("Impact")) || "0";
-            impact = parseInt(impact.replace(/\D/g,''));
+            let impact = 0;
+            let impactKeys = keywords.filter((e) => e.includes("Impact")) || [];
+            for (let im = 0;im < impactKeys.length; im++) {
+                impact += parseInt(impactKeys[im].replace(/\D/g,''));
+            }
             if (impact > 0) {
                 let weapon = {name: "Impact",number: this.models,type: "CCW",range: 0,attacks: impact,ap: 0,keywords: [""],fx: "",sound: ""};
                 weapons.push(weapon);
@@ -1126,12 +1132,13 @@ const Main = (() => {
 
 
     const AddAbility = (abilityName,action,characterID) => {
-        createObj("ability", {
+        let newObj = createObj("ability", {
             name: abilityName,
             characterid: characterID,
             action: action,
             istokenaction: true,
         })
+        if (newObj) {return newObj.id};
     }    
 
 
@@ -1194,7 +1201,18 @@ const Main = (() => {
             abilityName = weaponNum + ": " + names;
             weaponNum += 1;
             action = "!Attack;@{selected|token_id};@{target|token_id};" + keys[i];
-            AddAbility(abilityName,action,unit.charID);
+            let id = AddAbility(abilityName,action,unit.charID);
+            if (keys[i].includes("Limited")) {
+                let info = {
+                    key: keys[i],
+                    id: id,
+                }
+                if (state.Epic.limitedMacros[unit.id]) {
+                    state.Epic.limitedMacros[unit.id].push(info)
+                } else {
+                    state.Epic.limitedMacros[unit.id] = [info];
+                }
+            }
         }
 
         //activation 
@@ -2263,10 +2281,17 @@ log(weapon)
             outputCard.body.push("with " + weapon.name);
             outputCard.body.push(defender.name + " is " + weaponOut);
 
-
-
             if (weapon.keywords.includes("Limited")) {
-                attacker.SetTT2("Fired " + weapon.name);
+                let lids = state.Epic.limitedMacros[attacker.id];
+                for (let l=0;l<lids.length;l++) {
+                    let info = lids[l];
+        log("Info ")
+        log(info)
+                    if (info.key === weapon.type) {
+                        let abil = findObjs({_type: "ability", _id: info.id})[0];
+                        if (abil) {abil.remove()};
+                    }
+                }
             }
 
             for (let d=0;d<defenders.length;d++) {
@@ -2278,6 +2303,7 @@ log(weapon)
                 let savePass = [];
                 let saveFail = [];
                 let bane = 0, shred = 0, slam = 0, rending = 0;
+                let deadlyWeapon = false, deadlyNum = 1;
                 let regen = 0,plaguebound = 0,protected = 0,resist = 0;
                 let regenRolls = [],pbRolls = [],protRolls = [],resistRolls = [];
                 let regenTarget = 5,pbTarget = 6,protTarget = 6,resistTarget = 6;
@@ -2316,9 +2342,14 @@ log(weapon)
                         savePass.push(saveRoll);
                     } else {
                         saveFail.push(saveRoll);
-                        let deadly = weapon.keywords.find((e) => e.includes("Deadly")) || '1';
-                        deadly = parseInt(deadly.replace(/\D/g,''));
-                        wounds = Math.min(deadly,defender.toughness);
+                        let wounds = 1;
+                        let deadly = weapon.keywords.find((e) => e.includes("Deadly"));
+                        if (deadly) {
+                            wounds = parseInt(deadly.replace(/\D/g,''));
+                            wounds = Math.min(wounds,defender.toughness);
+                            deadlyWeapon = true;
+                            deadlyNum = wounds;
+                        }
 
                         if (saveRoll === 1) {
                             if (weapon.keywords.includes("Shred")) {
@@ -2333,9 +2364,6 @@ log(weapon)
                                 slam++;
                                 wounds++;
                             }
-
-
-
                         }
 
                         //regen and other 'saves' on wounds
@@ -2400,6 +2428,9 @@ log(weapon)
 
                 let saveTip = saveInfo.saveTip;
                 let s;
+                if (deadlyWeapon && deadlyNum > 1) {
+                    saveTip += "<br>Deadly: " + deadlyNum + " Wounds per hit";
+                }
                 if (rending > 0) {
                     s = (rending === 1) ? "":"s";
                     saveTip += "<br>Rending affected " + rending + " Save" + s;
@@ -2599,9 +2630,6 @@ log(attackerAuras)
             if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
                 notE = weapon.name + " - no LOS";
             }
-            if (attackerTT.includes("Fired " + weapon.name)) {
-                notE = weapon.name + " is Limited and has been Fired";
-            }
             let range = (defender.type === "Aircraft" && weapon.keywords.includes("Unstoppable") === false) ? weapon.range - 6:weapon.range;
             if (attacker.keywords.includes("Increased Shooting Range") || attackerAuras.includes("Increased Shooting Range")) {
                 range += 3;
@@ -2705,8 +2733,6 @@ log(attackerAuras)
             unit.moved = false; 
             let tt = unit.TTip();
             let persistant = tt.filter((e) => persistantTT.includes(e));
-            let limited = tt.filter((e) => e.includes("Fired "));
-            persistant = persistant.concat(limited);
             persistant = persistant.toString();
             unit.token.set("tooltip",persistant);
             unit.token.set(SM.fatigue,false);
@@ -2754,7 +2780,7 @@ log(attackerAuras)
         let unit = UnitArray[id];
         if (!unit) {return};
         toFront(unit.token);
-        if (unit.token.get("aura1_color") === "#000000") {
+        if (unit.token.get("aura1_color") === "transparent") {
             SetupCard(unit.name,"Change Order ?",unit.faction);
             outputCard.body.push("Unit has Activated already, ?Redo")
             ButtonInfo("Redo Order","!RedoOrder;" + unit.id + ";" + order);
@@ -2782,7 +2808,7 @@ log(attackerAuras)
         }
 
         outputCard.subtitle = order;
-        unit.token.set("aura1_color","#000000");
+        unit.token.set("aura1_color","transparent");
         if (unit.type === "Hero") {
             toFront(unit.token);
         }
@@ -3397,7 +3423,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 bar1_max: unit.wounds,
                 showplayers_bar1: true,
                 aura1_color: a1c,
-                aura1_radius: 0.05,
+                aura1_radius: 0.1,
                 showplayers_aura1: true,
                 tooltip: "",
                 show_tooltip: true,
@@ -3567,6 +3593,7 @@ log(playerID);
             deployLines: [],
             losLines: [],
             heroes: ["",""],
+            limitedMacros: {},
         }
 
         
