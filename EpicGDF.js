@@ -264,22 +264,24 @@ const Main = (() => {
         }
     };
 
-    const FX = (fxname,unit1,unit2) => {
-        //unit2 is target, unit1 is shooter
-        //if its an area effect, unit1 isnt used
-        if (fxname.includes("System")) {
-            //system fx
-            fxname = fxname.replace("System-","");
-            if (fxname.includes("Blast")) {
-                fxname = fxname.replace("Blast-","");
-                spawnFx(unit2.token.get("left"),unit2.token.get("top"), fxname);
-            } else {
-                spawnFxBetweenPoints(new Point(unit1.token.get("left"),unit1.token.get("top")), new Point(unit2.token.get("left"),unit2.token.get("top")), fxname);
-            }
-        } else {
+    const FX = (fxname,hex1,hex2) => {
+    
+        if (!fxname) {return};
+        let pt1 = hex1.centre;
+        let pt2 = hex2.centre;
+        if (fxname.includes("Custom")) {
+            fxname = fxname.replace("Custom-","");
             let fxType =  findObjs({type: "custfx", name: fxname})[0];
             if (fxType) {
-                spawnFxBetweenPoints(new Point(unit1.token.get("left"),unit1.token.get("top")), new Point(unit2.token.get("left"),unit2.token.get("top")), fxType.id);
+                spawnFxBetweenPoints(pt1, pt2, fxType.id);
+            }
+        } else {
+            let directed = ["breath","beam","missile","rocket"];
+            let points = directed.some(element => fxname.includes(element));
+            if (points === true) {
+                spawnFxBetweenPoints(pt1, pt2, fxname);
+            } else {
+                spawnFx(pt2.x,pt2.y, fxname);
             }
         }
     }
@@ -1177,6 +1179,7 @@ const Main = (() => {
             "Limited2": [],
             "Limited3": [],   
         }
+
   
         for (let i=0;i<unit.weapons.length;i++) {
             let weapon = unit.weapons[i];
@@ -1196,12 +1199,24 @@ const Main = (() => {
         for (let i=0;i<keys.length;i++) {
             let names = types[keys[i]];
             if (names.length === 0) {continue};
+            let fx = "";
+            for (let j=0;j<unit.weapons.length;j++) {
+                if (keys[i] === "CCW") {
+                    fx = "/fx bubbling-blood @{selected|token_id} @{target|token_id}";
+                    break;
+                } else if (names[0].includes(unit.weapons[j].name) && unit.weapons[j].fx) {
+                    fx = "/fx " + unit.weapons[j].fx + " @{selected|token_id} @{target|token_id}";
+                    break;
+                }
+            }
             names = names.toString();
             if (names.charAt(0) === ",") {names = names.replace(",","")};
             names = names.replaceAll(",","+");
             abilityName = weaponNum + ": " + names;
             weaponNum += 1;
             action = "!Attack;@{selected|token_id};@{target|token_id};" + keys[i];
+            action += '\n' + fx;
+
             let id = AddAbility(abilityName,action,unit.charID);
             if (keys[i].includes("Limited")) {
                 let info = {
@@ -2538,7 +2553,6 @@ log(weapon)
         let attacker = UnitArray[Tag[1]];
         let defender = UnitArray[Tag[2]];
 
-
         if (!attacker || !defender) {return};
         SetupCard(attacker.name,"Attack",attacker.faction);
         let weaponType = Tag[3]; //CCW, Rifle etc
@@ -2546,6 +2560,7 @@ log(weapon)
 
         let attackerHex = HexMap[attacker.hexLabel];
         let defenderHex = HexMap[defender.hexLabel];
+    
 
         let friendly = false;
         //due to overlap, check if accidentally clicked own unit
@@ -2569,11 +2584,7 @@ log(weapon)
             })
         }   
 
-log(attacker.name)
-log(attacker.keywords)
-
         let attackerAuras = attacker.Auras();
-log(attackerAuras)
         let attackerTT = attacker.TTip();
         let defenderModels = Math.ceil(parseInt(defender.token.get("bar1_value"))/defender.toughness);
 
@@ -2673,6 +2684,8 @@ log(attackerAuras)
             if (defendersAliveFlag.some((e) => e === true)) {
                 WeaponAttack(weapon);
                 outputCard.body.push("[hr]");
+                PlaySound(weapon.sound);
+                FX(weapon.fx,attackerHex,defenderHex);
             }
         })
 
@@ -2699,6 +2712,10 @@ log(attackerAuras)
         })
 
         attacker.Rotate(defenderHex);
+
+
+
+
 
         PrintCard();
     }
@@ -3088,6 +3105,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         let unitHex = HexMap[unit.hexLabel];
         let targets = [];
         let errorMsg = [];
+        let targetHex;
         for (let i=4;i<Tag.length;i++) {
             let target = UnitArray[Tag[i]];
             if (!target) {continue};
@@ -3099,7 +3117,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 errorMsg.push(target.name + " is not in LOS");
             }
             targets.push(target);
-            let targetHex = HexMap[target.hexLabel];
+            targetHex = HexMap[target.hexLabel];
             if (targetHex.tokenIDs.length > 1) {
                 _.each(targetHex.tokenIDs,tokenID => {
                     if (tokenID !== target.id) {
@@ -3124,7 +3142,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 target.token.set(SM.dangerous,true);
                 outputCard.body.push(target.name + " now has a Dangerous Terrain Debuff");
                 outputCard.body.push("The next time it moves, it will have to take a Dangerous Terrain Test");
-                FX("burst-slime",unit,target);
+                FX("burst-slime",unitHex,targetHex);
                 PlaySound("Squelch");
             }
         }
