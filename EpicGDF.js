@@ -1,5 +1,5 @@
 const Main = (() => {
-    const version = '2026.5.25';
+    const version = '2026.5.26';
     if (!state.Epic) {state.Epic = {}};
 
     const pageInfo = {};
@@ -2522,7 +2522,7 @@ log(weapon)
 
                 if (hp > 0) {
                     defender.token.set("bar1_value",hp);
-                    if (hp <= Math.floor(defender.wounds/2)) {
+                    if (hp <= Math.floor(defender.wounds/2) && totalWounds > 0) {
                         defender.token.set(SM.halfStr,true);
                         if (defender.type !== "Hero") {
                             moraleCheck = true;
