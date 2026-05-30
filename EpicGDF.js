@@ -1077,6 +1077,19 @@ const Main = (() => {
                 if (roll === 1) {wounds++};
             }
             let tip = "Rolls: " + rolls.sort().reverse().toString() + "<br>Takes Wounds on Rolls of 1";
+            saveTypes = [
+                {name: "Regeneration",target: 5, rolls: [],saved: 0,note: ""},
+                {name: "Plaguebound",target: 6, rolls: [],saved: 0,note: ""},
+                {name: "Protected",target: 6, rolls: [],saved: 0,note: ""},
+                {name: "Resistance",target: 6, rolls: [],saved: 0, note: ""},
+            ]
+            if (this.keywords.includes("Plaguebound Boost") || this.Auras().includes("Plaguebound Boost")) {
+                saveTypes[1].target = 5;
+                saveTypes[1].note = " Boost";
+            }
+            let saved = this.Saves(wounds);
+            tip += saveTips();
+            wounds -= saved;
             hp -= wounds;
             if (wounds === 0) {wounds = "No"}; 
             let s = (wounds === 1) ? "":"s";
@@ -1131,6 +1144,23 @@ const Main = (() => {
 
 
     }
+
+    saveTips = function() {
+        let tip = "";
+        _.each(saveTypes,saveType => {
+            if (saveType.rolls.length > 0) {
+                tip += "<br>----------------";
+                let s = (saveType.saved === 1) ? "":"s";
+                let saved = (saveType.saved === 0) ? "No":saveType.saved;
+                tip += "<br>" + saveType.name + saveType.note +" removed " + saved + " Wound" + s;
+                tip += '<br>Rolls: ' + saveType.rolls.sort().reverse().toString() + " vs. " + saveType.target + "+";
+            }
+        })
+        return tip;
+    }
+
+
+
 
 
 
@@ -1741,7 +1771,7 @@ const Main = (() => {
                 unit.token.set({
                     layer: 'foreground',
                     aura1_color: "#ffffff",
-                    aura1_radius: 2,
+                    aura1_radius: .5,
 
                 })
             }
@@ -1845,18 +1875,15 @@ log(unit.name)
         PrintCard();
     }
 
-/////
     const ObjectiveCheck = (objective) => {
 log("Objective Check");
 log(objective.name)
         let factions = [];
         let objHex = HexMap[objective.hexLabel];
         _.each(UnitArray, unit => {
-            if (unit.id !== objective.id) {
-    log(unit.name)
-    log(unit.faction)
-                let distance = objHex.distance(HexMap[unit.hexLabel]);
-    log("D: "  + distance)
+            let unitHex = HexMap[unit.hexLabel];
+            if (unit.type !== "Aircraft" && unit.token.get("tint_color") !== "#ff0000" && unit.id !== objective.id && unitHex.offboard === false) {
+                let distance = objHex.distance(unitHex);
                 if (distance < 2 && factions.includes(unit.faction) === false) {
                     factions.push(unit.faction)
                 }
@@ -2358,11 +2385,10 @@ log(weapon)
                 if (ignoreRegen && (defender.keywords.includes("Regeneration") || defender.Auras().includes("Regeneration"))) {
                     saveInfo.saveTip += "<br>Regeneration ignored due to " + ignoreRegen;
                 }
-                let pbE = "",resE = "";
                 saveTypes = [
-                    {name: "Regeneration",target: 5, rolls: [],saved: 0},
+                    {name: "Regeneration",target: 5, rolls: [],saved: 0,note: ""},
                     {name: "Plaguebound",target: 6, rolls: [],saved: 0,note: ""},
-                    {name: "Protected",target: 6, rolls: [],saved: 0},
+                    {name: "Protected",target: 6, rolls: [],saved: 0,note: ""},
                     {name: "Resistance",target: 6, rolls: [],saved: 0, note: ""},
                 ]
                 if (defender.keywords.includes("Plaguebound Boost") || defender.Auras().includes("Plaguebound Boost")) {
@@ -2454,45 +2480,12 @@ log(weapon)
                     saveTip += "<br>Slam added " + slam + " Wound" + s;
                 }
 
-
-
-
                 //display results, adjust hp of defender
                 finalTip = savePass.length + " Saves: " + savePass.sort().reverse().toString();
                 finalTip += '<br>' + saveFail.length + " Failed: " + saveFail.sort().reverse().toString();
                 finalTip += "<br>vs. Target: " + Math.min(6,Math.max(2,saveInfo.saveTarget)) + "+";
 
-//////
-
-                if (regenRolls.length > 0) {
-                    finalTip += "<br>----------------";
-                    s = (regen === 1) ? "":"s";
-                    regen = (regen === 0) ? "No":regen;
-                    finalTip += "<br>Regeneration removed " + regen + " Wound" + s;
-                    finalTip += '<br>Rolls: ' + regenRolls.sort().reverse().toString() + " vs. " + regenTarget + "+";
-                }
-                if (pbRolls.length > 0) {
-                    finalTip += "<br>----------------";
-                    s = (plaguebound === 1) ? "":"s";
-                    plaguebound = (plaguebound === 0) ? "No":plaguebound;                    
-                    finalTip += "<br>Plaguebound" + pbE +" removed " + plaguebound + " Wound" + s;
-                    finalTip += '<br>Rolls: ' + pbRolls.sort().reverse().toString() + " vs. " + pbTarget + "+";
-                }
-                if (protRolls.length > 0) {
-                    finalTip += "<br>----------------";
-                    s = (protected === 1) ? "":"s";
-                    protected = (protected === 0) ? "No":protected;
-                    finalTip += "<br>Protected stopped " + protected + " Wound" + s;
-                    finalTip += '<br>Rolls: ' + protRolls.sort().reverse().toString() + " vs. " + protTarget + "+";
-
-                }
-                if (resistRolls.length > 0) {
-                    finalTip += "<br>----------------";
-                    s = (resist === 1) ? "":"s";
-                    resist = (resist === 0) ? "No":resist;
-                    finalTip += "<br>Resistance" + resE + " stopped " + resist + " Wound" + s;
-                    finalTip += '<br>Rolls: ' + resistRolls.sort().reverse().toString() + " vs. " + resistTarget + "+";
-                }
+                finalTip += saveTips();
                 finalTip += "<br>----------------";
                 finalTip += saveTip;
 
