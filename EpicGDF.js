@@ -3717,9 +3717,9 @@ log(playerID);
                 if (losResult.distance > range) {
                     outputCard.body.push("[#FF0000]" + weapon.name + " - not in Range[/#]");
                 } else if (losResult.los === false && weapon.keywords.includes("Indirect")) {
-                    outputCard.body.push(weapon.name + " - Indirect and In Range");
+                    outputCard.body.push("[#0000ff]" + weapon.name + " - Indirect and In Range[/#]");
                 } else {
-                    outputCard.body.push(weapon.name + " - In LOS and In Range");
+                    outputCard.body.push("[#0000ff]" + weapon.name + " - In LOS and In Range[/#]");
                 }
             }
         })
