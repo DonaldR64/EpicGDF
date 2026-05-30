@@ -72,6 +72,7 @@ const Main = (() => {
     }
 
     let UnitArray = {};
+    let saveTypes = [];
 
     const LargeUnits = ["Vehicle/Monster","Artillery","Titan"]
 
@@ -1100,6 +1101,30 @@ const Main = (() => {
             }
         }
 
+
+
+        Saves(wounds,ignoreRegen) {
+            let auras = this.Auras();
+            let saved = 0;
+            for (let i=0;i<wounds;i++) {
+                typeLoop:
+                for (let t=0;t<saveTypes.length;t++) {
+                    let type = saveTypes[t];
+                    let name = type.name;
+                    if (name === "Regeneration" && ignoreRegen) {continue};
+                    if (this.keywords.includes(name) || auras.includes(name)) {
+                        let roll = randomInteger(6);
+                        saveTypes[t].rolls.push(roll);
+                        if (roll >= type.target) {
+                            saveTypes[t].saved++;
+                            saved++;
+                            break typeLoop; //next wound
+                        }
+                    }
+                }
+            }
+            return saved;
+        }
 
 
 
@@ -2323,9 +2348,6 @@ log(weapon)
                 let saveFail = [];
                 let bane = 0, shred = 0, slam = 0, rending = 0;
                 let deadlyWeapon = false, deadlyNum = 1;
-                let regen = 0,plaguebound = 0,protected = 0,resist = 0;
-                let regenRolls = [],pbRolls = [],protRolls = [],resistRolls = [];
-                let regenTarget = 5,pbTarget = 6,protTarget = 6,resistTarget = 6;
                 let ignoreRegenList = ["Bane","Butcher","Rending","Unstoppable"];
                 let ignoreRegen = ignoreRegenList.find((e) => weapon.keywords.includes(e));
 
@@ -2337,7 +2359,20 @@ log(weapon)
                     saveInfo.saveTip += "<br>Regeneration ignored due to " + ignoreRegen;
                 }
                 let pbE = "",resE = "";
-
+                saveTypes = [
+                    {name: "Regeneration",target: 5, rolls: [],saved: 0},
+                    {name: "Plaguebound",target: 6, rolls: [],saved: 0,note: ""},
+                    {name: "Protected",target: 6, rolls: [],saved: 0},
+                    {name: "Resistance",target: 6, rolls: [],saved: 0, note: ""},
+                ]
+                if (defender.keywords.includes("Plaguebound Boost") || defender.Auras().includes("Plaguebound Boost")) {
+                    saveTypes[1].target = 5;
+                    saveTypes[1].note = " Boost";
+                }
+                if (weapon.type === "Spell") {
+                    saveTypes[3].target = 2;
+                    saveTypes[3].note = " vs. Spell";
+                }
 
                 do {
                     let wounds = 0;
@@ -2385,57 +2420,9 @@ log(weapon)
                             }
                         }
 
-                        //regen and other 'saves' on wounds
-                        if ((defender.keywords.includes("Regeneration") || defender.Auras().includes("Regeneration")) && !ignoreRegen) {
-                            for (let r=0;r<wounds;r++) {
-                                let regenRoll = randomInteger(6);
-                                regenRolls.push(regenRoll);
-                                if (regenRoll >= regenTarget) {
-                                    regen++;
-                                    wounds--;
-                                }
-                            }
-                        }
-
-                        if (defender.keywords.includes("Plaguebound")) {
-                            if (defender.keywords.includes("Plaguebound Boost") || defender.Auras().includes("Plaguebound Boost")) {
-                                pbTarget = 5;
-                                pbE = " Boost";
-                            }
-                            for (let r=0;r<wounds;r++) {
-                                let pbRoll = randomInteger(6);
-                                pbRolls.push(pbRoll);
-                                if (pbRoll >= pbTarget) {
-                                    plaguebound++;
-                                    wounds--;
-                                }
-                            }
-                        }
-                        if (defender.keywords.includes("Protected")) {
-                            for (let r=0;r<wounds;r++) {
-                                let protRoll = randomInteger(6);
-                                protRolls.push(protRoll);
-                                if (protRoll >= protTarget) {
-                                    protected++;
-                                    wounds--;
-                                }
-                            }
-                        }
-                        if (defender.keywords.includes("Resistance") || defender.Auras().includes("Resistance")) {
-                            if (weapon.type === "Spell") {
-                                resistTarget = 2
-                                resE = " vs Spells"
-                            };
-                            for (let r=0;r<wounds;r++) {
-                                let resRoll = randomInteger(6);
-                                resistRolls.push(resRoll);
-                                if (resRoll >= resTarget) {
-                                    resist++;
-                                    wounds--;
-                                }
-                            }
-                        }
-
+                        //for each wound, check regen etc
+                        saved = defender.Saves(wounds,ignoreRegen);
+                        wounds -= saved;
                         totalWounds += wounds;
                         hp -= wounds;
 
@@ -2474,6 +2461,8 @@ log(weapon)
                 finalTip = savePass.length + " Saves: " + savePass.sort().reverse().toString();
                 finalTip += '<br>' + saveFail.length + " Failed: " + saveFail.sort().reverse().toString();
                 finalTip += "<br>vs. Target: " + Math.min(6,Math.max(2,saveInfo.saveTarget)) + "+";
+
+//////
 
                 if (regenRolls.length > 0) {
                     finalTip += "<br>----------------";
