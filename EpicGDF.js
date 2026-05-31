@@ -3706,8 +3706,8 @@ log(playerID);
             sendChat("","Not valid target");
             return;
         }
-
-        let targetHex = HexMap[target.label];
+        let shooterHex = HexMap[shooter.hexLabel]
+        let targetHex = HexMap[target.hexLabel];
 
 
         SetupCard(shooter.name,"LOS",shooter.faction);
@@ -3730,23 +3730,49 @@ log(playerID);
             }
         }
         outputCard.body.push("[hr]");
+        let weaponWith = false,weaponWithout = false;
+
         _.each(shooter.weapons,weapon => {
-            let range = (target.type === "Aircraft" && weapon.keywords.includes("Unstoppable") === false) ? weapon.range - 6:weapon.range;   
-            if (shooter.keywords.includes("Increased Shooting Range") || shooter.Auras().includes("Increased Shooting Range")) {
-                range += 3;
-            }
-            if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
-                outputCard.body.push("[#FF0000]" + weapon.name + " - no LOS[/#]");
-            } else {
-                if (losResult.distance > range) {
-                    outputCard.body.push("[#FF0000]" + weapon.name + " - not in Range[/#]");
-                } else if (losResult.los === false && weapon.keywords.includes("Indirect")) {
-                    outputCard.body.push("[#0000ff]" + weapon.name + " - Indirect and In Range[/#]");
+            if (weapon.type !== "CCW") {
+                let range = (target.type === "Aircraft" && weapon.keywords.includes("Unstoppable") === false) ? weapon.range - 6:weapon.range;   
+                if (shooter.keywords.includes("Increased Shooting Range") || shooter.Auras().includes("Increased Shooting Range")) {
+                    range += 3;
+                }
+                if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
+                    outputCard.body.push("[#FF0000]" + weapon.name + " - no LOS[/#]");
+                    weaponWithout = true;
                 } else {
-                    outputCard.body.push("[#0000ff]" + weapon.name + " - In LOS and In Range[/#]");
+                    if (losResult.distance > range) {
+                        outputCard.body.push("[#FF0000]" + weapon.name + " - not in Range[/#]");
+                        weaponWithout = true;
+                    } else if (losResult.los === false && weapon.keywords.includes("Indirect")) {
+                        outputCard.body.push("[#0000ff]" + weapon.name + " - Indirect and In Range[/#]");
+                        weaponWith = true;
+                    } else {
+                        outputCard.body.push("[#0000ff]" + weapon.name + " - In LOS and In Range[/#]");
+                        weaponWith = true;
+                    }
                 }
             }
         })
+        let pt1 = [shooterHex.center.x,shooterHex.center.y];
+        let pt2 = [targetHex.center.x,shooterHex.center.y];
+        if (losResult.blockedHexLabel) {
+            pt2 = [HexMap[blockedHexLabel].center.x,HexMap[blockedHexLabel].center.y];
+        }
+        if (weaponWith === true && weaponWithout === false) {
+            //green line
+        } else if (weaponWith === true && weaponWithout === true) {
+            //blue line
+        } else if (weaponWith === false && weaponWithout === false) {
+        
+
+
+
+
+        }
+
+
 
 
 
@@ -3797,6 +3823,7 @@ log(playerID);
         let los = [true,true];
         let interCover = [false,false];
         let losReason = ["",""];
+        let blockedHexLabel;
         for (let side=0;side<2;side++) {
             for (let i=0;i<len;i++) {
                 let interHex = HexMap[labels[side][i]];
@@ -3808,6 +3835,7 @@ log(playerID);
                     if (interHex.blockLOS === true && i<(len-1)) {
                         los[side] = false;
                         losReason[side] = interHex.terrain;
+                        blockedHexLabel = interHex.label;
                         break;
                     }
                     //if there a unit in the hex
@@ -3816,6 +3844,7 @@ log(playerID);
                         if (u2.type !== "Objective" && u2.type !== "Aircraft") {
                             los[side] = false;
                             losReason[side] = u2.name;
+                            blockedHexLabel = interHex.label;
                             break;
                         }
                     }
@@ -3867,6 +3896,7 @@ log(playerID);
             hexCover: hexCover,
             interCover: interCoverFinal,
             building: targetHex.building,
+            blockedHexLabel = blockedHexLabel,
             notes: notes,
         }
 
