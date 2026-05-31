@@ -935,7 +935,7 @@ const Main = (() => {
 
             SetupCard(this.name,"Morale",this.faction);
 
-            outputCard.body.push("Morale Roll: " + DisplayDice(moraleRoll,this.faction,24) + "vs. " + target + "+");
+            outputCard.body.push("Moraleoll: " + DisplayDice(moraleRoll,this.faction,24) + "vs. " + target + "+");
             outputCard.body.push("[hr]");
 
             if (extra.length > 0) {
@@ -3400,7 +3400,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             }
             let auraShape = true;
             let ds = false;
-            if (unit.type === "Hero") {
+            if (unit.type === "Hero" || unit.type === "Objective") {
                 let name = HeroNames(unit);
                 unit.name = name;
                 unit.token.set("name",name);
