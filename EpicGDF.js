@@ -174,7 +174,7 @@ const Main = (() => {
         TH1: "status_Red-01::2006626", //+1 TH
         speedFeat: "status_Fast-or-Haste::2006485",
         evade: "status_Disadvantage-or-Down::2006464",
-
+        laststand: "status_radioactive",
     }
 
     const TT = {
@@ -877,12 +877,11 @@ const Main = (() => {
 
             let auras = this.Auras();
             let moraleRoll = randomInteger(6);
-            let shaken = false;
+            let shaken = (this.token.get("tint_color") === "#ff0000") ? true:false;
 
-            if (this.token.get("tint_color") === "#ff0000") {
+            if (this.token.get(SM.laststand)) {
                 target++;
-                tip += "<br>Shaken -1";
-                shaken = true;
+                tip += "<br>Last Stand -1";
             }
             if (this.keywords.includes("Hive Bond") || auras.includes("Hive Bond")) {
                 if (this.keywords.includes("Hive Bond Boost") || auras.includes("Hive Bond Boost")) {
@@ -1934,9 +1933,9 @@ log(c)
                 weaponAP += 4;
                 apTip += "<br>Tear +4 AP";
             }
-            if (defender.token.get("tint_color") === "#ff0000") {
+            if (defender.token.get(SM.laststand)) {
                 defense++;
-                defenseTip += "<br>-1 Defense as Shaken";
+                defenseTip += "<br>-1 Defense due to Last Stand";
             }
 
 
@@ -2061,9 +2060,9 @@ log(c)
                 needed = 2;
                 neededTip = "<br>Reliable: 2+";
             }
-            if (attacker.token.get("tint_color") === "#ff0000") {
+            if (attacker.token.get(SM.laststand)) {
                 needed++;
-                neededTip += "<br>Shaken -1";
+                neededTip += "<br>Last Stand -1";
             }
 
             let blast = weapon.keywords.find(key => key.includes("Blast")) || "0";
@@ -2910,12 +2909,15 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             unit.token.set(SM.speedFeat,false);
             unit.SetTT2("Speed Feat Used");
         }
-
-        if (shaken === true && unit.type !== "Aircraft") {
-            outputCard.body.push("The Unit is Shaken and Moves at 1/2 Speed");
-            move = Math.round(move/2);
-            charge = Math.round(charge/2);
-            rush = Math.round(rush/2);
+        if (shaken === true && order !== "Rally") {
+            lastStand = true;
+            outputCard.body.push("The Unit is taking a Last Stand!");
+            if (unit.type !== "Aircraft") {
+                outputCard.body.push("It Moves at 1/2 Speed");
+                move = Math.round(move/2);
+                charge = Math.round(charge/2);
+                rush = Math.round(rush/2);
+            }
         }
 
         if (addBreak === true) {
@@ -3036,6 +3038,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 }
                 unit.token.set("tint_color","transparent");
                 unit.token.set(SM.evade,true);
+                unit.token.set(SM.laststand,false);
                 break;
 
             case 'Overwatch':
@@ -3978,6 +3981,10 @@ log(playerID);
                     toBack(unit.token);
                 }
             }
+
+            if (unit.name.includes("Zombies")) {
+                PlaySound("Zombies");
+            } 
             PlaySound(unit.moveSound);
         }
 
