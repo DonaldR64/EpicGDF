@@ -2640,7 +2640,7 @@ log(weapon)
             if (weapon.name === "Impact" && attacker.token.get(SM.fatigue) === true) {
                 notE = "Fatigue limits Impact";
             }
-            if (attacker.id !== state.Epic.activeID && combatType !== "Melee") {
+            if (attacker.id !== state.Epic.activeID && combatType !== "Melee" && attacker.token.get("aura1_color") !== "#ff00ff") {
                 notE = "Can only fire Ranged Weapons if Active Unit";
             } 
             if (weapon.type === "CCW" && losResult.distance > 1) {
