@@ -2189,7 +2189,7 @@ log(c)
                         }
                     }
                 }
-                if (attacker.order === "Overwatch") {
+                if (attacker.token.get("aura1_color") === "#ff00ff") {
                     needed++;
                     neededTip += "<br>Overwatch -1 to Hit";
                 }
@@ -2714,6 +2714,7 @@ log(weapon)
         if (combatType === "Melee") {
             attacker.token.set(SM.fatigue,true);
         }
+        attacker.token.set("aura1_color","transparent");
 
         attacker.Rotate(defenderHex);
 
@@ -3035,7 +3036,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
 
             case 'Overwatch':
                 outputCard.body.push("Unit is now on Overwatch until its next activation");
-                unit.token.set("tint_color","#ff00ff");
+                unit.token.set("aura1_color","#ff00ff");
                 break;
         }
 
