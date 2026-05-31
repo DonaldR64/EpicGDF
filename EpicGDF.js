@@ -935,7 +935,7 @@ const Main = (() => {
 
             SetupCard(this.name,"Morale",this.faction);
 
-            outputCard.body.push("Moraleoll: " + DisplayDice(moraleRoll,this.faction,24) + "vs. " + target + "+");
+            outputCard.body.push("Morale Roll: " + DisplayDice(moraleRoll,this.faction,24) + "vs. " + target + "+");
             outputCard.body.push("[hr]");
 
             if (extra.length > 0) {
@@ -3899,7 +3899,7 @@ log(playerID);
                     toBack(unit.token);
                 }
             }
-
+            
 
 
 
