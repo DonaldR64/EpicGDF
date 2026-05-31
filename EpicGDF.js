@@ -3755,10 +3755,10 @@ log(playerID);
                 }
             }
         })
-        let pt1 = [shooterHex.center.x,shooterHex.center.y];
-        let pt2 = [targetHex.center.x,shooterHex.center.y];
+        let pt1 = [shooterHex.centre.x,shooterHex.centre.y];
+        let pt2 = [targetHex.centre.x,targetHex.centre.y];
         if (losResult.blockedHexLabel) {
-            pt2 = [HexMap[losResult.blockedHexLabel].center.x,HexMap[lostResult.blockedHexLabel].center.y];
+            pt2 = [HexMap[losResult.blockedHexLabel].centre.x,HexMap[lostResult.blockedHexLabel].centre.y];
         }
         let set = [pt1,pt2];
         let colour = "#000000";
@@ -3767,6 +3767,7 @@ log(playerID);
         } else if (weaponWith === true && weaponWithout === true) {
             colour = "#ff0000";
         } 
+        log(set)
         DrawLine(set,colour,"LOS");
         PrintCard();
     }
@@ -3885,7 +3886,7 @@ log(playerID);
             hexCover: hexCover,
             interCover: interCoverFinal,
             building: targetHex.building,
-            blockedHexLabel = blockedHexLabel,
+            blockedHexLabel: blockedHexLabel,
             notes: notes,
         }
 
@@ -3921,6 +3922,7 @@ log(playerID);
         let newLabel = new Point(tok.get("left"),tok.get("top")).toCube().label();
         let prevLabel = new Point(prev.left,prev.top).toCube().label();
 
+        RemoveLines(["LOS"]);
 
 
         if (newLabel !== prevLabel && unit) {
@@ -4002,7 +4004,7 @@ log(playerID);
         }
         let args = msg.content.split(";");
         log(args);
-    
+        RemoveLines(["LOS"]);
         switch(args[0]) {
             case '!Dump':
                 log(HexMap)
