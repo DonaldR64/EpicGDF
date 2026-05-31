@@ -2232,7 +2232,6 @@ log(weapon)
                     neededTip += "<br>Unit Damaged -1 to Hit";
                 }
             }
-            let attDisplay = attacks;
                     /*
                     needs fixing
                                 if (weapon.name === "Impact" && defender.keywords.includes("Counter")) {
@@ -2240,6 +2239,8 @@ log(weapon)
                                 }
                     */
 
+
+            attDisplay = attacks; //as attacks is deprecated
             needed = Math.min(6,Math.max(2,needed)); //1 is always a miss, 6 a hit
 
             do {
@@ -2368,17 +2369,16 @@ log(weapon)
             let weaponOut;
             if (hits > 0) {
                 s = (hits === 1) ? "":"s";
-                tip = '[' + hits + '](#" class="showtip" title="' + finalTip + ')';
-                weaponOut = 'hit ' + tip + " time" + s;
+                weaponOut = '[' + hits + '](#" class="showtip" title="' + finalTip + ')';
             } else {
-                weaponOut = '[Missed](#" class="showtip" title="' + finalTip + ')';
+                s = "s";
+                weaponOut = '[Zero](#" class="showtip" title="' + finalTip + ')';
             }
             
-            let attWord = (combatType === "Ranged") ? " shot":" strike";
-            s = (attDisplay === 1) ? "":"s";
-            outputCard.body.push(attacker.name + " takes " + attDisplay + attWord + s)
-            outputCard.body.push("with " + weapon.name);
-            outputCard.body.push(defender.name + " is " + weaponOut);
+            let s2 = (weapon.number === 1) ? "s ":" ";
+            let attWord = ((combatType === "Ranged") ? " fire":" strike") + s2;
+            outputCard.body.push(weapon.name + attWord + attDisplay + " times");
+            outputCard.body.push(weaponOut + " hit" + s + " are scored");
 
             if (weapon.keywords.includes("Limited")) {
                 let lids = state.Epic.limitedMacros[attacker.id];
@@ -2528,7 +2528,7 @@ log(weapon)
                 if (d===1) {
                     outputCard.body.push("[hr]");
                 }
-                outputCard.body.push(defender.name + ' takes ' + saveOut + " Wounds");
+                outputCard.body.push(defender.name + ' suffers ' + saveOut + " Wounds");
 
                 if (hp > 0) {
                     defender.token.set("bar1_value",hp);
@@ -3758,7 +3758,7 @@ log(playerID);
         let pt1 = [shooterHex.centre.x,shooterHex.centre.y];
         let pt2 = [targetHex.centre.x,targetHex.centre.y];
         if (losResult.blockedHexLabel) {
-            pt2 = [HexMap[losResult.blockedHexLabel].centre.x,HexMap[lostResult.blockedHexLabel].centre.y];
+            pt2 = [HexMap[losResult.blockedHexLabel].centre.x,HexMap[losResult.blockedHexLabel].centre.y];
         }
         let set = [pt1,pt2];
         let colour = "#000000";
@@ -3803,6 +3803,7 @@ log(playerID);
 
         let finalLOS = true;
         let interCoverFinal = false;
+        let finalBlockedHexLabel;
         let hexCover = false;
         let finalLOSReason = "";
  
@@ -3840,8 +3841,8 @@ log(playerID);
                     }
                 }
                 //does edge at end give cover, and does so unless tall unit
-                if (i === (len-1) && target.keywords.includes("Tall") === false) {
-                    let dir = HexMap[labels[side][i-1]].cube.whatDirection(interHex.cube);
+                if (len > 1 && i === (len-1) && target.keywords.includes("Tall") === false) {
+                    let dir = HexMap[labels[side][i-1]].cube.whatDirection(interHex.cube)
                     let edge = HexMap[labels[side][i-1]].edges[dir];
                     if (edge !== "Open") {
                         interCover[side] = true;
@@ -3853,6 +3854,7 @@ log(playerID);
         if (los[0] === false && los[1] === false) {
             finalLOS = false;
             finalLOSReason = losReason[0];
+            finalBlockedHexLabel = blockedHexLabel;
             if (losReason[0] !== losReason[1]) {
                 finalLOSReason += " / " + losReason[1];
             }
@@ -3886,7 +3888,7 @@ log(playerID);
             hexCover: hexCover,
             interCover: interCoverFinal,
             building: targetHex.building,
-            blockedHexLabel: blockedHexLabel,
+            blockedHexLabel: finalBlockedHexLabel,
             notes: notes,
         }
 
