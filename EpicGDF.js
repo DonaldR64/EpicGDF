@@ -3978,10 +3978,7 @@ log(playerID);
                     toBack(unit.token);
                 }
             }
-
             PlaySound(unit.moveSound);
-
-
         }
 
 
