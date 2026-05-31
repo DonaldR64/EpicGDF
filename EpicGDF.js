@@ -1637,7 +1637,7 @@ const Main = (() => {
                 mapEdge = Math.round(token.get("left") + (token.get("width")/2));
                 return;
             }
-
+            name = name.split("//")[0].trim();
             let terrain = TerrainInfo[name];
             if (terrain) {
                 let centre = new Point(token.get("left"),token.get('top'));
