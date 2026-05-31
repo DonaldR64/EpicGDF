@@ -3758,27 +3758,16 @@ log(playerID);
         let pt1 = [shooterHex.center.x,shooterHex.center.y];
         let pt2 = [targetHex.center.x,shooterHex.center.y];
         if (losResult.blockedHexLabel) {
-            pt2 = [HexMap[blockedHexLabel].center.x,HexMap[blockedHexLabel].center.y];
+            pt2 = [HexMap[losResult.blockedHexLabel].center.x,HexMap[lostResult.blockedHexLabel].center.y];
         }
+        let set = [pt1,pt2];
+        let colour = "#000000";
         if (weaponWith === true && weaponWithout === false) {
-            //green line
+            colour = "#00ff00";
         } else if (weaponWith === true && weaponWithout === true) {
-            //blue line
-        } else if (weaponWith === false && weaponWithout === false) {
-        
-
-
-
-
-        }
-
-
-
-
-
-
-
-        
+            colour = "#ff0000";
+        } 
+        DrawLine(set,colour,"LOS");
         PrintCard();
     }
 
