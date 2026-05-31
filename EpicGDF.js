@@ -3979,7 +3979,7 @@ log(playerID);
                 }
             }
 
-
+            PlaySound(unit.moveSound);
 
 
         }
