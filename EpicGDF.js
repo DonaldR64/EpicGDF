@@ -2006,10 +2006,6 @@ log(c)
                     defense--;
                     defenseTip += "<br>Shielded +1 Defense";
                 }
-                if (defender.token.get(SM.evade)) {
-                    defense--;
-                    defenseTip += "<br>Evading +1 Defense";
-                }
 
                 if (weapon.ap > 0 && (defender.keywords.includes("Fortified") || defender.Auras().includes("Fortified"))) {
                     apTip += "<br>Fortified -1 to AP";
@@ -2102,7 +2098,7 @@ log(c)
             }
             if (attacker.order === "Hold" && combatType === "Ranged" && losResult.distance < 6) {
                 needed -= 1;
-                neededTip += "Hold/Focused Fire +1 to Hit";
+                neededTip += "<br>Focused Fire +1 to Hit";
             }
 
 
@@ -2207,7 +2203,10 @@ log(c)
                     needed++;
                     neededTip += "<br>Bad Shot -1 to Hit";
                 }
-
+                if (defender.token.get(SM.evade)) {
+                    needed++;
+                    neededTip += "<br>Hunkering Down -1 to Hit";
+                }
 
 
             }
