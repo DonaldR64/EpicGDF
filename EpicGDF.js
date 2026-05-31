@@ -3795,7 +3795,7 @@ log(playerID);
                 let interHex = HexMap[labels[side][i]];
                 let pt3 = new Point(i+1,0);
                 let pt4 = new Point(i+1,(interHex.elevation + interHex.height));
-                let line1 = lineLine(pt1,pt2,pt3,pt4);
+                let line1 = lineLine(pt1,pt2,pt3,pt4); //intersection
                 if (line1) {
                     //does hex block LOS (unless is targetHex)
                     if (interHex.blockLOS === true && i<(len-1)) {
@@ -3823,11 +3823,6 @@ log(playerID);
                 }
             }
         }
-
-
-
-
-
 
         if (los[0] === false && los[1] === false) {
             finalLOS = false;
