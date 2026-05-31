@@ -182,7 +182,7 @@ const Keywords = {
 
     "Takedown": "This allows Heroes to be targetted independantly of units. Takedown attacks should be done before other attacks",
 
-    "Tall": "This unit is tall, and can potentially see over/fire over some terrain",
+    "Tall": "This unit is as tall as many trees, and can potentially see over/fire over some terrain",
 
     "Targeting Visor Boost": "Shooting at Enemies gets +1 to Hit",
     "Targeting Visor Boost Aura": "[Aura] - Shooting at Enemies gets +1 to Hit",
