@@ -172,7 +172,9 @@ const Main = (() => {
         dangerous: "status_Tentacle::7757514",
         AP1: "status_Green-01::2006603", //+1 AP
         TH1: "status_Red-01::2006626", //+1 TH
-        speedFeat: "status_Fast-or-Haste::2006485"
+        speedFeat: "status_Fast-or-Haste::2006485",
+        evade: "status_Disadvantage-or-Down::2006464",
+
     }
 
     const TT = {
@@ -847,7 +849,7 @@ const Main = (() => {
             this.moved = false;
             this.hexLabel = label;
             this.prevHexLabel = label;
-
+            this.order = "";
             this.token = token;
 
             UnitArray[id] = this;
@@ -1287,9 +1289,9 @@ const Main = (() => {
         }
 
         //activation 
-        let orders = ";?{Order|Hold|Advance|Charge/Rush|Rally}";
+        let orders = ";?{Order|Hold|Advance|Charge/Rush|Rally|Overwatch}";
         if (unit.type === "Aircraft") {orders = ";?{Order|Advance|Rally}"};
-        if (unit.keywords.includes("Artillery") || unit.keywords.includes("Immobile")) {orders = ";Hold|Rally"}
+        if (unit.keywords.includes("Artillery") || unit.keywords.includes("Immobile")) {orders = ";Hold|Rally|Overwatch"}
 
         action = "!Activate;@{selected|token_id}" + orders;
         AddAbility("Activate",action,unit.charID);
@@ -1921,7 +1923,10 @@ log(c)
                 weaponAP += 4;
                 apTip += "<br>Tear +4 AP";
             }
-
+            if (defender.token.get("tint_color") === "#ff0000") {
+                defense++;
+                defenseTip += "<br>-1 Defense as Shaken";
+            }
 
 
             if ((attacker.keywords.includes("Ranged Slayer") || attackerAuras.includes("Ranged Slayer")) && combatType === "Ranged" && defender.toughness > 2) {
@@ -1994,6 +1999,10 @@ log(c)
                 if (defender.keywords.includes("Shielded") && weapon.type !== "Spell") {
                     defense--;
                     defenseTip += "<br>Shielded +1 Defense";
+                }
+                if (defender.token.get(SM.evade)) {
+                    defense--;
+                    defenseTip += "<br>Evading +1 Defense";
                 }
 
                 if (weapon.ap > 0 && (defender.keywords.includes("Fortified") || defender.Auras().includes("Fortified"))) {
@@ -2071,7 +2080,7 @@ log(c)
                         if (weapon.keywords[i].includes(ignoreCover[j])) {
                             cover = false;
                             neededTip += "<br>" + ignoreCover[j] + " ignores Cover";
-                        }
+                        }  
                     }
                 }  
             }
@@ -2085,6 +2094,12 @@ log(c)
                 needed -= 1;
                 neededTip += "<br>Unpredictable +1 to Hit";
             }
+            if (attacker.order === "Hold" && combatType === "Ranged" && losResult.distance < 6) {
+                needed -= 1;
+                neededTip += "Hold/Focused Fire +1 to Hit";
+            }
+
+
             //versatile attack +1 to hit
             let vathFlag = false;
             if (attackerTT.includes(TT.vATH)) {
@@ -2110,8 +2125,6 @@ log(c)
                 needed -= 1;
                 neededTip += "<br>Precision Charge +1 to Hit";
             }
-
-
 
             if (attacker.keywords.includes("Precise")) {
                 needed -= 1;
@@ -2170,7 +2183,10 @@ log(c)
                         }
                     }
                 }
-
+                if (attacker.order === "Overwatch") {
+                    needed++;
+                    neededTip += "<br>Overwatch -1 to Hit";
+                }
 
                 if (attacker.keywords.includes("Evasive")) {
                     needed++;
@@ -2658,9 +2674,6 @@ log(weapon)
 
         let meleeWounds = 0;
         let moraleCheck = false;
-        if (defender.type !== "Hero") {
-            moraleCheck = defender.token.get(SM.halfStr);
-        }
 
         _.each(weaponArray,weapon => {
             if (defendersAliveFlag.some((e) => e === true)) {
@@ -2884,8 +2897,12 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             unit.SetTT2("Speed Feat Used");
         }
 
-
-
+        if (shaken === true && unit.type !== "Aircraft") {
+            outputCard.body.push("The Unit is Shaken and Moves at 1/2 Speed");
+            move = Math.round(move/2);
+            charge = Math.round(charge/2);
+            rush = Math.round(rush/2);
+        }
 
         if (addBreak === true) {
             outputCard.body.push("[hr]");
@@ -2998,17 +3015,23 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 break;
             case 'Rally':
                 if (unit.type !== "Aircraft") {
-                    outputCard.body.push("Unit Stays in Hex and Rallies");
+                    outputCard.body.push("Unit Stays in Hex and Rallies, Hunkering Down against Fire");
                 } else {
                     outputCard.body.push("Aircraft moves " + move + " Hexes");
-                    outputCard.body.push("As the Aircraft is Rallying, it may not Fire");
+                    outputCard.body.push("As the Aircraft is Rallying, it may not Fire, but is Evading as it moves");
                 }
                 unit.token.set("tint_color","transparent");
+                unit.token.set(SM.evade,true);
+                break;
+
+            case 'Overwatch':
+                outputCard.body.push("Unit is now on Overwatch until its next activation");
+                unit.token.set("tint_color","#ff00ff");
                 break;
         }
 
 
-        if (unit.keywords.includes("Versatile Attack") || unit.keywords.includes("Versatile Attack Aura")) {
+        if ((unit.keywords.includes("Versatile Attack") || unit.keywords.includes("Versatile Attack Aura")) && order !== "Charge/Rush" && order !== "Rally") {
             let aur = (unit.keywords.includes("Versatile Attack Aura")) ? " Aura":"";
             outputCard.body.push("Unit has Versatile Attack" + aur);
             let buttons = [];
@@ -3037,7 +3060,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             outputCard.body.push(InlineButtons(buttons));
         }
 
-        
+        unit.order = order;
 
 
 
@@ -3109,6 +3132,9 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             }
         }
 
+        if (unit.token.get("tint_color") === "#ff0000") {
+            errorMsg.push("Unit is Shaken");
+        }
 
         let flavour = unit.flavours[specialName] || specialName;
         SetupCard(unit.name,flavour,unit.faction);
@@ -3762,7 +3788,7 @@ log(playerID);
                 //if there a unit in the hex
                 if (interHex.tokenIDs.length > 0 && interHex.label !== targetHex.label) {
                     let u2 = UnitArray[interHex.tokenIDs[0]];
-                    if (u2.type !== "Objective") {
+                    if (u2.type !== "Objective" && u2.type !== "Aircraft") {
                         los[side] = false;
                         losReason[side] = u2.name;
                         break;
@@ -3899,7 +3925,7 @@ log(playerID);
                     toBack(unit.token);
                 }
             }
-            
+
 
 
 
