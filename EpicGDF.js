@@ -211,6 +211,8 @@ const Main = (() => {
         "Ruined Building": {name: "Ruined Building", cover: true,building: false, blockLOS: false,height: 0, type: "Difficult"},
         "Ruined Concrete": {name: "Ruined Concrete Building", cover: true,building: false, blockLOS: false, height: 0, type: "Difficult"},
 
+        "Hill 1": {name: "Hill 1", cover: false,building: false, blockLOS: false, height: 1, type: "Hill"},
+        "Hill 2": {name: "Hill 2", cover: false,building: false, blockLOS: false, height: 2, type: "Hill"},
 
 
 
@@ -1626,6 +1628,9 @@ const Main = (() => {
 
 
 
+
+
+
     const AddTerrain = () => {
         //part 1 - add hex terrain
         let tokens = findObjs({_pageid: Campaign().get("playerpageid"),_type: "graphic",_subtype: "token",layer: "map",});
@@ -1637,7 +1642,6 @@ const Main = (() => {
             }
 
             let terrain = TerrainInfo[name];
-            let buildingTypes = ["Wood","Brick","Concrete"];
             if (terrain) {
                 let centre = new Point(token.get("left"),token.get('top'));
                 let centreLabel = centre.toCube().label();
@@ -1660,12 +1664,15 @@ const Main = (() => {
                 if (terrain.blockLOS === true) {
                     hex.blockLOS = true;
                 }
-                hex.terrainHeight = Math.max(hex.terrainHeight,terrain.height);
-                if (terrain.type !== "Open") {
+                if (terrain.type !== "Hill") {
+                    hex.terrainHeight = Math.max(hex.terrainHeight,terrain.height);
+                }
+                if (terrain.type !== "Open" && terrain.type !== "Hill") {
                     hex.type = terrain.type;
                 }
-//elevation later as hill hexes UNDER the other hexes
-
+                if (terrain.type === "Hill") {
+                    hex.elevation = terrain.height;
+                }
 
             }
 
@@ -3757,8 +3764,8 @@ log(playerID);
         let distance = targetHex.cube.distance(shooterHex.cube);
         let shooterHeight = shooterHex.elevation;
         let targetHeight = targetHex.elevation;
-        if (shooter.keywords.includes("Tall")) {shooterHeight += 1};
-        if (target.keywords.includes("Tall")) {targetHeight += 1};
+        if (shooter.keywords.includes("Tall")) {shooterHeight += 2};
+        if (target.keywords.includes("Tall")) {targetHeight += 2};
         if ((shooter.type === "Infantry" || shooter.type === "Hero" || shooter.type === "Light Vehicle/Small Monster") && shooterHex.building === true) {
             shooterHeight += (shooterHex.elevation - 1);
         }
@@ -3794,7 +3801,7 @@ log(playerID);
             for (let i=0;i<len;i++) {
                 let interHex = HexMap[labels[side][i]];
                 let pt3 = new Point(i+1,0);
-                let pt4 = new Point(i+1,(interHex.elevation + interHex.height));
+                let pt4 = new Point(i+1,(interHex.elevation + interHex.terrainHeight));
                 let line1 = lineLine(pt1,pt2,pt3,pt4); //intersection
                 if (line1) {
                     //does hex block LOS (unless is targetHex)
