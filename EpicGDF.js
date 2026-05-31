@@ -166,7 +166,7 @@ const Main = (() => {
 
 
     const SM = {
-        fatigue: "status_brown",
+        fatigue: "status_Unconscious::168879",
         halfStr: "status_Blood::2006465",
         spotter: "status_Bullseye::2006535",
         dangerous: "status_Tentacle::7757514",
@@ -1839,6 +1839,12 @@ log(unit.name)
             if (unit.name.includes("Objective")) {
                 ObjectiveCheck(unit);
             }
+            let markers = ["fatigue","AP1","TH1","speedFeat","evade"]
+            _.each(markers,marker => {
+                unit.token.set(SM[marker],false);
+            })
+
+
 
         }
 
@@ -2705,6 +2711,9 @@ log(weapon)
         _.each(things,thing => {
             attacker.token.set(SM[thing],false);
         })
+        if (combatType === "Melee") {
+            attacker.token.set(SM.fatigue,true);
+        }
 
         attacker.Rotate(defenderHex);
 
