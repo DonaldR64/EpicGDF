@@ -3755,6 +3755,23 @@ log(playerID);
         let shooterHex = HexMap[shooter.hexLabel];
         let targetHex = HexMap[target.hexLabel];
         let distance = targetHex.cube.distance(shooterHex.cube);
+        let shooterHeight = shooterHex.elevation;
+        let targetHeight = targetHex.elevation;
+        if (shooter.keywords.includes("Tall")) {shooterHeight += 1};
+        if (target.keywords.includes("Tall")) {targetHeight += 1};
+        if ((shooter.type === "Infantry" || shooter.type === "Hero" || shooter.type === "Light Vehicle/Small Monster") && shooterHex.building === true) {
+            shooterHeight += (shooterHex.elevation - 1);
+        }
+        if ((target.type === "Infantry" || target.type === "Hero" || target.type === "Light Vehicle/Small Monster") && targetHex.building === true) {
+            targetHeight += (targetHeight.elevation - 1);
+        }
+        let pt1 = new Point(0,shooterHeight);
+        let pt2 = new Point(distance,targetHeight);
+
+        if (shooter.type === "Aircraft" || target.type === "Aircraft") {
+            let result = {los: true,distance: distance,hexCover: false,interCover: false,building: false};
+            return result;
+        }
 
         if ((target.Auras().includes("Ranged Shrouding") || target.keywords.includes("Ranged Shrouding")) && distance > 3) {
             distance += 3;
@@ -3776,37 +3793,41 @@ log(playerID);
         for (let side=0;side<2;side++) {
             for (let i=0;i<len;i++) {
                 let interHex = HexMap[labels[side][i]];
-                let lastHex = shooterHex;
-                if (i>0) {
-                    lastHex = HexMap[labels[side][i-1]];
+                let pt3 = new Point(i+1,0);
+                let pt4 = new Point(i+1,(interHex.elevation + interHex.height));
+                let line1 = lineLine(pt1,pt2,pt3,pt4);
+                if (line1) {
+                    //does hex block LOS (unless is targetHex)
+                    if (interHex.blockLOS === true && i<(len-1)) {
+                        los[side] = false;
+                        losReason[side] = interHex.terrain;
+                        break;
+                    }
+                    //if there a unit in the hex
+                    if (interHex.tokenIDs.length > 0 && interHex.label !== targetHex.label) {
+                        let u2 = UnitArray[interHex.tokenIDs[0]];
+                        if (u2.type !== "Objective" && u2.type !== "Aircraft") {
+                            los[side] = false;
+                            losReason[side] = u2.name;
+                            break;
+                        }
+                    }
                 }
-                //does hex block LOS (unless is targetHex)
-                if (interHex.blockLOS === true && i<(len-1)) {
-                    los[side] = false;
-                    losReason[side] = interHex.terrain;
-                    break;
-                }
-                //does edge at end give cover
-                if (i === (len-1)) {
-                    let dir = lastHex.cube.whatDirection(interHex.cube);
-                    let edge = lastHex.edges[dir];
+                //does edge at end give cover, and does so unless tall unit
+                if (i === (len-1) && target.keywords.includes("Tall") === false) {
+                    let dir = HexMap[labels[side][i-1]].cube.whatDirection(interHex.cube);
+                    let edge = HexMap[labels[side][i-1]].edges[dir];
                     if (edge !== "Open") {
                         interCover[side] = true;
                     }
                 }
-                //if there a unit in the hex
-                if (interHex.tokenIDs.length > 0 && interHex.label !== targetHex.label) {
-                    let u2 = UnitArray[interHex.tokenIDs[0]];
-                    if (u2.type !== "Objective" && u2.type !== "Aircraft") {
-                        los[side] = false;
-                        losReason[side] = u2.name;
-                        break;
-                    }
-                }
-
-
             }
         }
+
+
+
+
+
 
         if (los[0] === false && los[1] === false) {
             finalLOS = false;
