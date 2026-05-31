@@ -763,9 +763,7 @@ const Main = (() => {
             this.wounds = parseInt(aa.wounds) || 1;
             this.models = this.wounds/this.toughness;
             this.type = aa.type || "Objective";
-            this.size = (aa.type === "Titan") ? 2:1;
-
-
+            this.moveSound = aa.movesound;            
 
             let keywords = [];
 
