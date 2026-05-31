@@ -1289,7 +1289,7 @@ const Main = (() => {
 
         //activation 
         let orders = ";?{Order|Hold|Advance|Charge/Rush|Rally|Overwatch}";
-        if (unit.type === "Aircraft") {orders = ";?{Order|Advance|Rally}"};
+        if (unit.type === "Aircraft") {orders = ";Advance"};
         if (unit.keywords.includes("Artillery") || unit.keywords.includes("Immobile")) {orders = ";Hold|Rally|Overwatch"}
 
         action = "!Activate;@{selected|token_id}" + orders;
@@ -2719,7 +2719,9 @@ log(weapon)
         }
         attacker.token.set("aura1_color","transparent");
 
-        attacker.Rotate(defenderHex);
+        if (attacker.type !== "Aircraft") {
+            attacker.Rotate(defenderHex);
+        }
 
 
 
@@ -2897,6 +2899,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             ignoreDifficult = true;
         }
         if (unit.type === "Aircraft") {
+            if (shaken === true) {order = "Rally"};
             addBreak = true;
             ignoreDifficult = true;
             outputCard.body.push("Unit is an Aircraft and Ignores Units and Terrain");
@@ -3714,7 +3717,7 @@ log(playerID);
         SetupCard(shooter.name,"LOS",shooter.faction);
 
         let losResult = LOS(shooter,target);
-        if (losResult.notes.length > 0) {
+        if (losResult.notes && losResult.notes.length > 0) {
             outputCard.body.push("Ranged Shrouding adds 3 Hexes to Distance");
         }
         outputCard.body.push("Distance: " + losResult.distance + " Hexes");
@@ -3756,6 +3759,7 @@ log(playerID);
                 }
             }
         })
+        
         let pt1 = [shooterHex.centre.x,shooterHex.centre.y];
         let pt2 = [targetHex.centre.x,targetHex.centre.y];
         if (losResult.blockedHexLabel) {
@@ -3763,11 +3767,15 @@ log(playerID);
         }
         let set = [pt1,pt2];
         let colour = "#000000";
+
         if (weaponWith === true && weaponWithout === false) {
             colour = "#00ff00";
         } else if (weaponWith === true && weaponWithout === true) {
             colour = "#ff0000";
         } 
+        if (weaponWith === false && weaponWithout === false) {
+            outputCard.body.push("Only CCW Weapons");
+        }
         log(set)
         DrawLine(set,colour,"LOS");
         PrintCard();
