@@ -211,8 +211,8 @@ const Main = (() => {
         "Ruined Building": {name: "Ruined Building", cover: true,building: false, blockLOS: false,height: 0, type: "Difficult"},
         "Ruined Concrete": {name: "Ruined Concrete Building", cover: true,building: false, blockLOS: false, height: 0, type: "Difficult"},
 
-        "Hill 1": {name: "Hill 1", cover: false,building: false, blockLOS: false, height: 1, type: "Hill"},
-        "Hill 2": {name: "Hill 2", cover: false,building: false, blockLOS: false, height: 2, type: "Hill"},
+        "Hill 1": {name: "Hill 1", cover: false,building: false, blockLOS: false, height: 1, type: "Open"},
+        "Hill 2": {name: "Hill 2", cover: false,building: false, blockLOS: false, height: 2, type: "Open"},
 
 
 
@@ -702,6 +702,7 @@ const Main = (() => {
             this.terrain = "Open";
             this.offboard = false;
             this.cover = false;
+            this.hill = false;
             this.terrainHeight = 0;
             this.blockLOS = false;
             this.building = false;
@@ -1651,9 +1652,11 @@ const Main = (() => {
                     if (name.includes("Building") && hex.terrain.includes("Ruined")) {
                         return;
                     }
+                    hex.terrain += ", " + terrain.name;
+                } else {
+                    hex.terrain = terrain.name;
                 }
 
-                hex.terrain = terrain.name;
                 hex.cover = (hex.cover === false) ? terrain.cover:false;
                 if (terrain.building === true) {
                     hex.building = true;
@@ -1664,11 +1667,12 @@ const Main = (() => {
                 if (terrain.type !== "Hill") {
                     hex.terrainHeight = Math.max(hex.terrainHeight,terrain.height);
                 }
-                if (terrain.type !== "Open" && terrain.type !== "Hill") {
+                if (terrain.type !== "Open") {
                     hex.type = terrain.type;
                 }
-                if (terrain.type === "Hill") {
+                if (terrain.name.includes("Hill")) {
                     hex.elevation = terrain.height;
+                    hex.hill = true;
                 }
 
             }
@@ -1680,11 +1684,11 @@ const Main = (() => {
 
         })
 
-        //part 2 - add hedges and such, defined by paths
+        //part 2 - add hedges and crests, defined by paths
         let paths = findObjs({_pageid: Campaign().get("playerpageid"),_type: "pathv2",layer: "map",});
         _.each(paths,path => {
-            let type = EdgeInfo[path.get("stroke").toLowerCase()];
-            if (type) {
+            let edge = EdgeInfo[path.get("stroke").toLowerCase()];
+            if (edge) {
                 let vertices = translatePoly(path);
                 //work through pairs of vertices
                 for (let i=0;i<(vertices.length -1);i++) {
@@ -1707,12 +1711,34 @@ const Main = (() => {
                         let pt4 = hex2.centre;
                         let intersect = lineLine(pt1,pt2,pt3,pt4);
                         if (intersect) {
-                            hex1.edges[DIRECTIONS[j]] = type;
-                            hex2.edges[DIRECTIONS[k]] = type;
+                            hex1.edges[DIRECTIONS[j]] = edge;
+                            hex2.edges[DIRECTIONS[k]] = edge;
                         }
                     }
                 }
             }
+            if (path.get("stroke").toLowerCase() === "#ffff00") {
+                let vertices = translatePoly(path);
+                for (let i=0;i<(vertices.length -1);i++) {
+                    let pt1 = vertices[i];
+                    let pt2 = vertices[i+1];
+                    let hex1 = HexMap[pt1.label()];
+                    let hex2 = HexMap[pt2.label()];
+                    hex1.elevation += .5;
+                    hex1.terrain += ", Ridgeline";
+                    hex1.cover = true;
+                    let interCubes = hex1.cube.linedraw(hex2.cube);
+                    _.each(interCubes,cube => {
+                        let hex3 = HexMap[cube.label()];
+                        hex3.elevation += .5;
+                        hex3.terrain += ", Ridgeline";
+                        hex3.cover = true;
+                    })
+                }
+            }
+
+
+
         })
     }
      
@@ -3835,6 +3861,15 @@ log(playerID);
                     if (interHex.blockLOS === true && i<(len-1)) {
                         los[side] = false;
                         losReason[side] = interHex.terrain;
+                        blockedHexLabel = interHex.label;
+                        break;
+                    }
+                    if (interHex.hill === true && i<(len-1)) {
+                        los[side] = false;
+                        losReason[side] = "Hill";
+                        if (interHex.terrain.includes("Ridgeline")) {
+                            losReason[side] = "Ridgeline/Hill";
+                        }
                         blockedHexLabel = interHex.label;
                         break;
                     }
