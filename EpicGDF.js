@@ -3853,6 +3853,18 @@ log(playerID);
         for (let side=0;side<2;side++) {
             for (let i=0;i<len;i++) {
                 let interHex = HexMap[labels[side][i]];
+                if (interHex.hill === true) {
+                    if (interHex.elevation > shooterHeight && interHex.elevation > targetHeight) {
+                        los[side] = false;
+                        losReason[side] = "Hill";
+                        if (interHex.terrain.includes("Ridgeline")) {
+                            losReason[side] = "Ridgeline/Hill";
+                        }
+                        blockedHexLabel = interHex.label;
+                        break;
+                    }
+                }
+
                 let pt3 = new Point(i+1,0);
                 let pt4 = new Point(i+1,(interHex.elevation + interHex.terrainHeight));
                 let line1 = lineLine(pt1,pt2,pt3,pt4); //intersection
@@ -3864,15 +3876,7 @@ log(playerID);
                         blockedHexLabel = interHex.label;
                         break;
                     }
-                    if (interHex.hill === true && i<(len-1)) {
-                        los[side] = false;
-                        losReason[side] = "Hill";
-                        if (interHex.terrain.includes("Ridgeline")) {
-                            losReason[side] = "Ridgeline/Hill";
-                        }
-                        blockedHexLabel = interHex.label;
-                        break;
-                    }
+
                     //if there a unit in the hex
                     if (interHex.tokenIDs.length > 0 && interHex.label !== targetHex.label) {
                         let u2 = UnitArray[interHex.tokenIDs[0]];
