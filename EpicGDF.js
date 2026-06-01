@@ -2827,16 +2827,19 @@ log(weapon)
         unit.Morale();
     }
 
-
+  
 
 
     const Activate = (msg) => {
-        let Tag = msg.content.split(";");
+        let Tag = msg.content.split(";"); 
         let id = Tag[1];
         let order = Tag[2];
         let unit = UnitArray[id];
         if (!unit) {return};
         toFront(unit.token);
+        if (unit.type === "Titan") {
+            toFront(unit.token);
+        }
         if (unit.token.get("aura1_color") === "transparent") {
             SetupCard(unit.name,"Change Order ?",unit.faction);
             outputCard.body.push("Unit has Activated already, ?Redo")
@@ -3736,6 +3739,12 @@ log(playerID);
             sendChat("","Not valid target");
             return;
         }
+        if (shooter.id == target.id) {
+            sendChat("","Its selecting shooter as target, may need to Move Shooter to Back");
+            return;
+        }
+
+
         let shooterHex = HexMap[shooter.hexLabel]
         let targetHex = HexMap[target.hexLabel];
 
@@ -3812,6 +3821,19 @@ log(playerID);
         let notes = [];
         let shooterHex = HexMap[shooter.hexLabel];
         let targetHex = HexMap[target.hexLabel];
+        if (shooter.type === "Titan") {
+            let cubes = shooterHex.cube.linedraw(targetHex.cube);
+            let cube = cubes[0];
+            shooterHex = HexMap[cube.label()];
+        }
+        if (target.type === "Titan") {
+            let cubes = targetHex.cube.linedraw(shooterHex.cube);
+            let cube = cubes[0];
+            targetHex = HexMap[cube.label()];
+        }
+
+
+
         let distance = targetHex.cube.distance(shooterHex.cube);
         let shooterHeight = shooterHex.elevation;
         let targetHeight = targetHex.elevation;
