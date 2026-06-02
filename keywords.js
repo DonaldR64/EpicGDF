@@ -86,6 +86,8 @@ const Keywords = {
 
     "Indirect": "Gets -1 to hit rolls when shooting after moving. May target enemies that are not in line of sight as if in line of sight, and ignores cover from sight obstructions.",
 
+    "Internal Transport(X)": "The Unit is large enough to start the game with X toughness worth of infantry inside, which can deploy onto the table using the Transport, moving to a max of 3 hexes and requiring an Advance or Charge/Rush order to Deploy. Once deployed, the Infantry cannot reboard",
+
     "Limited": "Weapons with this rule may only be used once per game.",
 
     "Melee Shrouding": "Enemies have -2 Hex Movement when charging this Unit",
