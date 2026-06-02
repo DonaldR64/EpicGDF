@@ -194,7 +194,7 @@ const Keywords = {
 
     "Thrust": "When charging, gets +1 to hit rolls and AP(+1) in melee.",
 
-    "Transport(X)": "May transport units up to X Toughness total, with heroes counting only as Toughness 1. Transports may deploy with units inside, and units may enter/exit by using any move action, but must stay fully within 3 hexes of it when exiting. Units inside/outside transports may not target other units outside/inside transports, but may target the transport itself. When a transport is destroyed, units inside must take a dangerous terrain test, are Shaken, and must be placed fully within 3 hexes of the transport before it’s removed. Note that units inside Transports are deployed at the same time as the Transport, and units can’t both embark/disembark as part of the same activation. Units may use Charge actions to disembark",
+    "Transport(X)": "Transport Rules",
 
 
     "Unpredictable": "When attacking, on a 1-3 the unit gets AP(+1), and on a 4-6 the unit gets +1 to hit rolls instead.",

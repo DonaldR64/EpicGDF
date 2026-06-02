@@ -2937,7 +2937,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             addBreak = true;
             outputCard.body.push("The Unit has Speed Feat Active and Added");
             move += 1;
-            charge += 1, rush+= 1;
+            charge += 2, rush+= 2;
             unit.token.set(SM.speedFeat,false);
             unit.SetTT2("Speed Feat Used");
         }
@@ -3226,16 +3226,17 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         if (tipList.includes(specialName)) {
             _.each(targets,target => {
                 target.SetTT2(specialName);
-                sendChat("",target.name + " now has " + specialName);
+                outputCard.body.push(target.name + " now has " + specialName);
             })
         }
         if (specialName.includes("Speed Feat")) {
             _.each(targets,target => {
                 let tt = target.TTip();
                 if (tt.includes("Speed Feat Used")) {
-                    sendChat("",target.name + " Has already Used Speed Feat this game");
+                    outputCard.body.push(target.name + " Has already Used Speed Feat this game");
                 } else {
                     target.token.set(SM.speedFeat,true);
+                    outputCard.body.push("Unit has Speed Feat activated");
                 }
             })
         }
