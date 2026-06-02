@@ -776,31 +776,32 @@ const Main = (() => {
             })
 
             //upgrades, which may be in [ ] with flavour text before
-            let keywordDisplay = "";
             let flavours = {};
             for (let i=1;i<11;i++) {
                 let eq = "key" + i + "equipped";
                 let k = "key" + i + "name";
                 if (aa[eq] === "Equipped") {
-                    let keyword = aa[k].trim();
+                    let upgrades = aa[k].trim();
                     let flavour;
-                    if (!keyword) {continue};
-                    if (i > 1) {keywordDisplay += "<br>"};
-                    keywordDisplay += keyword;
-                    if (keyword.includes("[")) {
-                        let i1 = keyword.indexOf("[");
-                        let i2 = keyword.indexOf("]");
-                        flavour = keyword.substring(0,i1);
-                        keyword = keyword.substring(i1 + 1,i2);
+                    if (!upgrades) {continue};
+                    if (upgrades.includes("[")) {
+                        let i1 = upgrades.indexOf("[");
+                        let i2 = upgrades.indexOf("]");
+                        flavour = upgrades.substring(0,i1);
+                        upgrades = upgrades.substring(i1 + 1,i2);
                     }
-                    keyword = keyword.trim();
-                    keywords.push(keyword);
-                    if (flavour !== "") {
-                        flavours[keyword] = flavour;
-                    }
+                    upgrades = upgrades.split(",");
+                    _.each(upgrades,upgrade => {
+                        upgrade = upgrade.trim();
+                        keywords.push(upgrade);
+                        if (flavour !== "") {
+                            flavours[upgrade] = flavour;
+                        }
+                    })
                 }
             }
             this.keywords = keywords;
+
             this.flavours = flavours;
 
             let weapons = [];
@@ -859,7 +860,6 @@ const Main = (() => {
                 HexMap[label].tokenIDs.push(id);
             }
 
-            log(this);
 
         }
 
@@ -1259,7 +1259,7 @@ const Main = (() => {
             let fx = "";
             for (let j=0;j<unit.weapons.length;j++) {
                 if (keys[i] === "CCW") {
-                    fx = "/fx bubbling-blood @{selected|token_id} @{target|token_id}";
+                    fx = "/fx bubbling-blood @{target|token_id}";
                     break;
                 } else if (names[0].includes(unit.weapons[j].name) && unit.weapons[j].fx) {
                     fx = "/fx " + unit.weapons[j].fx + " @{selected|token_id} @{target|token_id}";
@@ -3466,9 +3466,9 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             let unit = UnitArray[token];
             let character = getObj("character", token.get("represents"));   
             let name = character.get("name");
+            if (name.includes("Objective")) {continue};
             if (!unit) {
                 unit = new Unit(token.get("id"));
-    log("new Unit")
                 if (!unit.faction) {
                     unit.faction === "Neutral";
                     continue;
@@ -3476,7 +3476,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             }
             let auraShape = true;
             let ds = false;
-            if (unit.type === "Hero" || unit.type === "Objective") {
+            if (unit.type === "Hero") {
                 let name = HeroNames(unit);
                 unit.name = name;
                 unit.token.set("name",name);
