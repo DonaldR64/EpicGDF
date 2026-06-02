@@ -763,7 +763,10 @@ const Main = (() => {
             this.toughness = parseInt(aa.toughness) || 1;
             this.wounds = parseInt(aa.wounds) || 1;
             this.models = this.wounds/this.toughness;
-            this.type = aa.type || "Objective";
+            let type = aa.type || "Objective";
+            if (type === "Core") {type = "Infantry"};
+            this.type = type;
+            
             this.moveSound = aa.movesound;            
 
             let keywords = [];
@@ -868,7 +871,7 @@ const Main = (() => {
             let tip = "Quality: " + target;
             let extra = [];
 
-            let hero = this.Hero();
+            let hero = this.Associated();
             if (hero && hero !== false) {
                 if (hero.quality < target) {
                     tip = "Hero's Quality: " + hero.quality;
@@ -967,31 +970,33 @@ const Main = (() => {
 
         Auras() {
             ///checks if model or assoc hero has an active aura and returns their names
+
             let auras = this.keywords.filter((e) => e.includes("Aura")) || [];
             auras = auras.concat(this.TTip().filter((e) => e.includes("Aura")));
-            let hero = this.Hero();
-            if (hero && hero !== false) {
-                auras = auras.concat(hero.keywords.filter((e) => e.includes("Aura")));
-                auras = auras.concat(hero.TTip().filter((e) => e.includes("Aura")));
+            let assoc = this.Associated();
+            if (assoc && (this.type === "Infantry" || this.type === "Hero")) {
+                auras = auras.concat(assoc.keywords.filter((e) => e.includes("Aura")));
+                auras = auras.concat(assoc.TTip().filter((e) => e.includes("Aura")));
             }
+
             auras = auras.map((e) => e.replace(" Aura",""));
             auras = [...new Set(auras)];
             return auras;
         }
 
-        Hero() {
-            if (this.type !== "Infantry") {return false}; //heros cannot boost
+        Associated() {
+            if (this.type !== "Infantry" && this.type !== "Hero") {return false};
             let hex = HexMap[this.hexLabel];
-            let hero = false;
+            let assoc = false;
             _.each(hex.tokenIDs,tokenID => {
                 if (tokenID !== this.id) {
                     let unit2 = UnitArray[tokenID];
-                    if (unit2 && unit2.faction === this.faction && unit2.type === "Hero") {
-                        hero = unit2;
+                    if (unit2 && unit2.faction === this.faction) {
+                        assoc = unit2;
                     }
                 }
             })
-            return hero;
+            return assoc;
         }
 
         TTip() {
@@ -2003,7 +2008,7 @@ log(c)
                 vaapFlag = true;
             }
             if (attackerAuras.includes("Versatile Attack") && vaapFlag === false) {
-                let aH = attacker.Hero();
+                let aH = attacker.Associated();
                 if (aH && aH !== false) {
                     if (aH.TTip().includes(TT.vAAP)) {
                         weaponAP++;
@@ -2020,7 +2025,7 @@ log(c)
                     vddFlag = true;
                 }
                 if (defender.Auras().includes("Versatile Defense") && vddFlag === false) {
-                    let dH = defender.Hero();
+                    let dH = defender.Associated();
                     if (dH && dH !== false) {
                         if (dH.TTip().includes(TT.vDD)) {
                             defense--;
@@ -2140,7 +2145,7 @@ log(c)
                 vathFlag = true;
             }
             if (attackerAuras.includes("Versatile Attack") && vathFlag === false) {
-                let aH = attacker.Hero();
+                let aH = attacker.Associated();
                 if (aH && aH !== false) {
                     if (aH.TTip().includes(TT.vATH)) {
                         needed--;
@@ -2207,7 +2212,7 @@ log(c)
                     vdthFlag = true;
                 }
                 if (defender.Auras().includes("Versatile Defense") && vdthFlag === false) {
-                    let dH = defender.Hero();
+                    let dH = defender.Associated();
                     if (dH && dH !== false) {
                         if (dH.TTip().includes(TT.vDTH)) {
                             needed += 1;
@@ -2401,7 +2406,7 @@ log(weapon)
             let s2 = (weapon.number === 1) ? "s ":" ";
             let attWord = ((combatType === "Ranged") ? " fire":" strike") + s2;
             outputCard.body.push(weapon.name + attWord + attDisplay + " times");
-            outputCard.body.push(weaponOut + " hit" + s + " are scored");
+            outputCard.body.push(weaponOut + " hit" + s + " scored");
 
             if (weapon.keywords.includes("Limited")) {
                 let lids = state.Epic.limitedMacros[attacker.id];
@@ -2442,6 +2447,9 @@ log(weapon)
                     {name: "Protected",target: 6, rolls: [],saved: 0,note: ""},
                     {name: "Resistance",target: 6, rolls: [],saved: 0, note: ""},
                 ]
+log(defender.keywords)
+log(defender.Auras())
+log(defender.Associated())
                 if (defender.keywords.includes("Plaguebound Boost") || defender.Auras().includes("Plaguebound Boost")) {
                     saveTypes[1].target = 5;
                     saveTypes[1].note = " Boost";
@@ -2624,7 +2632,7 @@ log(weapon)
         defender.Debuffs("Combat");
         let defenders = [defender];
         let defendersAliveFlag = [true];
-        let defenderHero = defender.Hero();
+        let defenderHero = defender.Associated();
         if (defenderHero !== false) {
             defenderModels++
             defenderHero.Debuffs("Combat");
@@ -3586,9 +3594,9 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         outputCard.body.push("Cover: " + hex.cover);
         outputCard.body.push("Blocks LOS: " + hex.blockLOS);
         outputCard.body.push("Movement: " + hex.type);
-        //outputCard.body.push("Keywords: " + unit.keywords.toString());
-        //outputCard.body.push("Auras: " + unit.Auras().toString());
-        //outputCard.body.push("Tips: " + unit.TTip().toString());
+        outputCard.body.push("Unit Keywords: " + unit.keywords.toString());
+        outputCard.body.push("Unit Auras: " + unit.Auras().toString());
+        outputCard.body.push("Unit Tips: " + unit.TTip().toString());
         PrintCard();
     }
 
@@ -4020,9 +4028,6 @@ log(playerID);
             }
             log(unit.name + " is Moving");
             unit.hexLabel = newLabel;
-            if (unit.type === "Hero") {
-                toFront(unit.token);
-            } 
             if (unit.type === "Objective") {return};
             let index = prevHex.tokenIDs.indexOf(tok.id);
             if (index > -1) {
