@@ -804,8 +804,14 @@ const Main = (() => {
                 }
             }
             this.keywords = keywords;
-
             this.flavours = flavours;
+
+            let casterKey = keywords.find((e) => e.includes("Caster")) || [];
+            let casterLevel = 0;
+            if (casterKey) {
+                casterLevel += parseInt(casterKey.replace(/\D/g,''));
+            }
+            this.casterLevel = casterLevel;
 
             let weapons = [];
             for (let i=1;i<11;i++) {
@@ -849,6 +855,11 @@ const Main = (() => {
                 let weapon = {name: "Impact",number: this.models,type: "CCW",range: 0,attacks: impact,ap: 0,keywords: [""],fx: "",sound: ""};
                 weapons.push(weapon);
             }
+
+
+
+
+
 
             this.weapons = weapons;
             this.moved = false;
@@ -3505,11 +3516,21 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
 
             let a1c = Factions[unit.faction].objColour || "#ffffff";
 
+            let cl = unit.casterLevel;
+            let clM;
+            let sb2 = false;
+            if (cl > 0) {
+                clM = 6
+                sb2 = true;
+            };
             
             unit.token.set({
                 bar1_value: unit.wounds,
                 bar1_max: unit.wounds,
+                bar1_value: cl,
+                bar1_max: clM,
                 showplayers_bar1: true,
+                showplayers_bar2: sb2,
                 aura1_color: a1c,
                 aura1_radius: 0.1,
                 showplayers_aura1: true,
