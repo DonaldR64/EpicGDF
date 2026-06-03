@@ -73,6 +73,8 @@ const Main = (() => {
 
     let UnitArray = {};
     let saveTypes = [];
+    let spellCasterAssistInfo = [];
+    let spellCasterBlockInfo = [];
 
     const LargeUnits = ["Vehicle/Monster","Artillery","Titan"]
 
@@ -215,6 +217,7 @@ const Main = (() => {
     const TerrainInfo = {
         "Open": {name: "Open",cover: false, building: false, blockLOS: false,height: 0, type: "Open"},
         "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 50, type: "Difficult"},
+        "Orchards": {name: "Orchards",cover: true, building: false, blockLOS: true,height: 25, type: "Difficult"},
         "Brick Building 1": {name: "Brick Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult"},
         "Brick Building 2": {name: "Brick Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult"},
         "Concrete Building 1": {name: "Concrete Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult"},
@@ -3803,8 +3806,19 @@ log(playerID);
                 outputCard.body.push("Caster is Shaken and Cannot Cast Spells");
             } else {
                 outputCard.body.push(spellInfo.description);
-                let maxExtra = BonusSpellPoints(caster); //gather info
-                let maxExtraQ = ";?{Extra Points";
+                let maxExtra = spellPoints - spellInfo.cost;
+                let s = (maxExtra === 1) ? "":"s";
+                if (maxExtra > 0) {
+
+                    outputCard.body.push("Caster has " + maxExtra + " Point" + s + " extra available");
+                }
+                let bonusAvail = BonusSpellPoints(caster);
+                s = (bonusAvail === 1) ? "":"s";
+                if (bonusAvail > 0) {
+                    maxExtra += bonusAvail;
+                    outputCard.body.push("Friendly Nearby Casters can add " + bonusAvail + " Point" + s);
+                }
+                let maxExtraQ = ";?{Extra Points|0";
                 for (let i=1;i<=maxExtra;i++) {
                     maxExtraQ += "|" + i;
                 }
@@ -3831,10 +3845,30 @@ log(playerID);
 //cast3 - if no opposing points or once opposing points done, finalizes cast
 
     const BonusSpellPoints = (caster) => {
-        return 0
-
-
-
+        //find other friendly casters within 9 hexes, add in their points, record their id's in case used
+        let casterHex = HexMap[caster.hexLabel];
+        spellCasterAssistInfo = [];
+        let totalAvail = 0;
+        _.each(UnitArray,unit => {
+            if (unit.faction === caster.faction && unit.casterLevel > 0 && unit.id !== caster.id) {
+                let unitHex = HexMap[unit.hexLabel];
+                if (unitHex.offboard !== true) {
+                    let losResult = LOS(caster,unit);
+                    if (losResult.distance <= 9 && losResult.los === true) {
+                        let p = parseInt(unit.token.get("bar2_value"));
+                        if (p > 0) {
+                            let info = {
+                                id: unit.id,
+                                points: p,
+                            }
+                            totalAvail += p;
+                            spellCasterAssistInfo.push(info);
+                        }
+                    }
+                }
+            }
+        })
+        return totalAvail;
     }
 
 
