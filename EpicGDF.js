@@ -215,10 +215,10 @@ const Main = (() => {
     const TerrainInfo = {
         "Open": {name: "Open",cover: false, building: false, blockLOS: false,height: 0, type: "Open"},
         "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 50, type: "Difficult"},
-        "Brick Building 1": {name: "Brick Building Height 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult"},
-        "Brick Building 2": {name: "Brick Building Height 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult"},
-        "Concrete Building 1": {name: "Concrete Building Height 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult"},
-        "Concrete Building 2": {name: "Concrete Building Height 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult"},
+        "Brick Building 1": {name: "Brick Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult"},
+        "Brick Building 2": {name: "Brick Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult"},
+        "Concrete Building 1": {name: "Concrete Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult"},
+        "Concrete Building 2": {name: "Concrete Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult"},
         "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 3, type: "Open"},
         "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
         "Craters": {name: "Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
@@ -3333,7 +3333,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         points.push([b[0] - left,b[1] - bottom]);
         points = JSON.stringify(points);
 
-        let layer = (type === "LOS") ? "objects":"map";
+        let layer = (type === "LOS") ? "map":"map";
 
         let page = getObj('page',Campaign().get('playerpageid'));
         if(page) {
