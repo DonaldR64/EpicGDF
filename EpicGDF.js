@@ -719,6 +719,8 @@ const Main = (() => {
             this.terrainHeight = 0;
             this.blockLOS = false;
             this.building = false;
+            this.ridgeline = false;
+            this.ridgelineAngles = [];
             this.type = "Open";
             this.edges = {};
             _.each(DIRECTIONS,a => {
@@ -1753,15 +1755,22 @@ const Main = (() => {
                     let pt2 = vertices[i+1];
                     let hex1 = HexMap[pt1.label()];
                     let hex2 = HexMap[pt2.label()];
+                    let phi = Angle(hex1.cube.angle(hex2.cube));
                     hex1.elevation += .5;
                     hex1.terrain += ", Ridgeline";
-                    hex1.cover = true;
+                    hex1.ridgeline = true;
+                    if (hex1.ridgelineAngles.includes(phi) === false) {
+                        hex1.ridgelineAngles.push(phi);
+                    }
                     let interCubes = hex1.cube.linedraw(hex2.cube);
                     _.each(interCubes,cube => {
                         let hex3 = HexMap[cube.label()];
                         hex3.elevation += .5;
                         hex3.terrain += ", Ridgeline";
-                        hex3.cover = true;
+                        hex3.ridgeline = true;
+                        if (hex3.ridgelineAngles.includes(phi) === false) {
+                            hex3.ridgelineAngles.push(phi);
+                        }
                     })
                 }
             }
@@ -3632,6 +3641,9 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         outputCard.body.push("Unit Keywords: " + unit.keywords.toString());
         outputCard.body.push("Unit Auras: " + unit.Auras().toString());
         outputCard.body.push("Unit Tips: " + unit.TTip().toString());
+
+        outputCard.body.push("Ridgeline Angles: " + hex.ridgelineAngles.toString())
+
         PrintCard();
     }
 
@@ -3780,25 +3792,32 @@ log(playerID);
         if (!spellInfo) {
             outputCard.body.push("Not in Database");
         } else {
-            outputCard.body.push(spellInfo.description);
-            let maxExtra = BonusSpellPoints(caster); //gather info
-            let maxExtraQ = ";?{Extra Points";
-            for (let i=1;i<=maxExtra;i++) {
-                maxExtraQ += "|" + i;
-            }
-            maxExtraQ += "}"
-            if (maxExtra === 0) {
-                maxExtraQ = ";0";
-            }
-            let targets = "";
-            for (let i=0;i<spellInfo.targets;i++) {
-                let t = "Target " + (i+1);
-                targets += ";&#64;&#123;target&#124;" + t + "&#124;token_id&#125;";
-            }
+            let spellPoints = parseInt(caster.token.get("bar2_value"));
+            if (spellPoints < spellInfo.cost) {
+                outputCard.body.push("Unable to Cast this Spell due to Cost/Available Points");
+            } else if (caster.token.get("tint_color") === "#ff0000") {
+                outputCard.body.push("Caster is Shaken and Cannot Cast Spells");
+            } else {
+                outputCard.body.push(spellInfo.description);
+                let maxExtra = BonusSpellPoints(caster); //gather info
+                let maxExtraQ = ";?{Extra Points";
+                for (let i=1;i<=maxExtra;i++) {
+                    maxExtraQ += "|" + i;
+                }
+                maxExtraQ += "}"
+                if (maxExtra === 0) {
+                    maxExtraQ = ";0";
+                }
+                let targets = "";
+                for (let i=0;i<spellInfo.targets;i++) {
+                    let t = "Target " + (i+1);
+                    targets += ";&#64;&#123;target&#124;" + t + "&#124;token_id&#125;";
+                }
 
-            let action = "!Cast2;" + casterID + ";" + spellName +  maxExtraQ + targets;
+                let action = "!Cast2;" + casterID + ";" + spellName +  maxExtraQ + targets;
 
-            ButtonInfo("Cast " + spellName,action);
+                ButtonInfo("Cast " + spellName,action);
+            }
         }
         PrintCard();
     }
@@ -3860,8 +3879,11 @@ log(playerID);
             outputCard.body.push(losResult.losReason);
         } else {
             outputCard.body.push("There is LOS to Target");
-            if (losResult.cover === true) {
-                outputCard.body.push("Target Has   Cover");
+            if (losResult.hexCover === true) {
+                outputCard.body.push("Target Is in Cover");
+            }
+            if (losResult.interCover === true) {
+                outputCard.body.push("Target Has Intervening Cover");
             }
             if (losResult.building === true) {
                 outputCard.body.push("Target in Building");
@@ -4008,6 +4030,14 @@ log(playerID);
                             break;
                         }
                     }
+
+                    //does it provide cover for beyond
+                    if (interhex.cover === true && target.keywords.includes("Tall") === false) {
+                        interCover[side] = true;
+                    } 
+                    if (interHex.cover === "Infantry" && (target.type === "Infantry" || target.type === "Hero")) {
+                        interCover[side] = true;
+                    } 
                 }
                 //does edge at end give cover, and does so unless tall unit
                 if (len > 1 && i === (len-1) && target.keywords.includes("Tall") === false) {
@@ -4044,6 +4074,22 @@ log(playerID);
         if (targetHex.cover === true) {
             hexCover = true;
         }
+        if (targetHex.cover === false && targetHex.ridgeline === true) {
+            let phi = Angle(shooterHex.cube.angle(targetHex.cube));
+            for (let i=0;i<targetHex.ridgelineAngles.length;i++) {
+                let theta = targetHex.ridgelineAngles[i];
+                let theta2 = Angle(theta + 180);
+                let delta = Math.abs(theta-phi);
+                let delta2 = Math.abs(theta2 - phi);
+                if (delta > 30 && delta2 > 30) {
+                    hexCover = true;
+                    break;
+                }
+            }
+        }
+
+
+
         if (targetHex.cover === "Infantry" && target.type === "Infantry") {
             hexCover = true;
         }
