@@ -3785,11 +3785,7 @@ log(playerID);
         return;
     }
    
-    const Cast = (msg) => {
-        //allow player to cast, which chooses targets, adds points
-        //check if opposing player has casters, is so, put up a bit for them - in Cast2
-        //make these choices individual player output only
-        
+    const Cast = (msg) => {    
         let Tag = msg.content.split(";");
         let casterID = Tag[1];
         let caster = UnitArray[casterID];
@@ -3854,7 +3850,6 @@ log(playerID);
         spellCasterAssistInfo = [];
         let totalAvail = 0;
 
-
         _.each(UnitArray,unit => {
             if (unit.casterLevel > 0 && unit.id !== caster.id && ((type === "Friendly" && unit.faction === caster.faction) || (type !== "Friendly" && unit.faction !== caster.faction))) {
                 let unitHex = HexMap[unit.hexLabel];
@@ -3877,11 +3872,9 @@ log(playerID);
         return totalAvail;
     }
 
-//cast2 - checks valid targets, range etc, then puts out call for opposing points
-
+    //cast2 - checks valid targets, range etc, then puts out call for opposing points
     const Cast2 = (msg) => {
         let Tag = msg.content.split(";");
-log(Tag)
         let caster = UnitArray[spellCast.casterID];
         let spellInfo = Spells[spellCast.spellName];
         spellCast.extraPoints = parseInt(Tag[1]) || 0;
@@ -3935,14 +3928,14 @@ log(Tag)
         }
     }
 
-//cast3 - if opposing points
+    //cast3 - if opposing points, places them in spellCast
     const Cast3 = (msg) => {
         let Tag = msg.content.split(";");
         spellCast.oppPoints = parseInt(Tag[1]) || 0;
         Cast4();
     }
 
-//cast4 - if no opposing points or once opposing points done, finalizes cast, use info in spellCast global variable
+    //cast4 - finalizes cast, use info in spellCast global variable
     const Cast4 = () => {
         sendChat("","Spell Cast")
 log(spellCast)
