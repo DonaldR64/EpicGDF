@@ -3789,7 +3789,7 @@ log(playerID);
         //allow player to cast, which chooses targets, adds points
         //check if opposing player has casters, is so, put up a bit for them - in Cast2
         //make these choices individual player output only
-
+        
         let Tag = msg.content.split(";");
         let casterID = Tag[1];
         let caster = UnitArray[casterID];
@@ -3838,7 +3838,9 @@ log(playerID);
                 spellCast = {
                     casterID: casterID,
                     spellName: spellName,
-                    targets: [],
+                    targetIDs: [],
+                    extraPoints: 0,
+                    oppPoints: 0,
                 }
             }
 
@@ -3879,13 +3881,15 @@ log(playerID);
 
     const Cast2 = (msg) => {
         let Tag = msg.content.split(";");
+log(Tag)
         let caster = UnitArray[spellCast.casterID];
         let spellInfo = Spells[spellCast.spellName];
-        let extraPoints = Tag[3];
+        spellCast.extraPoints = parseInt(Tag[1]) || 0;
+
         let errorMsg = [];
-        spellCast.targets = [];
+        spellCast.targetIDs = [];
         let targetFaction;
-        for (let i=4;i<Tag.length;i++) {
+        for (let i=2;i<Tag.length;i++) {
             let id = Tag[i];
             let targetUnit = UnitArray[id];
             let losResult = LOS(caster,targetUnit);
@@ -3899,7 +3903,7 @@ log(playerID);
                 errorMsg.push("#ff0000" + unit.name + " is Friendly[/#]");
             } else {
                 targetFaction = targetUnit.faction;
-                spellCast.targets.push(targetUnit);
+                spellCast.targetIDs.push(id);
             }
         }
         if (errorMsg.length > 0) {
@@ -3931,7 +3935,7 @@ log(playerID);
 
 //cast3 - if opposing points
     const Cast3 = (msg) => {
-        
+
 
 
 
@@ -3943,8 +3947,8 @@ log(playerID);
 
 //cast4 - if no opposing points or once opposing points done, finalizes cast, use info in spellCast global variable
     const Cast4 = () => {
-
-
+        sendChat("","Spell Cast")
+log(spellCast)
 
 
     }
@@ -4395,6 +4399,14 @@ log(playerID);
             case '!Cast':
                 Cast(msg);
                 break;
+            case '!Cast2':
+                Cast2(msg);
+                break;
+            case '!Cast3':
+                Cast3(msg);
+                break;
+
+
             case '!RemoveLines2':
                 RemoveLines2();
                 break;
