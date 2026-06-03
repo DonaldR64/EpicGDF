@@ -211,21 +211,22 @@ const Main = (() => {
     //height - height of terrain
     //type - Open, Difficult, Dangerous, Impassable or Impassable to Vehicles etc
 
+    const buildingLevelHeight = 25;
     const TerrainInfo = {
         "Open": {name: "Open",cover: false, building: false, blockLOS: false,height: 0, type: "Open"},
-        "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 2, type: "Difficult"},
-        "Brick Building 1": {name: "Brick Building Height 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
-        "Brick Building 2": {name: "Brick Building Height 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
-        "Concrete Building 1": {name: "Concrete Building Height 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
-        "Concrete Building 2": {name: "Concrete Building Height 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
-        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 0.5, type: "Open"},
+        "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 50, type: "Difficult"},
+        "Brick Building 1": {name: "Brick Building Height 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult"},
+        "Brick Building 2": {name: "Brick Building Height 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult"},
+        "Concrete Building 1": {name: "Concrete Building Height 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult"},
+        "Concrete Building 2": {name: "Concrete Building Height 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult"},
+        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 3, type: "Open"},
         "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
         "Craters": {name: "Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
-        "Ruined Building": {name: "Ruined Building", cover: true,building: false, blockLOS: false,height: 1, type: "Difficult"},
-        "Ruined Concrete": {name: "Ruined Concrete Building", cover: true,building: false, blockLOS: false, height: 1, type: "Difficult"},
+        "Ruined Building": {name: "Ruined Building", cover: true,building: false, blockLOS: false,height: buildingLevelHeight * .5, type: "Difficult"},
+        "Ruined Concrete": {name: "Ruined Concrete Building", cover: true,building: false, blockLOS: false, height: buildingLevelHeight * .5, type: "Difficult"},
 
-        "Hill 1": {name: "Hill 1", cover: false,building: false, blockLOS: false, height: 1, type: "Open"},
-        "Hill 2": {name: "Hill 2", cover: false,building: false, blockLOS: false, height: 2, type: "Open"},
+        "Hill 1": {name: "Hill 1", cover: false,building: false, blockLOS: false, height: 30, type: "Open"},
+        "Hill 2": {name: "Hill 2", cover: false,building: false, blockLOS: false, height: 60, type: "Open"},
 
 
 
@@ -1695,7 +1696,7 @@ const Main = (() => {
                 if (terrain.blockLOS === true) {
                     hex.blockLOS = true;
                 }
-                if (terrain.type !== "Hill") {
+                if (terrain.name.includes("Hill") === false) {
                     hex.terrainHeight = Math.max(hex.terrainHeight,terrain.height);
                 }
                 if (terrain.type !== "Open") {
@@ -1756,7 +1757,7 @@ const Main = (() => {
                     let hex1 = HexMap[pt1.label()];
                     let hex2 = HexMap[pt2.label()];
                     let phi = Angle(hex1.cube.angle(hex2.cube));
-                    hex1.elevation += .5;
+                    hex1.elevation += .25;
                     hex1.terrain += ", Ridgeline";
                     hex1.ridgeline = true;
                     if (hex1.ridgelineAngles.includes(phi) === false) {
@@ -1765,7 +1766,7 @@ const Main = (() => {
                     let interCubes = hex1.cube.linedraw(hex2.cube);
                     _.each(interCubes,cube => {
                         let hex3 = HexMap[cube.label()];
-                        hex3.elevation += .5;
+                        hex3.elevation += .25;
                         hex3.terrain += ", Ridgeline";
                         hex3.ridgeline = true;
                         if (hex3.ridgelineAngles.includes(phi) === false) {
@@ -3292,9 +3293,12 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
 
     }
 
+    const RemoveLines2 = () => {
+            RemoveLines()
+    }
 
 
-    const RemoveLines = (which) => {
+    const RemoveLines = (which = ["LOS","Deploy"]) => {
         _.each(which,lines => {
             let array;
             if (lines === "LOS") {
@@ -3329,7 +3333,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         points.push([b[0] - left,b[1] - bottom]);
         points = JSON.stringify(points);
 
-        let layer = (type === "LOS") ? "foreground":"map";
+        let layer = (type === "LOS") ? "objects":"map";
 
         let page = getObj('page',Campaign().get('playerpageid'));
         if(page) {
@@ -3633,8 +3637,8 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         SetupCard(unit.name,"Info",unit.faction);
         outputCard.body.push("Hex Label: " + label);
         outputCard.body.push("Terrain: " + hex.terrain);
-        outputCard.body.push("Elevation: " + hex.elevation);
-        outputCard.body.push("Terrain Height: " + hex.terrainHeight);
+        outputCard.body.push("Elevation: " + hex.elevation + "m");
+        outputCard.body.push("Terrain Height: " + hex.terrainHeight + "m");
         outputCard.body.push("Cover: " + hex.cover);
         outputCard.body.push("Blocks LOS: " + hex.blockLOS);
         outputCard.body.push("Movement: " + hex.type);
@@ -3873,7 +3877,9 @@ log(playerID);
         if (losResult.notes && losResult.notes.length > 0) {
             outputCard.body.push("Ranged Shrouding adds 3 Hexes to Distance");
         }
-        outputCard.body.push("Distance: " + losResult.distance + " Hexes");
+        let d = losResult.distance;
+        let m = d * 50;
+        outputCard.body.push("Distance: " + d + " Hexes (" + m + "m)");
         if (losResult.los === false) {
             outputCard.body.push("No LOS to Target");
             outputCard.body.push(losResult.losReason);
@@ -3934,6 +3940,7 @@ log(playerID);
         }
         log(set)
         DrawLine(set,colour,"LOS");
+        ButtonInfo("Remove Line","!RemoveLines2");
         PrintCard();
     }
 
@@ -3961,10 +3968,10 @@ log(playerID);
         if (shooter.keywords.includes("Tall")) {shooterHeight += 2};
         if (target.keywords.includes("Tall")) {targetHeight += 2};
         if ((shooter.type === "Infantry" || shooter.type === "Hero" || shooter.type === "Light Vehicle/Small Monster") && shooterHex.building === true) {
-            shooterHeight += (shooterHex.elevation - 1);
+            shooterHeight += shooterHex.terrainHeight - buildingLevelHeight;
         }
         if ((target.type === "Infantry" || target.type === "Hero" || target.type === "Light Vehicle/Small Monster") && targetHex.building === true) {
-            targetHeight += (targetHeight.elevation - 1);
+            targetHeight += targetHex.terrainHeight - buildingLevelHeight;        
         }
         let pt1 = new Point(0,shooterHeight);
         let pt2 = new Point(distance,targetHeight);
@@ -4280,8 +4287,9 @@ log(playerID);
             case '!Cast':
                 Cast(msg);
                 break;
-
-
+            case '!RemoveLines2':
+                RemoveLines2();
+                break;
             case '!Roll':
                 RollDice(msg);
                 break;
