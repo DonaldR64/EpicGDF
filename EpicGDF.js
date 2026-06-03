@@ -218,11 +218,11 @@ const Main = (() => {
         "Brick Building 2": {name: "Brick Building Height 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
         "Concrete Building 1": {name: "Concrete Building Height 1", cover: true,building: true, blockLOS: true,height: 1, type: "Difficult"},
         "Concrete Building 2": {name: "Concrete Building Height 2", cover: true, building: true, blockLOS: true,height: 1, type: "Difficult"},
-        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 0, type: "Open"},
+        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 0.5, type: "Open"},
         "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
         "Craters": {name: "Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
-        "Ruined Building": {name: "Ruined Building", cover: true,building: false, blockLOS: false,height: 0, type: "Difficult"},
-        "Ruined Concrete": {name: "Ruined Concrete Building", cover: true,building: false, blockLOS: false, height: 0, type: "Difficult"},
+        "Ruined Building": {name: "Ruined Building", cover: true,building: false, blockLOS: false,height: 1, type: "Difficult"},
+        "Ruined Concrete": {name: "Ruined Concrete Building", cover: true,building: false, blockLOS: false, height: 1, type: "Difficult"},
 
         "Hill 1": {name: "Hill 1", cover: false,building: false, blockLOS: false, height: 1, type: "Open"},
         "Hill 2": {name: "Hill 2", cover: false,building: false, blockLOS: false, height: 2, type: "Open"},
@@ -4032,7 +4032,7 @@ log(playerID);
                     }
 
                     //does it provide cover for beyond
-                    if (interhex.cover === true && target.keywords.includes("Tall") === false) {
+                    if (interHex.cover === true && target.keywords.includes("Tall") === false) {
                         interCover[side] = true;
                     } 
                     if (interHex.cover === "Infantry" && (target.type === "Infantry" || target.type === "Hero")) {
