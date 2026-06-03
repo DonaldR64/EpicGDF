@@ -3786,16 +3786,18 @@ log(playerID);
             for (let i=1;i<=maxExtra;i++) {
                 maxExtraQ += "|" + i;
             }
-            maxExtraQ += "};"
+            maxExtraQ += "}"
             if (maxExtra === 0) {
-                maxExtraQ = ";0;";
+                maxExtraQ = ";0";
             }
             let targets = "";
             for (let i=0;i<spellInfo.targets;i++) {
-                targets += ";@{target|Target " + (i+1) + "|token_id}";
+                let t = "Target " + (i+1);
+                targets += ";@{target|" + t + "|token_id}";
             }
 
             let action = "!Cast2;casterID;" + spellName +  maxExtraQ + targets;
+
             ButtonInfo("Cast " + spellName,action);
         }
         PrintCard();
