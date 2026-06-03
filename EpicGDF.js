@@ -3793,10 +3793,10 @@ log(playerID);
             let targets = "";
             for (let i=0;i<spellInfo.targets;i++) {
                 let t = "Target " + (i+1);
-                targets += ";@{target|" + t + "|token_id}";
+                targets += ";&#64;&#123;target&#124;" + t + "&#124;token_id&#125;";
             }
 
-            let action = "!Cast2;casterID;" + spellName +  maxExtraQ + targets;
+            let action = "!Cast2;" + casterID + ";" + spellName +  maxExtraQ + targets;
 
             ButtonInfo("Cast " + spellName,action);
         }
