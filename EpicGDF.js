@@ -169,14 +169,26 @@ const Main = (() => {
     const SM = {
         fatigue: "status_Unconscious::168879",
         halfStr: "status_Blood::2006465",
-        spotter: "status_Bullseye::2006535",
-        dangerous: "status_Tentacle::7757514",
-        AP1: "status_Green-01::2006603", //+1 AP
-        TH1: "status_Red-01::2006626", //+1 TH
-        speedFeat: "status_Fast-or-Haste::2006485",
         evade: "status_Disadvantage-or-Down::2006464",
         laststand: "status_radioactive",
     }
+
+    const Buffs = {
+        AP1: "status_Green-01::2006603", //+1 AP
+        TH1: "status_Red-01::2006626", //+1 TH
+        speedFeat: "status_Fast-or-Haste::2006485",
+
+
+    }
+
+    const Debuffs = {
+        dangerous: "status_Tentacle::7757514",
+
+
+
+    }
+
+
 
     const TT = {
         vAAP: "Versatile Attack = +1 AP",
@@ -1077,7 +1089,7 @@ const Main = (() => {
 
 
         Dangerous() {
-            this.token.set(SM.dangerous,false);
+            this.token.set(Debuffs.dangerous,false);
             let hp = parseInt(this.token.get("bar1_value")) || 1;
             let fullStr = (hp > this.wounds/2) ? true:false;
             let rolls = [];
@@ -1968,7 +1980,7 @@ log(c)
                 weaponAP += 2;
                 apTip += "<br>Decimate +2AP vs Defense 2-3";
             }
-            if (attacker.token.get(SM.AP1) === true) {
+            if (attacker.token.get(Buffs.AP1) === true) {
                 weaponAP ++;
                 apTip += "<br>Unpredictable +1 AP";
             }
@@ -2139,7 +2151,7 @@ log(c)
                 needed -= 1;
                 neededTip += "<br>Artillery at Range +1 to Hit";
             }
-            if (attacker.token.get(SM.TH1) === true) {
+            if (attacker.token.get(Buffs.TH1) === true) {
                 needed -= 1;
                 neededTip += "<br>Unpredictable +1 to Hit";
             }
@@ -2671,9 +2683,9 @@ log(defender.Associated())
         if (unpredictable === true) {
             let roll = randomInteger(6);
             if (roll > 3) {
-                attacker.token.set(SM.AP1,true);
+                attacker.token.set(Buffs.AP1,true);
             } else {
-                attacker.token.set(SM.TH1,true);
+                attacker.token.set(Buffs.TH1,true);
             }
         }
 
@@ -2953,12 +2965,12 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             ignoreDifficult = true;
             outputCard.body.push("Unit is an Aircraft and Ignores Units and Terrain");
         }
-        if (unit.token.get(SM.speedFeat) === true) {
+        if (unit.token.get(Buffs.speedFeat) === true) {
             addBreak = true;
             outputCard.body.push("The Unit has Speed Feat Active and Added");
             move += 1;
             charge += 2, rush+= 2;
-            unit.token.set(SM.speedFeat,false);
+            unit.token.set(Buffs.speedFeat,false);
             unit.SetTT2("Speed Feat Used");
         }
         if (shaken === true && order !== "Rally") {
@@ -3216,7 +3228,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             for (let i=0;i<targets.length;i++) {
                 let target = targets[i];
                 if (i>0) {outputCard.body.push("[hr]")};
-                target.token.set(SM.dangerous,true);
+                target.token.set(Debuffs.dangerous,true);
                 outputCard.body.push(target.name + " now has a Dangerous Terrain Debuff");
                 outputCard.body.push("The next time it moves, it will have to take a Dangerous Terrain Test");
                 FX("burst-slime",unitHex,targetHex);
@@ -3255,7 +3267,7 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 if (tt.includes("Speed Feat Used")) {
                     outputCard.body.push(target.name + " Has already Used Speed Feat this game");
                 } else {
-                    target.token.set(SM.speedFeat,true);
+                    target.token.set(Buffs.speedFeat,true);
                     outputCard.body.push("Unit has Speed Feat activated");
                 }
             })
@@ -3754,6 +3766,41 @@ log(playerID);
         return;
     }
    
+    const Cast = (msg) => {
+        let casterID = msg.selected[0]._id;
+        let caster = UnitArray[casterID];
+        let spellName = msg.content.split(";")[1];
+        let spellInfo = Spells[spellName];
+        SetupCard(caster.name,spellName,caster.faction);
+        if (!spellInfo) {
+            outputCard.body.push("Not in Database");
+        } else {
+            outputCard.body.push(spellInfo.description);
+
+
+        }
+
+
+
+
+
+        PrintCard();
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4059,7 +4106,7 @@ log(playerID);
             if (newHex.tokenIDs.includes(tok.id) === false) {
                 newHex.tokenIDs.push(tok.id);
             }
-            if (unit.token.get(SM.dangerous) === true) {
+            if (unit.token.get(Debuffs.dangerous) === true) {
                 SetupCard(unit.name,"Dangerous Debuff",unit.faction);
                 outputCard.body.push("The Unit must take a Dangerous Terrain Test");
                 PrintCard();
@@ -4164,7 +4211,9 @@ log(playerID);
             case '!ToBack':
                 ToBack(msg);
                 break;
-
+            case '!Cast':
+                Cast(msg);
+                break;
 
 
             case '!Roll':
