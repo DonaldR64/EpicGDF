@@ -74,7 +74,7 @@ const Main = (() => {
     let UnitArray = {};
     let saveTypes = [];
     let spellCasterAssistInfo = [];
-    let spellCasterBlockInfo = [];
+    let spellCast = {};
 
     const LargeUnits = ["Vehicle/Monster","Artillery","Titan"]
 
@@ -3818,7 +3818,7 @@ log(playerID);
                     maxExtra += bonusAvail;
                     outputCard.body.push("Friendly Nearby Casters can add " + bonusAvail + " Point" + s);
                 }
-                let maxExtraQ = ";?{Extra Points|0";
+                let maxExtraQ = "?{Extra Points|0";
                 for (let i=1;i<=maxExtra;i++) {
                     maxExtraQ += "|" + i;
                 }
@@ -3832,25 +3832,29 @@ log(playerID);
                     targets += ";&#64;&#123;target&#124;" + t + "&#124;token_id&#125;";
                 }
 
-                let action = "!Cast2;" + casterID + ";" + spellName +  maxExtraQ + targets;
+                let action = "!Cast2;" + maxExtraQ + targets;
 
                 ButtonInfo("Cast " + spellName,action);
+                spellCast = {
+                    casterID: casterID,
+                    spellName: spellName,
+                    targets: [],
+                }
             }
+
         }
         PrintCard();
     }
 
-
-//cast2 - checks valid targets, range etc, then puts out call for opposing points
-//cast3 - if no opposing points or once opposing points done, finalizes cast
-
-    const BonusSpellPoints = (caster) => {
-        //find other friendly casters within 9 hexes, add in their points, record their id's in case used
+    const BonusSpellPoints = (caster,type = "Friendly") => {
+        //find other friendly casters within 9 hexes, add in their points, record their id's in case used, will work for both add and subtract as can check factions
         let casterHex = HexMap[caster.hexLabel];
         spellCasterAssistInfo = [];
         let totalAvail = 0;
+
+
         _.each(UnitArray,unit => {
-            if (unit.faction === caster.faction && unit.casterLevel > 0 && unit.id !== caster.id) {
+            if (unit.casterLevel > 0 && unit.id !== caster.id && ((type === "Friendly" && unit.faction === caster.faction) || (type !== "Friendly" && unit.faction !== caster.faction))) {
                 let unitHex = HexMap[unit.hexLabel];
                 if (unitHex.offboard !== true) {
                     let losResult = LOS(caster,unit);
@@ -3871,9 +3875,79 @@ log(playerID);
         return totalAvail;
     }
 
+//cast2 - checks valid targets, range etc, then puts out call for opposing points
+
+    const Cast2 = (msg) => {
+        let Tag = msg.content.split(";");
+        let caster = UnitArray[spellCast.casterID];
+        let spellInfo = Spells[spellCast.spellName];
+        let extraPoints = Tag[3];
+        let errorMsg = [];
+        spellCast.targets = [];
+        let targetFaction;
+        for (let i=4;i<Tag.length;i++) {
+            let id = Tag[i];
+            let targetUnit = UnitArray[id];
+            let losResult = LOS(caster,targetUnit);
+            if (losResult.los === false) {
+                errorMsg.push("#ff0000" + targetUnit.name + " is not in LOS[/#]");
+            } else if (losResult.distance > spellInfo.range) {
+                errorMsg.push("#ff0000" + unit.name + ' is Out of Range[/#]');
+            } else if (spellInfo.friendly === true && targetUnit.faction !== caster.faction) {
+                errorMsg.push("#ff0000" + unit.name + " is not Friendly[/#]");
+            } else if (spellInfo.friendly === false && targetUnit.faction === caster.faction) {
+                errorMsg.push("#ff0000" + unit.name + " is Friendly[/#]");
+            } else {
+                targetFaction = targetUnit.faction;
+                spellCast.targets.push(targetUnit);
+            }
+        }
+        if (errorMsg.length > 0) {
+            SetupCard(caster,spellName,caster.faction);
+            _.each(errorMsg,msg => {
+                outputCard.body.push(msg);
+            })
+            spellCast = {};
+            PrintCard();
+        } else {
+            //check if opposing spells
+            let opposingMax = BonusSpellPoints(caster,"Hostile");
+            let s = (opposingMax === 1) ? "":"s";
+            if (opposingMax > 0) {
+                SetupCard(targetFaction,"Spell Opposition",targetFaction);
+                outputCard.body.push("You can Oppose with " + opposingMax + " Point" + s);
+                let maxExtraQ = ";?{Opposing Points|0";
+                for (let i=1;i<=opposingMax;i++) {
+                    maxExtraQ += "|" + i;
+                }
+
+                let action = "!Cast3;" + targetFaction + ";" + maxExtraQ + "}";
+                ButtonInfo("Oppose Spell Cast",action)
+            } else {
+                Cast4();
+            }
+        }
+    }
+
+//cast3 - if opposing points
+    const Cast3 = (msg) => {
+        
 
 
 
+    }
+
+
+
+
+
+//cast4 - if no opposing points or once opposing points done, finalizes cast, use info in spellCast global variable
+    const Cast4 = () => {
+
+
+
+
+    }
 
 
 
