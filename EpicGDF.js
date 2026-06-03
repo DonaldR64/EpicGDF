@@ -3888,7 +3888,6 @@ log(Tag)
 
         let errorMsg = [];
         spellCast.targetIDs = [];
-        let targetFaction;
         for (let i=2;i<Tag.length;i++) {
             let id = Tag[i];
             let targetUnit = UnitArray[id];
@@ -3902,7 +3901,6 @@ log(Tag)
             } else if (spellInfo.friendly === false && targetUnit.faction === caster.faction) {
                 errorMsg.push("#ff0000" + unit.name + " is Friendly[/#]");
             } else {
-                targetFaction = targetUnit.faction;
                 spellCast.targetIDs.push(id);
             }
         }
@@ -3918,15 +3916,19 @@ log(Tag)
             let opposingMax = BonusSpellPoints(caster,"Hostile");
             let s = (opposingMax === 1) ? "":"s";
             if (opposingMax > 0) {
-                SetupCard(targetFaction,"Spell Opposition",targetFaction);
+                let oppPlayer = caster.player === 0 ? 1:0;
+                let oppFaction = state.Epic.factions[oppPlayer];
+
+                SetupCard(oppFaction,"Spell Opposition",oppFaction);
                 outputCard.body.push("You can Oppose with " + opposingMax + " Point" + s);
                 let maxExtraQ = ";?{Opposing Points|0";
                 for (let i=1;i<=opposingMax;i++) {
                     maxExtraQ += "|" + i;
                 }
 
-                let action = "!Cast3;" + targetFaction + ";" + maxExtraQ + "}";
+                let action = "!Cast3" + maxExtraQ + "}";
                 ButtonInfo("Oppose Spell Cast",action)
+                PrintCard();
             } else {
                 Cast4();
             }
@@ -3935,20 +3937,21 @@ log(Tag)
 
 //cast3 - if opposing points
     const Cast3 = (msg) => {
-
-
-
-
+        let Tag = msg.content.split(";");
+        spellCast.oppPoints = parseInt(Tag[1]) || 0;
+        Cast4();
     }
-
-
-
-
 
 //cast4 - if no opposing points or once opposing points done, finalizes cast, use info in spellCast global variable
     const Cast4 = () => {
         sendChat("","Spell Cast")
 log(spellCast)
+
+
+
+
+
+
 
 
     }
