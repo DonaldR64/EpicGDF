@@ -3808,7 +3808,7 @@ log(playerID);
 //cast3 - if no opposing points or once opposing points done, finalizes cast
 
     const BonusSpellPoints = (caster) => {
-        return 2
+        return 0
 
 
 
