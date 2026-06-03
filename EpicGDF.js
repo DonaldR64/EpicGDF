@@ -158,6 +158,7 @@ const Main = (() => {
             "fontColour": "#000000",
             "borderColour": "#3a8000",
             "borderStyle": "5px ridge",  
+            "spells": ["Elder Protection (1)","Death Bolt (1)","Path of War (2)","Psychic Vomit (2)","Head Bang (3)", "Crackling Bolt (3)"],
         },
 
 
@@ -806,12 +807,8 @@ const Main = (() => {
             this.keywords = keywords;
             this.flavours = flavours;
 
-            let casterKey = keywords.find((e) => e.includes("Caster")) || [];
-            let casterLevel = 0;
-            if (casterKey) {
-                casterLevel += parseInt(casterKey.replace(/\D/g,''));
-            }
-            this.casterLevel = casterLevel;
+            let casterKey = keywords.find((e) => e.includes("Caster")) || "0";
+            this.casterLevel = parseInt(casterKey.replace(/\D/g,''));
 
             let weapons = [];
             for (let i=1;i<11;i++) {
@@ -855,10 +852,6 @@ const Main = (() => {
                 let weapon = {name: "Impact",number: this.models,type: "CCW",range: 0,attacks: impact,ap: 0,keywords: [""],fx: "",sound: ""};
                 weapons.push(weapon);
             }
-
-
-
-
 
 
             this.weapons = weapons;
@@ -1342,7 +1335,15 @@ const Main = (() => {
         //Dangerous
         AddAbility("Dangerous","!DangerousTest",unit.charID);
 
-
+        if (unit.casterLevel > 0) {
+            action = "!Cast;?{Spell";
+            let spellNames = Factions[unit.faction].spells;
+            _.each(spellNames,spellName => {
+                action += "|" + spellName.trim();
+            })
+            action += "}";
+            AddAbility("Cast Spell",action,unit.charID);
+        }
 
 
 
@@ -3516,21 +3517,10 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
 
             let a1c = Factions[unit.faction].objColour || "#ffffff";
 
-            let cl = unit.casterLevel;
-            let clM;
-            let sb2 = false;
-            if (cl > 0) {
-                clM = 6
-                sb2 = true;
-            };
-            
             unit.token.set({
                 bar1_value: unit.wounds,
                 bar1_max: unit.wounds,
-                bar1_value: cl,
-                bar1_max: clM,
                 showplayers_bar1: true,
-                showplayers_bar2: sb2,
                 aura1_color: a1c,
                 aura1_radius: 0.1,
                 showplayers_aura1: true,
@@ -3543,6 +3533,15 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                 tint_color: "transparent",
                 disableSnapping: ds,
             })
+            if (unit.casterLevel > 0) {
+                unit.token.set({
+                    bar2_value: unit.casterLevel,
+                    bar2_max: 6,
+                    showplayers_bar2: true,
+                })
+            };
+
+
             if (unit.keywords.includes("Melee Shrouding") || unit.keywords.includes("Melee Shrouding Aura")) {
                 unit.token.set({
                     aura2_color: "#ffffff",
@@ -3583,6 +3582,9 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         if (charName.includes("Captain")) {name = "Captain "};
         if (charName.includes("Boss")) {name = "Boss "};
         if (charName.includes("Warboss")) {name = "Warboss "};
+        if (charName.includes("Weirdboy")) {name = "Weirdboy "};
+
+
 
         let names = state.Epic.heroes[unit.player];
         if (names === "" || !names) {
