@@ -1348,7 +1348,7 @@ const Main = (() => {
         AddAbility("Dangerous","!DangerousTest",unit.charID);
 
         if (unit.casterLevel > 0) {
-            action = "!Cast;?{Spell";
+            action = "!Cast;" + unit.id + ";?{Spell";
             let spellNames = Factions[unit.faction].spells;
             _.each(spellNames,spellName => {
                 action += "|" + spellName.trim();
@@ -3767,9 +3767,10 @@ log(playerID);
     }
    
     const Cast = (msg) => {
-        let casterID = msg.selected[0]._id;
+        let Tag = msg.content.split(";");
+        let casterID = Tag[1];
         let caster = UnitArray[casterID];
-        let spellName = msg.content.split(";")[1];
+        let spellName = Tag[2].split("(")[0].trim();
         let spellInfo = Spells[spellName];
         SetupCard(caster.name,spellName,caster.faction);
         if (!spellInfo) {
