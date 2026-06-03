@@ -3767,6 +3767,10 @@ log(playerID);
     }
    
     const Cast = (msg) => {
+        //allow player to cast, which chooses targets, adds points
+        //check if opposing player has casters, is so, put up a bit for them - in Cast2
+        //make these choices individual player output only
+
         let Tag = msg.content.split(";");
         let casterID = Tag[1];
         let caster = UnitArray[casterID];
@@ -3777,23 +3781,36 @@ log(playerID);
             outputCard.body.push("Not in Database");
         } else {
             outputCard.body.push(spellInfo.description);
+            let maxExtra = BonusSpellPoints(caster); //gather info
+            let maxExtraQ = ";?{Extra Points";
+            for (let i=1;i<=maxExtra;i++) {
+                maxExtraQ += "|" + i;
+            }
+            maxExtraQ += "};"
+            if (maxExtra === 0) {
+                maxExtraQ = ";0;";
+            }
+            let targets = "";
+            for (let i=0;i<spellInfo.targets;i++) {
+                targets += ";@{target|Target " + (i+1) + "|token_id}";
+            }
 
-
+            let action = "!Cast2;casterID;" + spellName +  maxExtraQ + targets;
+            ButtonInfo("Cast " + spellName,action);
         }
-
-
-
-
-
         PrintCard();
-
-
     }
 
 
+//cast2 - checks valid targets, range etc, then puts out call for opposing points
+//cast3 - if no opposing points or once opposing points done, finalizes cast
+
+    const BonusSpellPoints = (caster) => {
+        return 2
 
 
 
+    }
 
 
 
