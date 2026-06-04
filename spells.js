@@ -1,5 +1,5 @@
 //type - Buff, Debuff or damage
-//keywords are an array of strings
+//keywords are an array of
 const Spells = {
     "Elder Protection": {
         cost: 1,
@@ -44,7 +44,7 @@ const Spells = {
         hits: 6,
         ap: 0,
         keywords: ["Bane"],
-        fx: "burst-acid",
+        fx: "breath-acid",
         sound: "Boom",
     },
     "Head Bang": {

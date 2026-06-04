@@ -2330,19 +2330,19 @@ log(weapon)
                     hits++;
                     if (roll === 6) {
                         crits++;
-                        if ((attacker.keywords.includes("Relentless") || attackerAuras.includes("Relentless")) && losResult.distance > 4) {
+                        if ((attacker.keywords.includes("Relentless") || attackerAuras.includes("Relentless")) && losResult.distance > 4 && combatType !== "Spell") {
                             relentless++;
                         }
                         if (weapon.keywords.includes("Surge")) {
                             surge++;
                         }
-                        if (attacker.keywords.includes("Devout")) {
+                        if (attacker.keywords.includes("Devout") && combatType !== "Spell") {
                             devout++;
                         }
                         if (attacker.keywords.includes("Furious") || attackerAuras.includes("Furious")) {
                             furious++;
                         }
-                        if (attacker.keywords.includes("Predator Fighter")) {
+                        if (attacker.keywords.includes("Predator Fighter") && combatType !== "Spell") {
                             predator++;
                             let roll = randomInteger(6);
                             if (roll >= needed) {
@@ -2357,12 +2357,9 @@ log(weapon)
                         if (weapon.keywords.includes("Butcher")) {
                             butcher++;
                         }
-                        if (attacker.keywords.includes("Ferocious")) {
-                            ferocious++;
-                        }
                     }
                     if (roll === 5) {
-                        if (attacker.keywords.includes("Ferocious") && (attacker.keywords.includes("Ferocious Boost") || attackerAuras.includes("Ferocious Boost"))) {
+                        if (combatType !== "Spell" && attacker.keywords.includes("Ferocious") && (attacker.keywords.includes("Ferocious Boost") || attackerAuras.includes("Ferocious Boost"))) {
                             ferocious++;
                             ferBoost = true;
                         }
@@ -2832,10 +2829,10 @@ log(weapon)
         }
 
 
-
-
-
-        PrintCard();
+        //spells printed by Cast4
+        if (combatType !== "Spell") {
+            PrintCard();
+        }
     }
 
 
@@ -3913,9 +3910,14 @@ log(playerID);
 
         let errorMsg = [];
         spellCast.targetIDs = [];
+        let tIDs = [];
         for (let i=2;i<Tag.length;i++) {
             let id = Tag[i];
             let targetUnit = UnitArray[id];
+            if (!targetUnit) {
+                log("Error in Targetting of Spell")
+                continue;
+            }
             let losResult = LOS(caster,targetUnit);
             if (losResult.los === false) {
                 errorMsg.push("#ff0000" + targetUnit.name + " is not in LOS[/#]");
@@ -3926,7 +3928,7 @@ log(playerID);
             } else if (spellInfo.friendly === false && targetUnit.faction === caster.faction) {
                 errorMsg.push("#ff0000" + unit.name + " is Friendly[/#]");
             } else {
-                spellCast.targetIDs.push(id);
+                tIDs.push(id);
             }
         }
         if (errorMsg.length > 0) {
@@ -3937,6 +3939,7 @@ log(playerID);
             spellCast = {};
             PrintCard();
         } else {
+            spellCast.targetIDs = [... new Set(tIDs)];
             //check if opposing spells
             let opposingMax = BonusSpellPoints(caster,"Hostile");
             let s = (opposingMax === 1) ? "":"s";
@@ -4007,16 +4010,18 @@ log(playerID);
                 Attack(msg);
             }
         }
-        
+        if (spellInfo.type.includes("Debuff")) {
 
 
 
 
+        }
+        if (spellInfo.type.includes("Buff")) {
 
 
 
-
-
+            
+        }
     }
 
     const SpendSpellPoints = () => {
