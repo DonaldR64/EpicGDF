@@ -3962,6 +3962,7 @@ log(playerID);
 
     const Cast5 = () => {
         //enact the spell
+        //3 types - Buff, Debuff or Damage
         
 
 
