@@ -2640,6 +2640,8 @@ log(defender.Associated())
         let weaponType = Tag[3]; //CCW, Rifle etc
         let weapon;
 
+
+
         let attackerHex = HexMap[attacker.hexLabel];
         let defenderHex = HexMap[defender.hexLabel];
     
@@ -2657,7 +2659,7 @@ log(defender.Associated())
             })
         } 
         //if hero, check if shuld be a normal unit, if so change
-        if (defender.type === "Hero" && defenderHex.tokenIDs.length > 1 && weaponType !== "Sniper") {
+        if (defender.type === "Hero" && defenderHex.tokenIDs.length > 1 && weaponType.includes("Sniper") === false) {
             _.each(defenderHex.tokenIDs,tokenID => {
                 let unit2 = UnitArray[tokenID];
                 if (unit2.faction === defender.faction && unit2.id !== defender.id && unit2.type !== "Hero") {
@@ -2673,13 +2675,16 @@ log(defender.Associated())
         defender.Debuffs("Combat");
         let defenders = [defender];
         let defendersAliveFlag = [true];
-        let defenderHero = defender.Associated();
-        if (defenderHero !== false) {
-            defenderModels++
-            defenderHero.Debuffs("Combat");
-            defenders.push(defenderHero)
-            defendersAliveFlag.push(true);
+        if (weaponType.includes("Sniper") === false) {
+            let defenderHero = defender.Associated();
+            if (defenderHero !== false) {
+                defenderModels++
+                defenderHero.Debuffs("Combat");
+                defenders.push(defenderHero)
+                defendersAliveFlag.push(true);
+            }
         }
+
         //error checks
         let errorMsg = [];
         if (friendly === true) {
@@ -2688,7 +2693,8 @@ log(defender.Associated())
 
         //Weapons - los, ranges, limited
         let losResult = LOS(attacker,defender);
-        let combatType = (weaponType === "CCW") ? "Melee":"Ranged";
+        let combatType = (weaponType === "CCW") ? "Melee":(weaponType.includes("Spell")) ? "Ranged":"Spell";
+        
 
         let unpredictable = (attacker.keywords.includes("Unpredictable")) ? true:false;
         if (combatType === "Melee" && (attacker.keywords.includes("Unpredictable Fighter") || attackerAuras.includes("Unpredictable Fighter"))) {
@@ -2706,55 +2712,72 @@ log(defender.Associated())
             }
         }
 
-        let weaponArray = [];
-        let notEligible = []; //weapons not eligible for various reasons
-        for (let i=0;i<attacker.weapons.length;i++) {
-            weapon = DeepCopy(attacker.weapons[i]);
-            let notE;
-            if (weapon.type !== weaponType) {continue};
-            if (weapon.name === "Impact" && attacker.id !== state.Epic.activeID) {
-                notE = weapon.name + " only for Charging Unit";
-            }
-            if (weapon.name === "Impact" && attacker.token.get(SM.fatigue) === true) {
-                notE = "Fatigue limits Impact";
-            }
-            if (attacker.id !== state.Epic.activeID && combatType !== "Melee" && attacker.token.get("aura1_color") !== "#ff00ff") {
-                notE = "Can only fire Ranged Weapons if Active Unit";
-            } 
-            if (weapon.type === "CCW" && losResult.distance > 1) {
-                notE = "Not in Melee Range";
-            }
-            if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
-                notE = weapon.name + " - no LOS";
-            }
-            let range = (defender.type === "Aircraft" && weapon.keywords.includes("Unstoppable") === false) ? weapon.range - 6:weapon.range;
-            if (attacker.keywords.includes("Increased Shooting Range") || attackerAuras.includes("Increased Shooting Range")) {
-                range += 3;
-            }
-            if (losResult.distance > range && combatType === "Ranged" && weapon.type !== "CCW") {
-                notE = weapon.name + " - lacks Range";
-                if (losResult.notes.length > 1 && losResult.notes.includes("Ranged Shrouding")) {
-                    notE += "[Ranged Shrouding in effect]";
-                }
-            }
-            if (notE) {
-                notEligible.push(notE)
-            } else {
-                if (weapon.keywords.includes("Deadly")) {
-                    weaponArray.unshift(weapon);                
-                } else {
-                    weaponArray.push(weapon);                
-                }
 
+        if (combatType !== "Spell") {
+            let weaponArray = [];
+            let notEligible = []; //weapons not eligible for various reasons
+            for (let i=0;i<attacker.weapons.length;i++) {
+                weapon = DeepCopy(attacker.weapons[i]);
+                let notE;
+                if (weapon.type !== weaponType) {continue};
+                if (weapon.name === "Impact" && attacker.id !== state.Epic.activeID) {
+                    notE = weapon.name + " only for Charging Unit";
+                }
+                if (weapon.name === "Impact" && attacker.token.get(SM.fatigue) === true) {
+                    notE = "Fatigue limits Impact";
+                }
+                if (attacker.id !== state.Epic.activeID && combatType !== "Melee" && attacker.token.get("aura1_color") !== "#ff00ff") {
+                    notE = "Can only fire Ranged Weapons if Active Unit";
+                } 
+                if (weapon.type === "CCW" && losResult.distance > 1) {
+                    notE = "Not in Melee Range";
+                }
+                if (losResult.los === false && weapon.keywords.includes("Indirect") === false) {
+                    notE = weapon.name + " - no LOS";
+                }
+                let range = (defender.type === "Aircraft" && weapon.keywords.includes("Unstoppable") === false) ? weapon.range - 6:weapon.range;
+                if (attacker.keywords.includes("Increased Shooting Range") || attackerAuras.includes("Increased Shooting Range")) {
+                    range += 3;
+                }
+                if (losResult.distance > range && combatType === "Ranged" && weapon.type !== "CCW") {
+                    notE = weapon.name + " - lacks Range";
+                    if (losResult.notes.length > 1 && losResult.notes.includes("Ranged Shrouding")) {
+                        notE += "[Ranged Shrouding in effect]";
+                    }
+                }
+                if (notE) {
+                    notEligible.push(notE)
+                } else {
+                    if (weapon.keywords.includes("Deadly")) {
+                        weaponArray.unshift(weapon);                
+                    } else {
+                        weaponArray.push(weapon);                
+                    }
+
+                }
             }
+            if (weaponArray.length === 0) {
+                errorMsg = errorMsg.concat(notEligible);
+            }
+            if (ErrorMsg(errorMsg) === true) {
+                PrintCard();
+                return;
+            }
+        } else if (combatType === "Spell") {
+            weapon = {
+                number: 1,
+                name: spellInfo.spellName,
+                type: "Spell",
+                range: spellInfo.range,
+                attacks: spellInfo.attacks,
+                ap: spellInfo.ap,
+                keywords: spellInfo.keywords,
+                fx: spellInfo.fx,
+                sound: spellInfo.sound
+            }
+            weaponArray.push(weapon);
         }
-        if (weaponArray.length === 0) {
-            errorMsg = errorMsg.concat(notEligible);
-        }
-        if (ErrorMsg(errorMsg) === true) {
-            PrintCard();
-            return;
-        }
+    
 
         let meleeWounds = 0;
         let moraleCheck = false;
