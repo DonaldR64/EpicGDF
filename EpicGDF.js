@@ -2781,12 +2781,10 @@ log(weapon)
                 ap: spellInfo.ap || 0,
                 keywords: spellInfo.keywords || [""],
                 fx: spellInfo.fx,
-                sound: spellInfo.sound
+                sound: spellInfo.sound,
             }
             weaponArray.push(weapon);
         }
-    log(weaponArray)
-    return
 
         let meleeWounds = 0;
         let moraleCheck = false;
@@ -3975,7 +3973,7 @@ log(playerID);
         SetupCard(caster.name,spellInfo.spellName,caster.faction);
         let delta = spellCast.extraPoints - spellCast.oppPoints;
         let target = Math.min(Math.max(2,4 - delta),6);
-        let tip = "<br>Base 4+";
+        let tip = "Base 4+";
         if (spellCast.extraPoints > 0) {
             tip += "<br>Extra Points from Caster: +" + spellCast.extraPoints;
         }
