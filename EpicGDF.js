@@ -2464,8 +2464,6 @@ log(weapon)
                 let lids = state.Epic.limitedMacros[attacker.id];
                 for (let l=0;l<lids.length;l++) {
                     let info = lids[l];
-        log("Info ")
-        log(info)
                     if (info.key === weapon.type) {
                         let abil = findObjs({_type: "ability", _id: info.id})[0];
                         if (abil) {abil.remove()};
@@ -2645,11 +2643,12 @@ log(weapon)
         let defender = UnitArray[Tag[2]];
 
         if (!attacker || !defender) {return};
-        SetupCard(attacker.name,"Attack",attacker.faction);
         let weaponType = Tag[3]; //CCW, Rifle etc
         let weapon;
 
-
+        if (weaponType.includes("Spell") === false) {
+            SetupCard(attacker.name,"Attack",attacker.faction);
+        }
 
         let attackerHex = HexMap[attacker.hexLabel];
         let defenderHex = HexMap[defender.hexLabel];
@@ -2712,7 +2711,7 @@ log(weapon)
         if (combatType === "Ranged" && (attacker.keywords.includes("Unpredictable Shooter") || attackerAuras.includes("Unpredictable Shooter"))) {
             unpredictable = true;
         }
-        if (unpredictable === true) {
+        if (unpredictable === true && combatType !== "Spell") {
             let roll = randomInteger(6);
             if (roll > 3) {
                 attacker.token.set(Buffs.AP1,true);
@@ -2772,20 +2771,22 @@ log(weapon)
                 return;
             }
         } else if (combatType === "Spell") {
+            let spellInfo = Spells[spellCast.spellName];
             weapon = {
                 number: 1,
-                name: spellInfo.spellName,
+                name: spellCast.spellName,
                 type: "Spell",
                 range: spellInfo.range,
                 attacks: spellInfo.hits,
-                ap: spellInfo.ap,
-                keywords: spellInfo.keywords,
+                ap: spellInfo.ap || 0,
+                keywords: spellInfo.keywords || " ",
                 fx: spellInfo.fx,
                 sound: spellInfo.sound
             }
             weaponArray.push(weapon);
         }
-    
+    log(weaponArray)
+    return
 
         let meleeWounds = 0;
         let moraleCheck = false;
@@ -3991,13 +3992,31 @@ log(playerID);
             outputCard.body.push("[hr]");
             Cast5();
         }
+        
         PrintCard();
     }
 
     const Cast5 = () => {
         //enact the spell
         //3 types - Buff, Debuff or Damage
+        let caster = UnitArray[spellCast.casterID];
+        let spellInfo = Spells[spellCast.spellName];
+        if (spellInfo.type.includes("Damage")) {
+            for (let i=0;i<spellCast.targetIDs.length;i++) {
+                let msg = {
+                    content: " ;" + caster.id + ";" + spellCast.targetIDs[i] + ";Spell",
+                }
+                Attack(msg);
+            }
+        }
         
+
+
+
+
+
+
+
 
 
     }
