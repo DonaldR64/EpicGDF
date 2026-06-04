@@ -1,6 +1,7 @@
 //type - Buff, Debuff or damage
 //keywords are an array of
 const Spells = {
+    //Orks
     "Elder Protection": {
         cost: 1,
         description: "Pick one friendly unit within 6 hexes, which gets Resistance once (next time the effect would apply)",
@@ -70,12 +71,76 @@ const Spells = {
         fx: "burst-magic",
         sound: "Boom",
     },
-
-
-
-
-
-
+    //Deathguard
+    "Aura of Pestilence": {
+        cost: 1,
+        description: "Pick one enemy unit within 9 hexes, which counts as being in Difficult Terrain once (next time the effect would apply).",
+        type: "Debuff",
+        friendly: false,
+        targets: 1,
+        range: 9,
+        debuff: "Difficult Terrain",
+        sound: "Squelch",
+    },
+    "Rapid Putrefaction": {
+        cost: 1,
+        description: "Pick one enemy unit within 6 hexes, which takes 2 hits with AP(1) and Surge.",
+        type: "Damage",
+        friendly: false,
+        targets: 1,
+        range: 6,
+        hits: 2,
+        ap: 0,
+        keywords: ["Surge"],
+        fx: "burst-slime",
+        sound: "Squelch",
+    },
+    "Blessed Virus": {
+        cost: 2,
+        description: "Pick up to two friendly units within 6 hexes, which get Rapid Rush once (next time the effect would apply).",
+        type: "Buff",
+        friendly: true,
+        targets: 2,
+        range: 6,
+        buff: "Rapid Rush",
+        sound: "Angels",
+    },
+    "Plague Malediction": {
+        cost: 2,
+        description: "Pick one enemy model within 12 hexes, which takes 2 hits with AP(4). This effect is resolved as if the target was a unit of [1].",
+        type: "Damage,Sniper",
+        friendly: false,
+        targets: 1,
+        range: 12,
+        hits: 2,
+        ap: 4,
+        keywords: ["Takedown"],
+        fx: "burst-slime",
+        sound: "Squelch",
+    },
+    "Plague Boon": {
+        cost: 3,
+        description: "Pick up to three friendly units within 6 hexes, which get Plaguebound Boost once (next time the effect would apply).",
+        type: "Buff",
+        friendly: true,
+        targets: 3,
+        range: 6,
+        buff: "Plaguebound Boost",
+        sound: "Angels",
+    },
+    "Rot Wave": {
+        cost: 3,
+        description: "Pick one enemy unit within 9 hexes, which takes 6 hits.",
+        type: "Damage",
+        friendly: false,
+        targets: 1,
+        range: 9,
+        hits: 6,
+        ap: 0,
+        keywords: [""],
+        fx: "burst-slime",
+        sound: "Boom",
+    },
 
 
 
