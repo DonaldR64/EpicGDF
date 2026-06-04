@@ -6,3 +6,5 @@ weapontype = Spell, possibly Spell,Sniper if single target possible
 
 
 */
+
+

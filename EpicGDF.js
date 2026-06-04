@@ -1284,8 +1284,10 @@ const Main = (() => {
             let names = types[keys[i]];
             if (names.length === 0) {continue};
             let fx = "";
+            let ccwTag = "";
             for (let j=0;j<unit.weapons.length;j++) {
                 if (keys[i] === "CCW") {
+                    ccwTag = " [CCW]";
                     fx = "/fx bubbling-blood @{target|token_id}";
                     break;
                 } else if (names[0].includes(unit.weapons[j].name) && unit.weapons[j].fx) {
@@ -1296,7 +1298,7 @@ const Main = (() => {
             names = names.toString();
             if (names.charAt(0) === ",") {names = names.replace(",","")};
             names = names.replaceAll(",","+");
-            abilityName = weaponNum + ": " + names;
+            abilityName = weaponNum + ccwTag + ": " + names;
             weaponNum += 1;
             action = "!Attack;@{selected|token_id};@{target|token_id};" + keys[i];
             action += '\n' + fx;
@@ -2015,7 +2017,7 @@ log(c)
                 weaponAP += 2;
                 apTip += "<br>Ranged Slayer +2 AP vs Tough 3+";
             }
-            if ((attacker.keywords.includes("Slayer") || attackerAuras.includes("Slayer")) && defender.toughness > 2) {
+            if ((attacker.keywords.includes("Slayer") || attackerAuras.includes("Slayer")) && defender.toughness > 2 && combatType !== "Spell") {
                 if ((attacker.keywords.includes("Ranged Slayer") || attackerAuras.includes("Ranged Slayer"))) {
                     if (combatType === "Ranged") {
                         weaponAP += 2;
@@ -2043,12 +2045,12 @@ log(c)
             }
             //versatile attack +1AP
             let vaapFlag = false;
-            if (attackerTT.includes(TT.vAAP)) {
+            if (attackerTT.includes(TT.vAAP) && combatType !== "Spell") {
                 weaponAP++;
                 apTip += "<br>" + TT.vAAP;
                 vaapFlag = true;
             }
-            if (attackerAuras.includes("Versatile Attack") && vaapFlag === false) {
+            if (attackerAuras.includes("Versatile Attack") && vaapFlag === false && combatType !== "Spell") {
                 let aH = attacker.Associated();
                 if (aH && aH !== false) {
                     if (aH.TTip().includes(TT.vAAP)) {
@@ -2136,6 +2138,12 @@ log(c)
                 needed++;
                 neededTip += "<br>Last Stand -1";
             }
+            if (combatType === "Spell") {
+                needed = 1;
+                neededTip = "<br>Spell - Auto Hit"
+            }
+
+
 
             let blast = weapon.keywords.find(key => key.includes("Blast")) || "0";
             blast = parseInt(blast.replace(/\D/g,''));
@@ -2168,7 +2176,7 @@ log(c)
                 needed -= 1;
                 neededTip += "<br>Artillery at Range +1 to Hit";
             }
-            if (attacker.token.get(Buffs.TH1) === true) {
+            if (attacker.token.get(Buffs.TH1) === true && combatType !== "Spell") {
                 needed -= 1;
                 neededTip += "<br>Unpredictable +1 to Hit";
             }
@@ -2180,12 +2188,12 @@ log(c)
 
             //versatile attack +1 to hit
             let vathFlag = false;
-            if (attackerTT.includes(TT.vATH)) {
+            if (attackerTT.includes(TT.vATH) && combatType !== "Spell") {
                 needed -= 1;
                 neededTip += "<br>" + TT.vATH;
                 vathFlag = true;
             }
-            if (attackerAuras.includes("Versatile Attack") && vathFlag === false) {
+            if (attackerAuras.includes("Versatile Attack") && vathFlag === false && combatType !== "Spell") {
                 let aH = attacker.Associated();
                 if (aH && aH !== false) {
                     if (aH.TTip().includes(TT.vATH)) {
@@ -2204,11 +2212,11 @@ log(c)
                 neededTip += "<br>Precision Charge +1 to Hit";
             }
 
-            if (attacker.keywords.includes("Precise")) {
+            if (attacker.keywords.includes("Precise") && combatType !== "Spell") {
                 needed -= 1;
                 neededTip += "<br>Precise +1 to Hit";
             }
-            if (attacker.keywords.includes("Targeting Visor") && losResult.distance > 4) {
+            if (attacker.keywords.includes("Targeting Visor") && losResult.distance > 4 && combatType !== "Spell") {
                 if (attacker.keywords.includes("Targeting Visor Boost") || attackerAuras.includes("Targeting Visor Boost")) {
                     needed -= 2;
                     neededTip += "<br>Targeting Visor & Boost +2 to Hit";
@@ -2221,7 +2229,8 @@ log(c)
                 needed--;
                 neededTip += "<br>Good Shot +1 to Hit";
             }
-            if (defender.token.get(SM.spotter) === true || defender.token.get(SM.spotter) > 0) {
+/*
+            if (defender.token.get(SM.spotter) === true || defender.token.get(SM.spotter) > 0 && combatType !== "Spell") {
                 let spotter = 1;
                 if (defender.token.get(SM.spotter) > 1) {
                     spotter = parseInt(defender.token.get(SM.spotter));
@@ -2230,7 +2239,7 @@ log(c)
                 neededTip += "<br>Spotting Mark +" + spotter + " to Hit";
                 defender.token.set(SM.spotter,false); //used
             }
-
+*/
             //Negative To Hits - removed by Unstoppable
             if (weapon.keywords.includes("Unstoppable") === false) {
                 if (cover === true && (combatType === "Ranged" || (combatType === "Melee" && LargeUnits.includes(attacker.type))))  {
@@ -2289,7 +2298,7 @@ log(c)
 log(weapon)
             //Number of Attacks
             let attacks = weapon.number * weapon.attacks;
-            if (attacker.token.get(SM.halfStr) === true) {
+            if (attacker.token.get(SM.halfStr) === true  && combatType !== "Spell" && attacker.type !== "Hero") {
                 attacks = Math.floor(attacks/2);
             }
             if (attacks === 0) {
@@ -2310,7 +2319,9 @@ log(weapon)
 
 
             attDisplay = attacks; //as attacks is deprecated
-            needed = Math.min(6,Math.max(2,needed)); //1 is always a miss, 6 a hit
+            if (combatType !== "Spell") {
+                needed = Math.min(6,Math.max(2,needed)); //1 is always a miss, 6 a hit
+            }
 
             do {
                 let roll = randomInteger(6);
@@ -2488,9 +2499,7 @@ log(weapon)
                     {name: "Protected",target: 6, rolls: [],saved: 0,note: ""},
                     {name: "Resistance",target: 6, rolls: [],saved: 0, note: ""},
                 ]
-log(defender.keywords)
-log(defender.Auras())
-log(defender.Associated())
+
                 if (defender.keywords.includes("Plaguebound Boost") || defender.Auras().includes("Plaguebound Boost")) {
                     saveTypes[1].target = 5;
                     saveTypes[1].note = " Boost";
@@ -2693,7 +2702,7 @@ log(defender.Associated())
 
         //Weapons - los, ranges, limited
         let losResult = LOS(attacker,defender);
-        let combatType = (weaponType === "CCW") ? "Melee":(weaponType.includes("Spell")) ? "Ranged":"Spell";
+        let combatType = (weaponType === "CCW") ? "Melee":(weaponType.includes("Spell")) ? "Spell":"Ranged";
         
 
         let unpredictable = (attacker.keywords.includes("Unpredictable")) ? true:false;
@@ -2712,9 +2721,8 @@ log(defender.Associated())
             }
         }
 
-
+        let weaponArray = [];
         if (combatType !== "Spell") {
-            let weaponArray = [];
             let notEligible = []; //weapons not eligible for various reasons
             for (let i=0;i<attacker.weapons.length;i++) {
                 weapon = DeepCopy(attacker.weapons[i]);
@@ -2769,7 +2777,7 @@ log(defender.Associated())
                 name: spellInfo.spellName,
                 type: "Spell",
                 range: spellInfo.range,
-                attacks: spellInfo.attacks,
+                attacks: spellInfo.hits,
                 ap: spellInfo.ap,
                 keywords: spellInfo.keywords,
                 fx: spellInfo.fx,
@@ -2791,7 +2799,7 @@ log(defender.Associated())
             }
         })
 
-        if (moraleCheck === true && combatType === "Ranged" && defendersAliveFlag.some((e)=> e === true)) {
+        if (moraleCheck === true && (combatType === "Ranged" || combatType === "Spell") && defendersAliveFlag.some((e)=> e === true)) {
             outputCard.body.push("The unit must take a Morale Check");
             ButtonInfo("Morale Check","!Morale;" + defender.id)
         }
@@ -2814,8 +2822,11 @@ log(defender.Associated())
         })
         if (combatType === "Melee") {
             attacker.token.set(SM.fatigue,true);
+            if (attacker.id === state.Epic.activeID ) {
+                attacker.token.set("aura1_color","transparent");
+            }
         }
-        attacker.token.set("aura1_color","transparent");
+      
 
         if (attacker.type !== "Aircraft") {
             attacker.Rotate(defenderHex);
