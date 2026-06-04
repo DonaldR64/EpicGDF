@@ -73,7 +73,7 @@ const Main = (() => {
 
     let UnitArray = {};
     let saveTypes = [];
-    let spellCasterAssistInfo = [];
+    let spellCasterAssistIDs = [];
     let spellCast = {};
 
     const LargeUnits = ["Vehicle/Monster","Artillery","Titan"]
@@ -962,7 +962,7 @@ const Main = (() => {
 
             SetupCard(this.name,"Morale",this.faction);
 
-            outputCard.body.push("Morale Roll: " + DisplayDice(moraleRoll,this.faction,24) + "vs. " + target + "+");
+            outputCard.body.push("Morale Roll: " + DisplayDice(moraleRoll,this.faction,24) + " vs. " + target + "+");
             outputCard.body.push("[hr]");
 
             if (extra.length > 0) {
@@ -1893,7 +1893,11 @@ const Main = (() => {
 log(unit.name)
             let unitTT = unit.TTip();
             unitAuras = unit.Auras();
-
+            if (unit.casterLevel > 0) {
+                let sp = parseInt(unit.token.get("bar2_value"));
+                sp = Math.min(6,sp + unit.casterLevel);
+                unit.token.set("bar2_value",sp);
+            }
             //Steadfast
             if ((unit.keywords.includes("Steadfast") || unitAuras.includes("Steadfast") || unitTT.includes("steadfast")) && (unit.token.get("tint_color") === "#ff0000")) {
                 let steadRoll = randomInteger(6);
@@ -3791,6 +3795,14 @@ log(playerID);
         let caster = UnitArray[casterID];
         let spellName = Tag[2].split("(")[0].trim();
         let spellInfo = Spells[spellName];
+        spellCasterAssistIDs = [];
+        spellCast = {
+            casterID: casterID,
+            spellName: spellName,
+            targetIDs: [],
+            extraPoints: 0,
+            oppPoints: 0,
+        }
         SetupCard(caster.name,spellName,caster.faction);
         if (!spellInfo) {
             outputCard.body.push("Not in Database");
@@ -3802,42 +3814,34 @@ log(playerID);
                 outputCard.body.push("Caster is Shaken and Cannot Cast Spells");
             } else {
                 outputCard.body.push(spellInfo.description);
-                let maxExtra = spellPoints - spellInfo.cost;
-                let s = (maxExtra === 1) ? "":"s";
-                if (maxExtra > 0) {
-
-                    outputCard.body.push("Caster has " + maxExtra + " Point" + s + " extra available");
+                let extraSelf = spellPoints - spellInfo.cost;
+                let s = (extraSelf === 1) ? "":"s";
+                if (extraSelf > 0) {
+                    outputCard.body.push("Caster has " + extraSelf + " Point" + s + " extra available");
+                }
+                let extraQ = "?{Extra Points|0";
+                for (let i=1;i<=extraSelf;i++) {
+                    extraQ += "|" + i + "(Self)";
                 }
                 let bonusAvail = BonusSpellPoints(caster);
                 s = (bonusAvail === 1) ? "":"s";
                 if (bonusAvail > 0) {
-                    maxExtra += bonusAvail;
                     outputCard.body.push("Friendly Nearby Casters can add " + bonusAvail + " Point" + s);
                 }
-                let maxExtraQ = "?{Extra Points|0";
-                for (let i=1;i<=maxExtra;i++) {
-                    maxExtraQ += "|" + i;
+                for (let i=extraSelf+1;i<=(extraSelf + bonusAvail);i++) {
+                    extraQ += "|" + i;
                 }
-                maxExtraQ += "}"
-                if (maxExtra === 0) {
-                    maxExtraQ = ";0";
+                extraQ += "}"
+                if (extraSelf + bonusAvail === 0) {
+                    extraQ = ";0";
                 }
                 let targets = "";
                 for (let i=0;i<spellInfo.targets;i++) {
                     let t = "Target " + (i+1);
                     targets += ";&#64;&#123;target&#124;" + t + "&#124;token_id&#125;";
                 }
-
-                let action = "!Cast2;" + maxExtraQ + targets;
-
+                let action = "!Cast2;" + extraQ + targets;
                 ButtonInfo("Cast " + spellName,action);
-                spellCast = {
-                    casterID: casterID,
-                    spellName: spellName,
-                    targetIDs: [],
-                    extraPoints: 0,
-                    oppPoints: 0,
-                }
             }
 
         }
@@ -3845,9 +3849,8 @@ log(playerID);
     }
 
     const BonusSpellPoints = (caster,type = "Friendly") => {
-        //find other friendly casters within 9 hexes, add in their points, record their id's in case used, will work for both add and subtract as can check factions
+        //find other casters within 9 hexes, add in their points, record their id's in case used, will work for both add and subtract as can check factions
         let casterHex = HexMap[caster.hexLabel];
-        spellCasterAssistInfo = [];
         let totalAvail = 0;
 
         _.each(UnitArray,unit => {
@@ -3858,12 +3861,8 @@ log(playerID);
                     if (losResult.distance <= 9 && losResult.los === true) {
                         let p = parseInt(unit.token.get("bar2_value"));
                         if (p > 0) {
-                            let info = {
-                                id: unit.id,
-                                points: p,
-                            }
                             totalAvail += p;
-                            spellCasterAssistInfo.push(info);
+                            spellCasterAssistIDs.push(unit.id);
                         }
                     }
                 }
@@ -3911,14 +3910,12 @@ log(playerID);
             if (opposingMax > 0) {
                 let oppPlayer = caster.player === 0 ? 1:0;
                 let oppFaction = state.Epic.factions[oppPlayer];
-
                 SetupCard(oppFaction,"Spell Opposition",oppFaction);
                 outputCard.body.push("You can Oppose with " + opposingMax + " Point" + s);
                 let maxExtraQ = ";?{Opposing Points|0";
                 for (let i=1;i<=opposingMax;i++) {
                     maxExtraQ += "|" + i;
                 }
-
                 let action = "!Cast3" + maxExtraQ + "}";
                 ButtonInfo("Oppose Spell Cast",action)
                 PrintCard();
@@ -3935,22 +3932,75 @@ log(playerID);
         Cast4();
     }
 
-    //cast4 - finalizes cast, use info in spellCast global variable
+    //cast4 - rolls for success, pays cost
     const Cast4 = () => {
-        sendChat("","Spell Cast")
-log(spellCast)
+        SpendSpellPoints();
+        let caster = UnitArray[spellCast.casterID];
+        let spellInfo = Spells[spellCast.spellName];
+        SetupCard(caster.name,spellInfo.spellName,caster.faction);
+        let delta = spellCast.extraPoints - spellCast.oppPoints;
+        let target = Math.min(Math.max(2,4 - delta),6);
+        let tip = "<br>Base 4+";
+        if (spellCast.extraPoints > 0) {
+            tip += "<br>Extra Points from Caster: +" + spellCast.extraPoints;
+        }
+        if (spellCast.oppPoints > 0) {
+            tip += "<br>Points from Opposing: -" + spellCast.oppPoints;
+        }
+        let targetDisplay = '[' + target + '](#" class="showtip" title="' + tip + ')';
+        let spellRoll = randomInteger(6);
+        outputCard.body.push("Roll: " + DisplayDice(spellRoll,caster.faction,24) + " vs. " + targetDisplay + "+");
+        if (spellRoll < target) {
+            outputCard.body.push("[#ff0000]The Spell Fails to be Cast[/#]");
+        } else {
+            outputCard.body.push("[#0000ff]The Spell is Successfully Cast[/#]");
+            outputCard.body.push("[hr]");
+            Cast5();
+        }
+        PrintCard();
+    }
 
-
-
-
-
-
+    const Cast5 = () => {
+        //enact the spell
+        
 
 
     }
 
-
-
+    const SpendSpellPoints = () => {
+        let caster = UnitArray[spellCast.casterID];
+        let spellInfo = Spells[spellCast.spellName];
+        let casterSP = parseInt(caster.token.get("bar2_value"));
+        //spell cost
+        casterSP -= spellInfo.cost;
+        //extra points used, starting with caster
+        for (let i=0;i<spellCast.extraPoints;i++) {
+            if (casterSP > 0) {
+                casterSP--;
+            } else {
+                for (k=0;k<spellCasterAssistIDs.length;k++) {
+                    let unit3 = UnitArray[spellCasterAssistIDs[k]];
+                    let sp = parseInt(unit3.token.get("bar2_value"));
+                    if (unit3.faction === caster.faction && sp > 0) {
+                        sp--;
+                        unit3.token.set("bar2_value",sp);
+                    }
+                }
+            }
+        }
+        caster.token.set("bar2_value",casterSP);
+        //opp points
+        for (let i=0;i<spellCast.oppPoints;i++) {
+            for (k=0;k<spellCasterAssistIDs.length;k++) {
+                let unit3 = UnitArray[spellCasterAssistIDs[k]];
+                let sp = parseInt(unit3.token.get("bar2_value"));
+                if (unit3.faction !== caster.faction && sp > 0) {
+                    sp--;
+                    unit3.token.set("bar2_value",sp);
+                }
+            }
+        }
+    }
 
 
 
