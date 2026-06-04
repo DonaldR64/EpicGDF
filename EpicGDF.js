@@ -100,6 +100,7 @@ const Main = (() => {
             "fontColour": "#000000",
             "borderColour": "#000000",
             "borderStyle": "5px ridge",
+            "spells": ["Aura of Pestilence (1)","Rapid Putrefaction (1)","Blessed Virus (2)","Plague Malediction (2)","Plague Boon (3)","Rot Wave (3)"],
         },
         "Alien Hives": {
             "image": "https://s3.amazonaws.com/files.d20.io/images/362007142/CjTYql17F5VDkqGlW_yorg/thumb.png?1696555948",
