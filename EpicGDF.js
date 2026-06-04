@@ -2779,7 +2779,7 @@ log(weapon)
                 range: spellInfo.range,
                 attacks: spellInfo.hits,
                 ap: spellInfo.ap || 0,
-                keywords: spellInfo.keywords || " ",
+                keywords: spellInfo.keywords || [""],
                 fx: spellInfo.fx,
                 sound: spellInfo.sound
             }
