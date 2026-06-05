@@ -906,10 +906,6 @@ const Main = (() => {
             let moraleRoll = randomInteger(6);
             let shaken = (this.token.get("tint_color") === "#ff0000") ? true:false;
 
-            if (this.token.get(SM.laststand)) {
-                target++;
-                tip += "<br>Last Stand -1";
-            }
             if (this.keywords.includes("Hive Bond") || auras.includes("Hive Bond")) {
                 if (this.keywords.includes("Hive Bond Boost") || auras.includes("Hive Bond Boost")) {
                     target -= 2;
@@ -921,10 +917,12 @@ const Main = (() => {
             }
 
             target = Math.min(6,Math.max(2,target));
+            if (shaken === true) {target = 7};
+
             let success = (moraleRoll >= target) ? true:false;
 
             //fearless
-            if (this.keywords.includes("Fearless") && success === false) {
+            if (this.keywords.includes("Fearless") && success === false && shaken === false) {
                 let fearlessRoll = randomInteger(6);
                 let ftip = "Fearless Roll: " + fearlessRoll + " vs 4+";
                 if (fearlessRoll > 3) {
@@ -935,6 +933,9 @@ const Main = (() => {
                 }
                 extra.push(ftip);
             }
+
+
+
 
             //after failure changes - automatic
             if (this.keywords.includes("No Retreat") && success === false) {
@@ -978,15 +979,14 @@ const Main = (() => {
                 tip = '[Failure!](#" class="showtip" title="' + tip + ')';
                 outputCard.body.push(tip);
                 if (shaken === true) {
-                    outputCard.body.push("Shaken Unit Routs!");
-                    this.Killed();
+                    outputCard.body.push("Unit remains Shaken");
                 } else {
                     outputCard.body.push("Unit is Shaken");
-                    this.token.set("tint_color","#ff0000");
-                    if (this.token.get(SM.halfStr) === true) {
-                        outputCard.body.push("If this was a Melee, Remove the Unit as it Routs!");
-                    }                        
                 }
+                this.token.set("tint_color","#ff0000");
+                if (this.token.get(SM.halfStr) === true) {
+                    outputCard.body.push("If this was a Melee, Remove the Unit as it Routs!");
+                }                        
             }
             PrintCard();
         }
@@ -1077,11 +1077,24 @@ const Main = (() => {
             delete UnitArray[this.id];
         }
 
-        Debuffs(phase) {
+        RemoveBuffs(phase) {
             if (phase === "Combat") {
                 this.RemoveTTip("piercing");
             }
+            if (phase === "Activation") {
+                let TTlist = [TT.vAAP,TT.vATH,TT.vDD,TT.vDTH,];
+                let markerList = [Buffs.AP1,Buffs.TH1,SM.evade,SM.laststand,];
 
+                _.each(TTlist,tip => {
+                    this.RemoveTTip(tip);
+                });
+                _.each(markerList,marker => {
+                    this.token.set(marker,false);
+                })
+
+
+
+            }
 
 
 
@@ -1855,7 +1868,6 @@ const Main = (() => {
         })
         RemoveLines(["Deploy"]);
         PrintCard();
-        ClearMarkers();
         state.Epic.turn = 1;
     }
 
@@ -1891,15 +1903,20 @@ const Main = (() => {
 
         //things at beginning of turn
         let notes = [];
+        keys = Object.keys(UnitArray);
+
         for (let i=0;i<keys.length;i++) {
             let unit = UnitArray[keys[i]];
-log(unit.name)
+            unit.prevHexLabel = unit.hexLabel;
             let unitTT = unit.TTip();
-            unitAuras = unit.Auras();
+            let unitAuras = unit.Auras();
             if (unit.casterLevel > 0) {
                 let sp = parseInt(unit.token.get("bar2_value"));
                 sp = Math.min(6,sp + unit.casterLevel);
                 unit.token.set("bar2_value",sp);
+            }
+            if (unit.token.get("aura1_color") !== "#ff00ff") {
+                unit.token.set("aura1_color",Factions[unit.faction].objColour);
             }
             //Steadfast
             if ((unit.keywords.includes("Steadfast") || unitAuras.includes("Steadfast") || unitTT.includes("steadfast")) && (unit.token.get("tint_color") === "#ff0000")) {
@@ -1918,7 +1935,7 @@ log(unit.name)
             if (unit.name.includes("Objective")) {
                 ObjectiveCheck(unit);
             }
-            let markers = ["fatigue","AP1","TH1","speedFeat","evade"]
+            let markers = ["fatigue","AP1","TH1"]
             _.each(markers,marker => {
                 unit.token.set(SM[marker],false);
             })
@@ -1955,7 +1972,6 @@ log(unit.name)
             } else {
                 outputCard.body.push("The Faction that went last goes first this Turn");
             }
-            ClearMarkers();
         } else {
             outputCard.body.push("The Game Ends");
         }
@@ -2123,6 +2139,11 @@ log(c)
                 needed = 6;
                 neededTip = "<br>Fatigue: 6+";
             }
+            //if shaken and attacking then is last stand (below) else if shaken and defending/attacking back is this
+            if (attacker.token.get("tint_color") === "#ff0000" && state.Epic.activeID !== attacker.id) {
+                needed = 6;
+                neededTip = "<br>Shaken and Fighting Back: 6+";
+            }
             if (weapon.name === "Ravage") {
                 needed = 6;
                 neededTip = "<br>Ravage: 6+";
@@ -2135,7 +2156,7 @@ log(c)
                 needed = 2;
                 neededTip = "<br>Reliable: 2+";
             }
-            if (attacker.token.get(SM.laststand)) {
+            if (attacker.token.get(SM.laststand) && state.Epic.activeID === attacker.id) {
                 needed++;
                 neededTip += "<br>Last Stand -1";
             }
@@ -2678,14 +2699,14 @@ log(weapon)
         let attackerTT = attacker.TTip();
         let defenderModels = Math.ceil(parseInt(defender.token.get("bar1_value"))/defender.toughness);
 
-        defender.Debuffs("Combat");
+        defender.RemoveBuffs("Combat");
         let defenders = [defender];
         let defendersAliveFlag = [true];
         if (weaponType.includes("Sniper") === false) {
             let defenderHero = defender.Associated();
             if (defenderHero !== false) {
                 defenderModels++
-                defenderHero.Debuffs("Combat");
+                defenderHero.RemoveBuffs("Combat");
                 defenders.push(defenderHero)
                 defendersAliveFlag.push(true);
             }
@@ -2710,6 +2731,8 @@ log(weapon)
             unpredictable = true;
         }
         if (unpredictable === true && combatType !== "Spell") {
+            attacker.token.set(Buffs.AP1,false);
+            attacker.token.set(Buffs.TH1,false);
             let roll = randomInteger(6);
             if (roll > 3) {
                 attacker.token.set(Buffs.AP1,true);
@@ -2817,6 +2840,10 @@ log(weapon)
         _.each(things,thing => {
             attacker.token.set(SM[thing],false);
         })
+        if (attacker.token.get("aura1_color") === "#ff00ff") {
+            attacker.token.set("aura1_color","transparent");
+        }
+
         if (combatType === "Melee") {
             attacker.token.set(SM.fatigue,true);
             if (attacker.id === state.Epic.activeID ) {
@@ -2856,33 +2883,6 @@ log(weapon)
 
 
 
-    const ClearMarkers = () => {
-        //persists turn to turn
-        let persistantTT = ["Steadfast Buff","Versatile Attack = +1 AP","Versatile Attack = +1 to Hit", "Versatile Defense = +1 to Defense","Versatile Defense = -1 to Be Hit",];
-
-
-
-
-        //reset fatigue, activation, tooltips
-        _.each(UnitArray,unit => {
-            if (!unit.token) {return};
-            if (unit.name.includes("Objective")) {return};
-            unit.moved = false; 
-            let tt = unit.TTip();
-            let persistant = tt.filter((e) => persistantTT.includes(e));
-            persistant = persistant.toString();
-            unit.token.set("tooltip",persistant);
-            unit.token.set(SM.fatigue,false);
-            unit.token.set("aura1_color",Factions[unit.faction].objColour);
-            if (unit.type === "Hero") {
-                toFront(unit.token);
-            }
-        })
-
-
-    }
-
-
     const SetupGame = (msg) => {
         let Tag = msg.content.split(";");
         let deployment = Tag[1];
@@ -2916,10 +2916,18 @@ log(weapon)
         let order = Tag[2];
         let unit = UnitArray[id];
         if (!unit) {return};
-        toFront(unit.token);
-        if (unit.type === "Titan") {
+        if (unit.type !== "Titan") {
             toFront(unit.token);
         }
+        if (unit.keywords.includes("Ambush")) {
+            unit.token.set({
+                aura2_color: "transparent",
+                aura2_radius: 0,
+                showplayers_aura2: false,
+            })
+        }
+
+
         if (unit.token.get("aura1_color") === "transparent") {
             SetupCard(unit.name,"Change Order ?",unit.faction);
             outputCard.body.push("Unit has Activated already, ?Redo")
@@ -2947,13 +2955,15 @@ log(weapon)
             outputCard.body.push("Bound - The Unit may immediately be placed anywhere within " + roll + " Hexes")
         }
 
+        unit.RemoveBuffs("Activation");
+
+
         outputCard.subtitle = order;
         unit.token.set("aura1_color","transparent");
         if (unit.type === "Hero") {
             toFront(unit.token);
         }
 
-unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
 
         let move = 3;
         if (unit.keywords.includes("Fast")) {
@@ -3049,8 +3059,8 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
         }
 
         let situation = 1; //open
-        if (startHex.type === "Difficult" && ignoreDifficult === false) {situation = 2}; //difficult but not building
-        if (startHex.building === true) {situation = 3}; //building
+        if (startHex.type === "Difficult" && ignoreDifficult === false) {situation = 2};
+        if (startHex.building === true && ignoreDifficult === false) {situation = 3}; //building
 
 
         switch(order) {
@@ -3298,7 +3308,9 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             } else {
                 outputCard.body.push(tip + " is healed/repaired for " + healed + " Wound" + s);
             }
-//holy sound
+            if (hp > targets[0].wounds/2) {
+                targets[0].token.set(SM.halfStr,false);
+            }
         }
 
         //just placing the special name in tooltip
@@ -3549,7 +3561,16 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
             let unit = UnitArray[token];
             let character = getObj("character", token.get("represents"));   
             let name = character.get("name");
-            if (name.includes("Objective")) {continue};
+            if (name.includes("Objective")) {
+                unit.token.set({
+                    aura1_color: "#ffffff",
+                    aura1_radius: 2.45,
+                    showplayers_aura1: true,
+                    aura1_square: false,
+                    tint_color: "transparent",
+                    layer: "objects",
+                })
+            };
             if (!unit) {
                 unit = new Unit(token.get("id"));
                 if (!unit.faction) {
@@ -3603,15 +3624,15 @@ unit.prevHexLabel = unit.hexLabel; //change this to be set at start of turn
                     showplayers_bar2: true,
                 })
             };
-
-
-            if (unit.keywords.includes("Melee Shrouding") || unit.keywords.includes("Melee Shrouding Aura")) {
+            if (unit.keywords.includes("Ambush")) {
                 unit.token.set({
                     aura2_color: "#ffffff",
-                    aura2_radius: 2,
+                    aura2_radius: 4,
                     showplayers_aura2: true,
                 })
             }
+
+
             AddAbilities2(unit)
 
 
@@ -3781,6 +3802,42 @@ log(playerID);
 
         sendChat("","Cleared State/Arrays");
     }
+
+    const ShowUnactivated = () => {
+        let names = [[],[]];
+        let keys = Object.keys(UnitArray);
+
+        let remaining = false;
+
+        SetupCard("Activations Remaining","","Neutral");
+
+        for (let i=0;i<keys.length;i++) {
+            let unit = UnitArray[keys[i]];
+            let token = unit.token;
+            if (!token) {
+                delete UnitArray[keys[i]];
+                continue;
+            }
+            if (token && token.get("aura1_color") === Factions[unit.faction].objColour) {
+                names[unit.player].push(unit.name);
+            }
+        }
+log(names)
+        for (let p=0;p<2;p++) {
+            let list = names[p];
+log(list)
+            outputCard.body.push("[U][B]" + state.Epic.factions[p] + "[/b][/u]");
+            if (list.length === 0) {
+                outputCard.body.push("All Units Activated");
+            } else {
+                for (i=0;i<list.length;i++) {
+                    outputCard.body.push(list[i]);
+                }
+            }
+        }
+        PrintCard();
+    }
+
 
 
 
@@ -4519,6 +4576,9 @@ log(playerID);
                 break;
             case '!SetTT':
                 SetTT(msg);
+                break;
+            case '!ShowUnactivated':
+                ShowUnactivated();
                 break;
 
         }
