@@ -3889,8 +3889,11 @@ log(playerID);
                 let spellInfo = Spells[spellName];
                 let extra = points - spellInfo.cost;
                 if (extra >= 0) {
-                    let tip = '['+ spellName + '](#" class="showtip tipsy" title="' + spellInfo.description + ')';
-                    outputCard.body.push("[B][U]" + tip + "[/b][/u]");
+
+
+                    let s = spellInfo.cost === 1 ? "":"s"
+                    let tip = '['+ spellInfo.cost + ' Point' + s +'](#" class="showtip tipsy" title="' + spellInfo.description + ')';
+                    outputCard.body.push("[B][U]" + spellName + ": " + tip + "[/b][/u]");
                     let extraQ = ";?{Extra Points|0";
                     for (let i=1;i<=extra;i++) {
                         extraQ += "|" + i + "(Self)";
@@ -3909,7 +3912,7 @@ log(playerID);
                     }
                     let info = {
                         action: "!Cast2;" + caster.id + ";" + spellName + extraQ + targets,
-                        phrase: "Cast: " + spellInfo.cost + " Points",
+                        phrase: "Cast " + spellName,
                     }
                     outputCard.inline.push(info);
                     outputCard.body.push("[INLINE]")
