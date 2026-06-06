@@ -1370,12 +1370,7 @@ const Main = (() => {
         AddAbility("Dangerous","!DangerousTest",unit.charID);
 
         if (unit.casterLevel > 0) {
-            action = "!Cast;" + unit.id + ";?{Spell";
-            let spellNames = Factions[unit.faction].spells;
-            _.each(spellNames,spellName => {
-                action += "|" + spellName.trim();
-            })
-            action += "}";
+            action = "!CastSpell";
             AddAbility("Cast Spell",action,unit.charID);
         }
 
