@@ -180,14 +180,17 @@ const Main = (() => {
         AP1: "status_Green-01::2006603", //+1 AP
         TH1: "status_Red-01::2006626", //+1 TH
         speedFeat: "status_Fast-or-Haste::2006485",
-
+        Resistance: "status_bolt-shield",
+        "Ferocious Boost": "status_strong",
+        "Rapid Rush": "status_half-haze",
+        "Plaguebound Boost": "status_bleeding-eye",
 
     }
 
     const Debuffs = {
         dangerous: "status_Tentacle::7757514",
-
-
+        "Rending Against": "status_overdrive",
+        "Difficult Terrain": "status_tread",
 
     }
 
@@ -1078,8 +1081,11 @@ const Main = (() => {
         }
 
         RemoveBuffs(phase) {
-            if (phase === "Combat") {
-                this.RemoveTTip("piercing");
+            if (phase === "Defense") {
+                let bffs = ["Resistance"];
+                _.each(bffs,b => {
+                    this.token.set(Buffs[b],false);
+                })
             }
             if (phase === "Activation") {
                 let TTlist = [TT.vAAP,TT.vATH,TT.vDD,TT.vDTH,];
@@ -1091,9 +1097,6 @@ const Main = (() => {
                 _.each(markerList,marker => {
                     this.token.set(marker,false);
                 })
-
-
-
             }
 
 
@@ -1126,9 +1129,10 @@ const Main = (() => {
                 {name: "Protected",target: 6, rolls: [],saved: 0,note: ""},
                 {name: "Resistance",target: 6, rolls: [],saved: 0, note: ""},
             ]
-            if (this.keywords.includes("Plaguebound Boost") || this.Auras().includes("Plaguebound Boost")) {
+            if (this.keywords.includes("Plaguebound Boost") || this.Auras().includes("Plaguebound Boost") || this.token.get(Buffs["Plaguebound Boost"])) {
                 saveTypes[1].target = 5;
                 saveTypes[1].note = " Boost";
+                this.token.set(Buffs["Plaguebound Boost"],false);
             }
             let saved = this.Saves(wounds);
             tip += saveTips();
@@ -1168,7 +1172,7 @@ const Main = (() => {
                     let type = saveTypes[t];
                     let name = type.name;
                     if (name === "Regeneration" && ignoreRegen) {continue};
-                    if (this.keywords.includes(name) || auras.includes(name)) {
+                    if (this.keywords.includes(name) || auras.includes(name) || (Buffs[name] && this.token.get(Buffs[name]))) {
                         let roll = randomInteger(6);
                         saveTypes[t].rolls.push(roll);
                         if (roll >= type.target) {
@@ -2376,14 +2380,10 @@ log(weapon)
                         }
                     }
                     if (roll === 5) {
-                        if (combatType !== "Spell" && attacker.keywords.includes("Ferocious") && (attacker.keywords.includes("Ferocious Boost") || attackerAuras.includes("Ferocious Boost"))) {
+                        if (combatType !== "Spell" && attacker.keywords.includes("Ferocious") && (attacker.keywords.includes("Ferocious Boost") || attackerAuras.includes("Ferocious Boost") || attacker.token.get(Buffs["Ferocious Boost"]))) {
                             ferocious++;
                             ferBoost = true;
                         }
-
-
-
-
                     }
 
 
@@ -2487,6 +2487,7 @@ log(weapon)
 
             for (let d=0;d<defenders.length;d++) {
                 defender = defenders[d];
+                if (!defender) {continue}
                 if (hits === 0) {continue};
                 let saveInfo = DefenderSave(defender,weapon);
                 let hp = parseInt(defender.token.get("bar1_value"));
@@ -2497,11 +2498,15 @@ log(weapon)
                 let deadlyWeapon = false, deadlyNum = 1;
                 let ignoreRegenList = ["Bane","Butcher","Rending","Unstoppable"];
                 let ignoreRegen = ignoreRegenList.find((e) => weapon.keywords.includes(e));
-
                 if (defender.TTip().includes("Rending Mark")) {
                     ignoreRegen = "Rending Mark";
                     RemoveTTip("Rending Mark");
                 }
+                if (defender.token.get(Debuffs["Rending Against"])) {
+                    ignoreRegen = "Rending Against Debuff";
+                    defender.token.set(Debuffs["Rending Against"],false);
+                }
+
                 if (ignoreRegen && (defender.keywords.includes("Regeneration") || defender.Auras().includes("Regeneration"))) {
                     saveInfo.saveTip += "<br>Regeneration ignored due to " + ignoreRegen;
                 }
@@ -2512,9 +2517,10 @@ log(weapon)
                     {name: "Resistance",target: 6, rolls: [],saved: 0, note: ""},
                 ]
 
-                if (defender.keywords.includes("Plaguebound Boost") || defender.Auras().includes("Plaguebound Boost")) {
+                if (defender.keywords.includes("Plaguebound Boost") || defender.Auras().includes("Plaguebound Boost") || defender.token.get(Buffs["Plaguebound Boost"])) {
                     saveTypes[1].target = 5;
                     saveTypes[1].note = " Boost";
+                    defender.token.set(Buffs["Plaguebound Boost"],false);
                 }
                 if (weapon.type === "Spell") {
                     saveTypes[3].target = 2;
@@ -2526,7 +2532,7 @@ log(weapon)
                     let saveRoll = randomInteger(6);
                     let target = saveInfo.saveTarget;
                     if (crits > 0) {
-                        if (weapon.keywords.includes("Rending") || ignoreRegen === "Rending Mark") {
+                        if (weapon.keywords.includes("Rending") || ignoreRegen && ignoreRegen.includes("Rending")) {
                             rending++;
                             target += 4;
                         }
@@ -2623,6 +2629,7 @@ log(weapon)
                 }
                 outputCard.body.push(defender.name + ' suffers ' + saveOut + " Wounds");
 
+                defender.RemoveBuffs("Defense");
                 if (hp > 0) {
                     defender.token.set("bar1_value",hp);
                     if (hp <= Math.floor(defender.wounds/2) && totalWounds > 0) {
@@ -2694,14 +2701,12 @@ log(weapon)
         let attackerTT = attacker.TTip();
         let defenderModels = Math.ceil(parseInt(defender.token.get("bar1_value"))/defender.toughness);
 
-        defender.RemoveBuffs("Combat");
         let defenders = [defender];
         let defendersAliveFlag = [true];
         if (weaponType.includes("Sniper") === false) {
             let defenderHero = defender.Associated();
             if (defenderHero !== false) {
                 defenderModels++
-                defenderHero.RemoveBuffs("Combat");
                 defenders.push(defenderHero)
                 defendersAliveFlag.push(true);
             }
@@ -2831,9 +2836,9 @@ log(weapon)
         }
 
         //remove these things
-        let things = ["AP1","TH1"];
+        let things = ["AP1","TH1","Ferocious Boost"];
         _.each(things,thing => {
-            attacker.token.set(SM[thing],false);
+            attacker.token.set(Buffs[thing],false);
         })
         if (attacker.token.get("aura1_color") === "#ff00ff") {
             attacker.token.set("aura1_color","transparent");
@@ -2996,7 +3001,7 @@ log(weapon)
             outputCard.body.push("Unit has Rapid Charge gets +2 Hexes to Charge");
             charge += 2;
         }
-        if ((unit.keywords.includes("Rapid Rush") || unitAuras.includes("Rapid Rush")) && order === "Charge/Rush") {
+        if ((unit.keywords.includes("Rapid Rush") || unitAuras.includes("Rapid Rush") || unit.token.get(Buffs["Rapid Rush"])) && order === "Charge/Rush") {
             addBreak = true;
             outputCard.body.push("Unit has Rapid Rush and gets +3 Hexes to Rush");
             rush += 3;
@@ -3054,7 +3059,7 @@ log(weapon)
         }
 
         let situation = 1; //open
-        if (startHex.type === "Difficult" && ignoreDifficult === false) {situation = 2};
+        if ((startHex.type === "Difficult" || unit.token.get(Debuffs["Difficult Terrain"]))&& ignoreDifficult === false) {situation = 2};
         if (startHex.building === true && ignoreDifficult === false) {situation = 3}; //building
 
 
@@ -3142,7 +3147,7 @@ log(weapon)
                 if ((unit.keywords.includes("Hit & Run")) || unitAuras.includes("Hit & Run")) {
                     outputCard.body.push("The Unit may move up to 2 Hexes after Shooting or Melee");
                 }
-
+                unit.token.set(Buffs["Rapid Rush"],false);
 
 
                 break;
@@ -3195,7 +3200,7 @@ log(weapon)
         }
 
         unit.order = order;
-
+        unit.token.set(Debuffs["Difficult Terrain"],false)
 
 
         PrintCard();
@@ -3892,9 +3897,11 @@ log(playerID);
 
 
                     let s = spellInfo.cost === 1 ? "":"s"
-                    let tip = '['+ spellInfo.cost + ' Point' + s +'](#" class="showtip tipsy" title="' + spellInfo.description + ')';
-                    outputCard.body.push("[B][U]" + spellName + ": " + tip + "[/b][/u]");
-                    
+                    let tip = '['+ spellName + '](#" class="showtip tipsy" title="' + spellInfo.description + ')';
+
+
+                    outputCard.body.push("[B][U]" + tip + "[/b][/u]");
+
                     let extraQ = ";?{Extra Points|0";
                     for (let i=1;i<=extra;i++) {
                         extraQ += "|" + i + "(Self)";
@@ -3913,7 +3920,7 @@ log(playerID);
                     }
                     let info = {
                         action: "!Cast2;" + caster.id + ";" + spellName + extraQ + targets,
-                        phrase: "Cast " + spellName,
+                        phrase:  spellInfo.cost + " Point" + s,
                     }
                     outputCard.inline.push(info);
                     outputCard.body.push("[INLINE]")
@@ -4077,16 +4084,18 @@ log(spellCast)
             }
         }
         if (spellInfo.type.includes("Debuff")) {
-
-
-
-
+            for (let i=0;i<spellCast.targetIDs.length;i++) {
+                let enemy = UnitArray[spellCast.targetIDs[i]];
+                enemy.token.set(Debuffs[spellInfo.debuff],true);
+                outputCard.body.push(enemy.name + " has " + spellInfo.debuff);
+            }
         }
         if (spellInfo.type.includes("Buff")) {
-
-
-
-            
+            for (let i=0;i<spellCast.targetIDs.length;i++) {
+                let friendly = UnitArray[spellCast.targetIDs[i]];
+                friendly.token.set(Buffs[spellInfo.buff],true);
+                outputCard.body.push(friendly.name + " has " + spellInfo.buff);
+            }
         }
     }
 
