@@ -3955,7 +3955,7 @@ const CastSpell = (msg) => {
                 outputCard.body.push("[B][U]" + spellName + "[/b][/u]");
                 outputCard.body.push("Cost: " + spellInfo.cost);
                 outputCard.body.push(spellInfo.description);
-                let extraQ = ";?Extra Points|0";
+                let extraQ = ";?{Extra Points|0";
                 for (let i=1;i<=extra;i++) {
                     extraQ += "|" + i + "(Self)";
                 }
@@ -4051,7 +4051,7 @@ const CastSpell = (msg) => {
         }
 
         if (errorMsg.length > 0) {
-            SetupCard(caster,spellName,caster.faction);
+            SetupCard(caster.name,spellName,caster.faction);
             _.each(errorMsg,msg => {
                 outputCard.body.push(msg);
             })
@@ -4095,10 +4095,11 @@ const CastSpell = (msg) => {
 
     //cast4 - rolls for success, pays cost
     const Cast4 = () => {
+log(spellCast)
         SpendSpellPoints();
         let caster = UnitArray[spellCast.casterID];
         let spellInfo = Spells[spellCast.spellName];
-        SetupCard(caster.name,spellInfo.spellName,caster.faction);
+        SetupCard(caster.name,spellCast.spellName,caster.faction);
         let delta = spellCast.extraPoints - spellCast.oppPoints;
         let target = Math.min(Math.max(2,4 - delta),6);
         let tip = "Base 4+";
