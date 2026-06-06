@@ -3894,6 +3894,7 @@ log(playerID);
                     let s = spellInfo.cost === 1 ? "":"s"
                     let tip = '['+ spellInfo.cost + ' Point' + s +'](#" class="showtip tipsy" title="' + spellInfo.description + ')';
                     outputCard.body.push("[B][U]" + spellName + ": " + tip + "[/b][/u]");
+                    
                     let extraQ = ";?{Extra Points|0";
                     for (let i=1;i<=extra;i++) {
                         extraQ += "|" + i + "(Self)";
