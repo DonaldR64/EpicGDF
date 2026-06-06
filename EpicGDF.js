@@ -158,7 +158,7 @@ const Main = (() => {
             "backgroundColour": "#3a8000",
             "objColour": "#00ff00",
             "titlefont": "Goblin One",
-            "fontColour": "#000000",
+            "fontColour": "#ffffff",
             "borderColour": "#3a8000",
             "borderStyle": "5px ridge",  
             "spells": ["Elder Protection","Death Bolt","Path of War","Psychic Vomit","Head Bang", "Crackling Bolt"],
@@ -3870,123 +3870,64 @@ log(playerID);
         return;
     }
    
-    const Cast = (msg) => {    
-        let Tag = msg.content.split(";");
-        let casterID = Tag[1];
-        let caster = UnitArray[casterID];
-        let spellName = Tag[2].split("(")[0].trim();
-        let spellInfo = Spells[spellName];
-        spellCasterAssistIDs = [];
-        spellCast = {
-            casterID: casterID,
-            spellName: spellName,
-            targetIDs: [],
-            extraPoints: 0,
-            oppPoints: 0,
-        }
-        SetupCard(caster.name,spellName,caster.faction);
-        if (!spellInfo) {
-            outputCard.body.push("Not in Database");
+
+    const CastSpell = (msg) => {
+        let id = msg.selected[0]._id;
+        let caster = UnitArray[id];
+        let spells = Factions[caster.faction].spells;
+        let points = parseInt(caster.token.get("bar2_value"));
+        let bonusAvail = BonusSpellPoints(caster);
+
+        SetupCard(caster.name,"Cast Spell",caster.faction);
+        if (caster.token.get("tint_color") === "#ff0000") {
+            outputCard.body.push("[#ff0000]Caster is Shaken and Cannot Cast Spells[/#]");
+        } else if (points === 0) {
+            outputCard.body.push("[#ff0000]Caster has No Spell Points[/#]");
         } else {
-            let spellPoints = parseInt(caster.token.get("bar2_value"));
-            if (spellPoints < spellInfo.cost) {
-                outputCard.body.push("Unable to Cast this Spell due to Cost/Available Points");
-            } else if (caster.token.get("tint_color") === "#ff0000") {
-                outputCard.body.push("Caster is Shaken and Cannot Cast Spells");
-            } else {
-                outputCard.body.push(spellInfo.description);
-                let extraSelf = spellPoints - spellInfo.cost;
-                let s = (extraSelf === 1) ? "":"s";
-                if (extraSelf > 0) {
-                    outputCard.body.push("Caster has " + extraSelf + " Point" + s + " extra available");
+            for (let i=0;i<spells.length;i++) {
+                let spellName = spells[i];
+                let spellInfo = Spells[spellName];
+                let extra = points - spellInfo.cost;
+                if (extra >= 0) {
+                    let tip = '['+ spellName + '](#" class="showtip tipsy" title="' + spellInfo.description + ')';
+                    outputCard.body.push("[B][U]" + tip + "[/b][/u]");
+                    let extraQ = ";?{Extra Points|0";
+                    for (let i=1;i<=extra;i++) {
+                        extraQ += "|" + i + "(Self)";
+                    }
+                    for (let i=extra+1;i<=(extra + bonusAvail);i++) {
+                        extraQ += "|" + i;
+                    }
+                    extraQ += "}"
+                    if (extra + bonusAvail === 0) {
+                        extraQ = ";0";
+                    }
+                    let targets = "";
+                    for (let i=0;i<spellInfo.targets;i++) {
+                        let t = "Target " + (i+1);
+                        targets += ";&#64;&#123;target&#124;" + t + "&#124;token_id&#125;";
+                    }
+                    let info = {
+                        action: "!Cast2;" + caster.id + ";" + spellName + extraQ + targets,
+                        phrase: "Cast: " + spellInfo.cost + " Points",
+                    }
+                    outputCard.inline.push(info);
+                    outputCard.body.push("[INLINE]")
+                    outputCard.body.push("[hr]");
                 }
-                let extraQ = "?{Extra Points|0";
-                for (let i=1;i<=extraSelf;i++) {
-                    extraQ += "|" + i + "(Self)";
-                }
-                let bonusAvail = BonusSpellPoints(caster);
-                s = (bonusAvail === 1) ? "":"s";
-                if (bonusAvail > 0) {
-                    outputCard.body.push("Friendly Nearby Casters can add " + bonusAvail + " Point" + s);
-                }
-                for (let i=extraSelf+1;i<=(extraSelf + bonusAvail);i++) {
-                    extraQ += "|" + i;
-                }
-                extraQ += "}"
-                if (extraSelf + bonusAvail === 0) {
-                    extraQ = ";0";
-                }
-                let targets = "";
-                for (let i=0;i<spellInfo.targets;i++) {
-                    let t = "Target " + (i+1);
-                    targets += ";&#64;&#123;target&#124;" + t + "&#124;token_id&#125;";
-                }
-                let action = "!Cast2;" + extraQ + targets;
-                ButtonInfo("Cast " + spellName,action);
             }
+            outputCard.body.push("Caster has " + points + " Spell Points total");
+            s = (bonusAvail === 1) ? "":"s";
+            if (bonusAvail > 0) {
+                outputCard.body.push("Friendly Nearby Casters can add " + bonusAvail + " Point" + s);
+            }
+
+
+
 
         }
         PrintCard();
     }
-
-const CastSpell = (msg) => {
-    let id = msg.selected[0]._id;
-    let caster = UnitArray[id];
-    let spells = Factions[caster.faction].spells;
-    let points = parseInt(caster.token.get("bar2_value"));
-    let bonusAvail = BonusSpellPoints(caster);
-
-    SetupCard(caster.name,"Cast Spell",caster.faction);
-    if (caster.token.get("tint_color") === "#ff0000") {
-        outputCard.body.push("[#ff0000]Caster is Shaken and Cannot Cast Spells[/#]");
-    } else if (points === 0) {
-        outputCard.body.push("[#ff0000]Caster has No Spell Points[/#]");
-    } else {
-        for (let i=0;i<spells.length;i++) {
-            let spellName = spells[i];
-            let spellInfo = Spells[spellName];
-            let extra = points - spellInfo.cost;
-            if (extra >= 0) {
-                outputCard.body.push("[B][U]" + spellName + "[/b][/u]");
-                outputCard.body.push("Cost: " + spellInfo.cost);
-                outputCard.body.push(spellInfo.description);
-                let extraQ = ";?{Extra Points|0";
-                for (let i=1;i<=extra;i++) {
-                    extraQ += "|" + i + "(Self)";
-                }
-                for (let i=extra+1;i<=(extra + bonusAvail);i++) {
-                    extraQ += "|" + i;
-                }
-                extraQ += "}"
-                if (extra + bonusAvail === 0) {
-                    extraQ = ";0";
-                }
-                let targets = "";
-                for (let i=0;i<spellInfo.targets;i++) {
-                    let t = "Target " + (i+1);
-                    targets += ";&#64;&#123;target&#124;" + t + "&#124;token_id&#125;";
-                }
-                let info = {
-                    action: "!Cast2;" + caster.id + ";" + spellName + extraQ + targets,
-                    phrase: "Cast " + spellName,
-                }
-                outputCard.inline.push(info);
-                outputCard.body.push("[INLINE]")
-                outputCard.body.push("[hr]");
-            }
-        }
-        outputCard.body.push("Caster has " + points + " Spell Points total");
-        s = (bonusAvail === 1) ? "":"s";
-        if (bonusAvail > 0) {
-            outputCard.body.push("Friendly Nearby Casters can add " + bonusAvail + " Point" + s);
-        }
-
-
-
-
-    }
-    PrintCard();
-}
 
 
 

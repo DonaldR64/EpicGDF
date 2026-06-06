@@ -4,7 +4,7 @@ const Spells = {
     //Orks
     "Elder Protection": {
         cost: 1,
-        description: "Pick one friendly unit within 6 hexes, which gets Resistance once (next time the effect would apply)",
+        description: "Pick one friendly unit within 6 hexes, which gets Resistance once [next time the effect would apply]",
         type: "Buff",
         friendly: true,
         targets: 1,
@@ -14,7 +14,7 @@ const Spells = {
     },
     "Death Bolt": {
         cost: 1,
-        description: "Pick one enemy unit within 3 Hexes, which takes 1 hit with Deadly(3) and Tear.",
+        description: "Pick one enemy unit within 3 Hexes, which takes 1 hit with Deadly[3] and Tear.",
         type: "Damage",
         friendly: false,
         targets: 1,
@@ -27,7 +27,7 @@ const Spells = {
     },
     "Path of War": {
         cost: 2,
-        description: "Pick up to two friendly units within 6 Hexes, which get Ferocious Boost once (next time the effect would apply).",
+        description: "Pick up to two friendly units within 6 Hexes, which get Ferocious Boost once [next time the effect would apply].",
         type: "Buff",
         friendly: true,
         targets: 2,
@@ -50,7 +50,7 @@ const Spells = {
     },
     "Head Bang": {
         cost: 3,
-        description: "Pick up to three enemy units within 9 Hexes, which friendly units gets Rending in melee against once (next time the effect would apply).",
+        description: "Pick up to three enemy units within 9 Hexes, which friendly units gets Rending in melee against once [next time the effect would apply].",
         type: "Debuff",
         friendly: false,
         targets: 3,
@@ -60,7 +60,7 @@ const Spells = {
     },
     "Crackling Bolt": {
         cost: 3,
-        description: "Pick one enemy unit within 9 Hexes, which takes 3 hits with Blast(3).",
+        description: "Pick one enemy unit within 9 Hexes, which takes 3 hits with Blast[3].",
         type: "Damage",
         friendly: false,
         targets: 1,
@@ -74,7 +74,7 @@ const Spells = {
     //Deathguard
     "Aura of Pestilence": {
         cost: 1,
-        description: "Pick one enemy unit within 9 hexes, which counts as being in Difficult Terrain once (next time the effect would apply).",
+        description: "Pick one enemy unit within 9 hexes, which counts as being in Difficult Terrain once [next time the effect would apply].",
         type: "Debuff",
         friendly: false,
         targets: 1,
@@ -84,7 +84,7 @@ const Spells = {
     },
     "Rapid Putrefaction": {
         cost: 1,
-        description: "Pick one enemy unit within 6 hexes, which takes 2 hits with AP(1) and Surge.",
+        description: "Pick one enemy unit within 6 hexes, which takes 2 hits with AP[1] and Surge.",
         type: "Damage",
         friendly: false,
         targets: 1,
@@ -97,7 +97,7 @@ const Spells = {
     },
     "Blessed Virus": {
         cost: 2,
-        description: "Pick up to two friendly units within 6 hexes, which get Rapid Rush once (next time the effect would apply).",
+        description: "Pick up to two friendly units within 6 hexes, which get Rapid Rush once [next time the effect would apply].",
         type: "Buff",
         friendly: true,
         targets: 2,
@@ -107,7 +107,7 @@ const Spells = {
     },
     "Plague Malediction": {
         cost: 2,
-        description: "Pick one enemy model within 12 hexes, which takes 2 hits with AP(4). This effect is resolved as if the target was a unit of [1].",
+        description: "Pick one enemy model within 12 hexes, which takes 2 hits with AP[4]. This effect is resolved as if the target was a unit of [1].",
         type: "Damage,Sniper",
         friendly: false,
         targets: 1,
@@ -120,7 +120,7 @@ const Spells = {
     },
     "Plague Boon": {
         cost: 3,
-        description: "Pick up to three friendly units within 6 hexes, which get Plaguebound Boost once (next time the effect would apply).",
+        description: "Pick up to three friendly units within 6 hexes, which get Plaguebound Boost once [next time the effect would apply].",
         type: "Buff",
         friendly: true,
         targets: 3,
