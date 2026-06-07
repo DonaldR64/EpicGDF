@@ -101,6 +101,7 @@ const Main = (() => {
             "borderColour": "#000000",
             "borderStyle": "5px ridge",
             "spells": ["Aura of Pestilence","Rapid Putrefaction","Blessed Virus","Plague Malediction","Plague Boon","Rot Wave"],
+            "logo": "https://files.d20.io/images/489765569/c3KYx0PXMmAnha-SDtmopQ/thumb.png?1780790325",
         },
         "Alien Hives": {
             "image": "https://s3.amazonaws.com/files.d20.io/images/362007142/CjTYql17F5VDkqGlW_yorg/thumb.png?1696555948",
@@ -162,6 +163,7 @@ const Main = (() => {
             "borderColour": "#3a8000",
             "borderStyle": "5px ridge",  
             "spells": ["Elder Protection","Death Bolt","Path of War","Psychic Vomit","Head Bang", "Crackling Bolt"],
+            "logo": "https://files.d20.io/images/489765576/2x9rlPhZ-M0TwguakuET_w/thumb.png?1780790327",
         },
 
 
@@ -1978,8 +1980,6 @@ const Main = (() => {
     }
 
     const ObjectiveCheck = (objective) => {
-log("Objective Check");
-log(objective.name)
         let factions = [];
         let objHex = HexMap[objective.hexLabel];
         _.each(UnitArray, unit => {
@@ -1991,15 +1991,11 @@ log(objective.name)
                 }
             }
         })
-log("Factions: ")
-log(factions)
         if (factions.length === 1) {
-            let c = Factions[factions[0]].objColour;
-log(c)
-            objective.token.set("aura1_color",c);
+
         }
         if (factions.length === 2) {
-            objective.token.set("aura1_color","#ffffff");
+            
         }    
     }
 
@@ -3570,6 +3566,11 @@ log(weapon)
                     tint_color: "transparent",
                     layer: "objects",
                 })
+                
+
+
+
+
             };
             if (!unit) {
                 unit = new Unit(token.get("id"));
