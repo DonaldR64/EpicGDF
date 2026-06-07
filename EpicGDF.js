@@ -90,6 +90,7 @@ const Main = (() => {
             "fontColour": "#000000",
             "borderColour": "#00FF00",
             "borderStyle": "5px ridge",
+            "objColour": "#ffffff",
         },
         "Plague Disciples": {
             "image": "https://s3.amazonaws.com/files.d20.io/images/353239057/GIITPAhD-JdRRD2D6BREWw/thumb.png?1691112406",
@@ -101,7 +102,7 @@ const Main = (() => {
             "borderColour": "#000000",
             "borderStyle": "5px ridge",
             "spells": ["Aura of Pestilence","Rapid Putrefaction","Blessed Virus","Plague Malediction","Plague Boon","Rot Wave"],
-            "logo": "https://files.d20.io/images/489765569/c3KYx0PXMmAnha-SDtmopQ/thumb.png?1780790325",
+            "logo": "https://files.d20.io/images/489765576/2x9rlPhZ-M0TwguakuET_w/thumb.png?1780790327",
         },
         "Alien Hives": {
             "image": "https://s3.amazonaws.com/files.d20.io/images/362007142/CjTYql17F5VDkqGlW_yorg/thumb.png?1696555948",
@@ -163,7 +164,7 @@ const Main = (() => {
             "borderColour": "#3a8000",
             "borderStyle": "5px ridge",  
             "spells": ["Elder Protection","Death Bolt","Path of War","Psychic Vomit","Head Bang", "Crackling Bolt"],
-            "logo": "https://files.d20.io/images/489765576/2x9rlPhZ-M0TwguakuET_w/thumb.png?1780790327",
+            "logo": "https://files.d20.io/images/489765569/c3KYx0PXMmAnha-SDtmopQ/thumb.png?1780790325",
         },
 
 
@@ -1859,17 +1860,30 @@ const Main = (() => {
         SetupCard("Start New Game","Turn 1","Neutral");
         _.each(UnitArray,unit => {
             if (unit.name.includes("Objective")) {
+                let tsides = [unit.token.get("imgsrc")];
+                tsides.push(tokenImage(Factions[state.Epic.factions[0]].logo));
+                tsides.push(tokenImage(Factions[state.Epic.factions[1]].logo));
+                tsides = tsides.toString().replaceAll(",","|");
+log(tsides)
+
+
                 unit.token.set({
                     layer: 'foreground',
                     aura1_color: "#ffffff",
                     aura1_radius: .5,
-
+                    sides: tsides,
+                    currentSide: 0,
                 })
             }
         })
         RemoveLines(["Deploy"]);
         PrintCard();
         state.Epic.turn = 1;
+
+
+
+
+
     }
 
     const NextTurn = () => {
@@ -1886,6 +1900,7 @@ const Main = (() => {
 
         for (let i=0;i<keys.length;i++) {
             let unit = UnitArray[keys[i]];
+            if (unit.faction === "Neutral") {continue};
             let token = unit.token;
             if (!token) {
                 delete UnitArray[keys[i]];
@@ -1992,10 +2007,19 @@ const Main = (() => {
             }
         })
         if (factions.length === 1) {
-
+            let f = state.Epic.factions.indexOf(factions[0]) + 1;
+            let img = tokenImage(objective.token.get("sides").split("|")[f]);
+            objective.token.set({
+                imgsrc: img,
+                currentSide: f,
+            })
         }
         if (factions.length === 2) {
-            
+            let img = tokenImage(objective.token.get("sides").split("|")[0]);
+            objective.token.set({
+                imgsrc: img,
+                currentSide: 0,
+            })
         }    
     }
 
@@ -3549,7 +3573,13 @@ log(weapon)
             _subtype: "token",
             layer: "objects",
         });
-
+        let tokens2 = findObjs({
+            _pageid: Campaign().get("playerpageid"),
+            _type: "graphic",
+            _subtype: "token",
+            layer: "foreground",
+        });
+        tokens = tokens.concat(tokens2);
         let names = {};
 
         for (let i=0;i<tokens.length;i++) {
@@ -3557,24 +3587,23 @@ log(weapon)
             let unit = UnitArray[token];
             let character = getObj("character", token.get("represents"));   
             let name = character.get("name");
+            let tsides = token.get("sides").split("|");
             if (name.includes("Objective")) {
-                unit.token.set({
+                let tsides = token.get("sides").split("|");
+                token.set({
                     aura1_color: "#ffffff",
                     aura1_radius: 2.45,
                     showplayers_aura1: true,
                     aura1_square: false,
                     tint_color: "transparent",
                     layer: "objects",
+                    currentSide: 0,
+                    imgsrc: tokenImage(tsides[0]),
                 })
-                
-
-
-
-
             };
             if (!unit) {
                 unit = new Unit(token.get("id"));
-                if (!unit.faction) {
+                if (!unit.faction || name.includes("Objective")) {
                     unit.faction === "Neutral";
                     continue;
                 }
