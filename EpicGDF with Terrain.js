@@ -2371,6 +2371,16 @@ log(weapon)
                 needed = Math.min(6,Math.max(2,needed)); //1 is always a miss, 6 a hit
             }
 
+            if (combatType === "Ranged") {
+                
+
+
+
+            }
+
+
+
+
             do {
                 let roll = randomInteger(6);
                 if (roll >= needed) {
@@ -2837,27 +2847,10 @@ log(weapon)
         let meleeWounds = 0;
         let moraleCheck = false;
 
-        //terrain
-        if (defenderHex.flammable === true && weapon.keywords.includes("Destructive")) {
-
-        }
-
-
-
-
-
-
+        let terrainHits = [];
 
         _.each(weaponArray,weapon => {
-            
             //terrain
-            if (defenderHex.flammable === true && weapon.keywords.includes("Destructive")) {
-
-            }
-
-
-
-
             if (defendersAliveFlag.some((e) => e === true)) {
                 WeaponAttack(weapon);
                 outputCard.body.push("[hr]");
@@ -2865,6 +2858,15 @@ log(weapon)
                 FX(weapon.fx,attackerHex,defenderHex);
             }
         })
+
+        if (terrainHits.length > 0) {
+
+
+
+
+        }
+
+
 
         if (moraleCheck === true && (combatType === "Ranged" || combatType === "Spell") && defendersAliveFlag.some((e)=> e === true)) {
             outputCard.body.push("The unit must take a Morale Check");
