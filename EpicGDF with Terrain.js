@@ -794,7 +794,10 @@ const Main = (() => {
             this.toughness = parseInt(aa.toughness) || 1;
             this.wounds = parseInt(aa.wounds) || 1;
             this.models = this.wounds/this.toughness;
-            let type = aa.type || "Objective";
+            let type = aa.type || "";
+            if (type === "" && this.name.includes("Objective")) {
+                type === "Objective";
+            }
             if (type === "Core") {type = "Infantry"};
             this.type = type;
             
@@ -2045,18 +2048,11 @@ log("Terrain Hits")
             }
 log(terWeaponArray);
 
-
-
-
-            let terr = {};
-
-            let defenders = [new Unit(defenderHex.terrainID)];
-            defenders = [terr];
-            outputCard.body.push(terr.name);
+            let terrain = new Unit(defenderHex.terrainID)
+            let defenders = [terrain];
+            outputCard.body.push(terrain.name);
             _.each(terWeaponArray,weapon => {
                 WeaponAttack(weapon,true);
-
-
             })
 
 
