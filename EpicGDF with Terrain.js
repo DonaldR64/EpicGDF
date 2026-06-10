@@ -794,10 +794,7 @@ const Main = (() => {
             this.toughness = parseInt(aa.toughness) || 1;
             this.wounds = parseInt(aa.wounds) || 1;
             this.models = this.wounds/this.toughness;
-            let type = aa.type || "";
-            if (type === "" && this.name.includes("Objective")) {
-                type === "Objective";
-            }
+            let type = aa.type || "System";
             if (type === "Core") {type = "Infantry"};
             this.type = type;
             
