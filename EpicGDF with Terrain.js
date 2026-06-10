@@ -2034,7 +2034,6 @@ log(tsides)
 
         const TerrainHits = () => {
 log("Terrain Hits")
-log(terrainHits) //array of weapons that hit the hex this attack
             let terWeaponArray = [];
             for (let i=0;i<terrainHits.length;i++) {
                 let weap = terrainHits[i];
@@ -2075,8 +2074,13 @@ log(terWeaponArray);
                 }
             }
 
+            defenders = [terr];
+
+            _.each(terWeaponArray,weapon => {
+                WeaponAttack(weapon,true);
 
 
+            })
 
 
 
@@ -2207,7 +2211,7 @@ log(terWeaponArray);
         }
 
 
-        const WeaponAttack = (weapon) => {
+        const WeaponAttack = (weapon,terAttack = false) => {
             let hitRolls = [],missRolls = [], hits = 0; extraHits = 0; crits = 0;
             let relentless = 0,surge = 0, furious = 0,predator = 0,butcher = 0;
             let devout = 0,ferocious = 0;
@@ -2245,8 +2249,10 @@ log(terWeaponArray);
                 needed = 1;
                 neededTip = "<br>Spell - Auto Hit"
             }
-
-
+            if (terAttack === true) {
+                needed = 4;
+                neededTip = "<br>Terrain - 4+";
+            }
 
             let blast = weapon.keywords.find(key => key.includes("Blast")) || "0";
             blast = parseInt(blast.replace(/\D/g,''));
@@ -2399,6 +2405,13 @@ log(terWeaponArray);
 
             }
 log(weapon)
+
+            if (terAttack === true) {
+                needed = 4;
+                neededTip = "<br>Terrain - 4+";
+            }
+
+
             //Number of Attacks
             let attacks = weapon.number * weapon.attacks;
             if (attacker.token.get(SM.halfStr) === true  && combatType !== "Spell" && attacker.type !== "Hero") {
