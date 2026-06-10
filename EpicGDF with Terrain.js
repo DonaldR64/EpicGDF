@@ -1,5 +1,5 @@
 const Main = (() => {
-    const version = '2026.6.2';
+    const version = '2026.6.10';
     if (!state.Epic) {state.Epic = {}};
 
     const pageInfo = {};
