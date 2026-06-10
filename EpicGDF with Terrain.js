@@ -734,6 +734,7 @@ const Main = (() => {
             this.blockLOS = false;
             this.building = false;
             this.breakable = false;
+            this.terrainID = "";
             this.ridgeline = false;
             this.ridgelineAngles = [];
             this.type = "Open";
@@ -1733,6 +1734,7 @@ const Main = (() => {
                 }
                 if (terrain.breakable && terrain.breakable === true) {
                     hex.breakable = true;
+                    hex.terrainID = token.id;
                 }
 
             }
@@ -2047,33 +2049,8 @@ log(terWeaponArray);
 
 
             let terr = {};
-            if (defenderHex.building === true) {
-                terr = {
-                    name: "Building",
-                    defense: 2,
-                    keywords: ["Protected"],
-                    wounds: 6,
-                    models: 6, //allows blast to cause > 1 wound
-                    toughness: 6,
-                    type: "Building",
-                    faction: "Neutral",
-                }
-                if (defenderHex.terrain.includes("Brick")) {
-                    terr.defense = 3;
-                }
-            } else if (defenderHex.terrain.includes("Woods") || defenderHex.terrain.includes("Orchard")) {
-                terr = {
-                    name: "Woods",
-                    defense: 4,
-                    keywords: [],
-                    wounds: 3,
-                    models: 3,
-                    toughness: 3,
-                    type: "Woods",
-                    faction: "Neutral",
-                }
-            }
 
+            let defenders = [new Unit(defenderHex.terrainID)];
             defenders = [terr];
             outputCard.body.push(terr.name);
             _.each(terWeaponArray,weapon => {
