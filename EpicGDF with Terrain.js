@@ -2897,7 +2897,7 @@ log(weapon)
         })
 
         if (terrainHits.length > 0) {
-            TerrainHits();
+            //TerrainHits();
         }
 
         if (moraleCheck === true && (combatType === "Ranged" || combatType === "Spell")) {
