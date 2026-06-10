@@ -2035,6 +2035,18 @@ log(tsides)
         const TerrainHits = () => {
 log("Terrain Hits")
 log(terrainHits) //array of weapons that hit the hex this attack
+            let terWeaponArray = [];
+            for (let i=0;i<terrainHits.length;i++) {
+                let weap = terrainHits[i];
+                if (terWeaponArray.find((e) => e.name === weap.name)) {continue};
+                weap.attacks = terrainHits.filter((e) => e.name === weap.name).length; //# of misses, now used as # of attacks
+                terWeaponArray.push(weap);
+            }
+log(terWeaponArray);
+
+
+
+
             let terr = {};
             if (defenderHex.building === true) {
                 terr = {
@@ -2046,6 +2058,9 @@ log(terrainHits) //array of weapons that hit the hex this attack
                     toughness: 6,
                     type: "Building",
                     faction: "Neutral",
+                }
+                if (defenderHex.terrain.includes("Brick")) {
+                    terr.defense = 3;
                 }
             } else if (defenderHex.terrain.includes("Woods") || defenderHex.terrain.includes("Orchard")) {
                 terr = {
