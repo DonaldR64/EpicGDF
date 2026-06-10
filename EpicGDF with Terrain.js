@@ -223,13 +223,13 @@ const Main = (() => {
     const buildingLevelHeight = 25;
     const TerrainInfo = {
         "Open": {name: "Open",cover: false, building: false, blockLOS: false,height: 0, type: "Open"},
-        "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 50, type: "Difficult",flammable: true},
-        "Orchards": {name: "Orchards",cover: true, building: false, blockLOS: true,height: 25, type: "Difficult",flammable: true},
-        "Brick Building 1": {name: "Brick Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult"},
-        "Brick Building 2": {name: "Brick Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult"},
-        "Concrete Building 1": {name: "Concrete Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult"},
-        "Concrete Building 2": {name: "Concrete Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult"},
-        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 3, type: "Open",flammable: true},
+        "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 50, type: "Difficult",breakable: true},
+        "Orchards": {name: "Orchards",cover: true, building: false, blockLOS: true,height: 25, type: "Difficult",breakable: true},
+        "Brick Building 1": {name: "Brick Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult",breakable: true},
+        "Brick Building 2": {name: "Brick Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult",breakable: true},
+        "Concrete Building 1": {name: "Concrete Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult",breakable: true},
+        "Concrete Building 2": {name: "Concrete Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult",breakable: true},
+        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 3, type: "Open",breakable: true},
         "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
         "Craters": {name: "Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
         "Artillery Craters": {name: "Artillery Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
@@ -733,7 +733,7 @@ const Main = (() => {
             this.terrainHeight = 0;
             this.blockLOS = false;
             this.building = false;
-            this.flammable = false;
+            this.breakable = false;
             this.ridgeline = false;
             this.ridgelineAngles = [];
             this.type = "Open";
@@ -1731,8 +1731,8 @@ const Main = (() => {
                     hex.elevation = terrain.height;
                     hex.hill = true;
                 }
-                if (terrain.flammable && terrain.flammable === true) {
-                    hex.flammable = true;
+                if (terrain.breakable && terrain.breakable === true) {
+                    hex.breakable = true;
                 }
 
             }
@@ -2031,6 +2031,46 @@ log(tsides)
     }
 
     const Attack = (msg) => {
+
+        const TerrainHits = () => {
+log("Terrain Hits")
+log(terrainHits) //array of weapons that hit the hex this attack
+            let terr = {};
+            if (defenderHex.building === true) {
+                terr = {
+                    name: "Building",
+                    defense: 2,
+                    keywords: ["Protected"],
+                    wounds: 6,
+                    models: 6, //allows blast to cause > 1 wound
+                    toughness: 6,
+                    type: "Building",
+                    faction: "Neutral",
+                }
+            } else if (defenderHex.terrain.includes("Woods") || defenderHex.terrain.includes("Orchard")) {
+                terr = {
+                    name: "Woods",
+                    defense: 4,
+                    keywords: [],
+                    wounds: 3,
+                    models: 3,
+                    toughness: 3,
+                    type: "Woods",
+                    faction: "Neutral",
+                }
+            }
+
+
+
+
+
+
+
+
+        }
+
+
+
 
         const DefenderSave = (defender,weapon) => {
             let defense = defender.defense;
@@ -2371,16 +2411,6 @@ log(weapon)
                 needed = Math.min(6,Math.max(2,needed)); //1 is always a miss, 6 a hit
             }
 
-            if (combatType === "Ranged") {
-                
-
-
-
-            }
-
-
-
-
             do {
                 let roll = randomInteger(6);
                 if (roll >= needed) {
@@ -2429,7 +2459,13 @@ log(weapon)
 
                 } else {
                     missRolls.push(roll);
-                    //misses hit terrain here
+                    if (weapon.keywords.includes("Destructive") === false && defenderHex.breakable === true) {
+                        terrainHits.push(weapon);
+                    }
+                }
+
+                if (weapon.keywords.includes("Indirect") && weapon.keywords.find((e) => e.includes("Blast"))) {
+                    //PlaceCraters(defenderHex);
                 }
                 attacks--;
             } while (attacks > 0);
@@ -2739,13 +2775,13 @@ log(weapon)
         let defenderModels = Math.ceil(parseInt(defender.token.get("bar1_value"))/defender.toughness);
 
         let defenders = [defender];
-        let defendersAliveFlag = [true];
+        let defendersAliveFlag = [defender.id];
         if (weaponType.includes("Sniper") === false) {
             let defenderHero = defender.Associated();
             if (defenderHero !== false) {
                 defenderModels++
                 defenders.push(defenderHero)
-                defendersAliveFlag.push(true);
+                defendersAliveFlag.push(defenderHero.id);
             }
         }
 
@@ -2851,7 +2887,10 @@ log(weapon)
 
         _.each(weaponArray,weapon => {
             //terrain
-            if (defendersAliveFlag.some((e) => e === true)) {
+            if (weapon.keywords.includes("Destructive")) {
+                terrainHits.push(weapon);
+            }
+            if (defendersAliveFlag.some((e) => e !== false)) {
                 WeaponAttack(weapon);
                 outputCard.body.push("[hr]");
                 PlaySound(weapon.sound);
@@ -2860,18 +2899,26 @@ log(weapon)
         })
 
         if (terrainHits.length > 0) {
+            TerrainHits();
+            outputCard.body.push("[hr]")
+            outputCard.body.push("Terrain Hits Go Here")
+        }
 
-
-
-
+        if (moraleCheck === true && (combatType === "Ranged" || combatType === "Spell")) {
+            _.each(defendersAliveFlag,id => {
+                if (id !== false) {
+                    if (UnitArray[id].type !== "Hero") {
+                        outputCard.body.push(UnitArray[id].name + " must take a Morale Check");
+                        ButtonInfo("Morale Check","!Morale;" + id)
+                    }
+                }
+            })
         }
 
 
 
-        if (moraleCheck === true && (combatType === "Ranged" || combatType === "Spell") && defendersAliveFlag.some((e)=> e === true)) {
-            outputCard.body.push("The unit must take a Morale Check");
-            ButtonInfo("Morale Check","!Morale;" + defender.id)
-        }
+
+
         if (combatType === "Melee" && defendersAliveFlag.some((e)=> e === true)) {
             let fear = attacker.keywords.find((e) => e.includes("Fear")) || "0";
             fear = parseInt(fear.replace(/\D/g,''));
@@ -3627,7 +3674,7 @@ log(weapon)
                     tint_color: "transparent",
                     layer: "objects",
                     currentSide: 0,
-                    imgsrc: tokenImage(tsides[0]),
+                    imgsrc: tokenImage(tsides[0]) || "",
                 })
             };
             if (!unit) {
