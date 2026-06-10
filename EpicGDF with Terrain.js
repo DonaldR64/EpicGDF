@@ -2075,7 +2075,7 @@ log(terWeaponArray);
             }
 
             defenders = [terr];
-
+            outputCard.body.push(terr.name);
             _.each(terWeaponArray,weapon => {
                 WeaponAttack(weapon,true);
 
@@ -2109,7 +2109,7 @@ log(terWeaponArray);
                 weaponAP += 4;
                 apTip += "<br>Tear +4 AP";
             }
-            if (defender.token.get(SM.laststand)) {
+            if (defender.token && defender.token.get(SM.laststand)) {
                 defense++;
                 defenseTip += "<br>-1 Defense due to Last Stand";
             }
@@ -2928,8 +2928,6 @@ log(weapon)
 
         if (terrainHits.length > 0) {
             TerrainHits();
-            outputCard.body.push("[hr]")
-            outputCard.body.push("Terrain Hits Go Here")
         }
 
         if (moraleCheck === true && (combatType === "Ranged" || combatType === "Spell")) {
