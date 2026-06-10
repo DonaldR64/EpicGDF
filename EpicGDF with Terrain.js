@@ -891,6 +891,35 @@ const Main = (() => {
             this.order = "";
             this.token = token;
 
+
+            if (this.type === "Terrain") {
+                if (this.name.includes("Woods") || this.name.includes("Orchard")) {
+                    this.wounds = 3;
+                    this.toughness = 1;
+                    this.defense = 4;
+                }
+                if (this.name.includes("Brick")) {
+                    this.wounds = 6;
+                    this.toughness = 1;
+                    this.defense = 4;
+                    this.keywords = ["Protected"];
+                }
+                if (this.name.includes("Concrete")) {
+                    this.wounds = 6;
+                    this.toughness = 1;
+                    this.defense = 3;
+                    this.keywords = ["Protected"];
+                }
+
+
+
+                this.models = this.wounds/this.toughness;
+
+
+            }
+
+
+
             UnitArray[id] = this;
             let index = HexMap[label].tokenIDs.indexOf(id);
             if (index < 0) {
@@ -1077,15 +1106,23 @@ const Main = (() => {
         }
 
         Killed() {
-            this.token.set({
-                "statusmarkers": "dead",
-                "layer": "map",
-            })
-            let index = HexMap[this.hexLabel].tokenIDs.indexOf(this.id);
-            if (index > -1) {
-                HexMap[this.hexLabel].tokenIDs.splice(index,1);
+            if (this.type === "Terrain") {
+
+
+
+            } else {
+                this.token.set({
+                    "statusmarkers": "dead",
+                    "layer": "map",
+                })
+                let index = HexMap[this.hexLabel].tokenIDs.indexOf(this.id);
+                if (index > -1) {
+                    HexMap[this.hexLabel].tokenIDs.splice(index,1);
+                }
+                delete UnitArray[this.id];
+
+
             }
-            delete UnitArray[this.id];
         }
 
         RemoveBuffs(phase) {
@@ -2044,10 +2081,13 @@ log("Terrain Hits")
                 terWeaponArray.push(weap);
             }
 log(terWeaponArray);
-
-            let terrain = new Unit(defenderHex.terrainID)
-            let defenders = [terrain];
-            outputCard.body.push(terrain.name);
+            let defender = UnitArray[defenderHex.terrainID];
+            if (!defender) {
+                defender = new Unit(defenderHex.terrainID);
+            }
+log(defender)
+            defenders = [defender];
+            outputCard.body.push("[B][U]" + defender.name + "[/u][/b]");
             _.each(terWeaponArray,weapon => {
                 WeaponAttack(weapon,true);
             })
@@ -2537,13 +2577,21 @@ log(weapon)
                 weaponOut = '[' + hits + '](#" class="showtip" title="' + finalTip + ')';
             } else {
                 s = "s";
-                weaponOut = '[Zero](#" class="showtip" title="' + finalTip + ')';
+                let word = terAttack === true ? "No":"Zero";
+                weaponOut = '['+ word + '](#" class="showtip" title="' + finalTip + ')';
             }
             
             let s2 = (weapon.number === 1) ? "s ":" ";
+            let s3 = (weapon.number === 1) ? "":"s";
+
             let attWord = ((combatType === "Ranged") ? " fire":" strike") + s2;
-            outputCard.body.push(weapon.name + attWord + attDisplay + " times");
-            outputCard.body.push(weaponOut + " hit" + s + " scored");
+
+            if (terAttack === true) {
+                outputCard.body.push(weaponOut + " Collateral Hit" + s);
+            } else {
+                outputCard.body.push(weapon.name + attWord + attDisplay + " time" + s3);
+                outputCard.body.push(weaponOut + " hit" + s + " scored");
+            }
 
             if (weapon.keywords.includes("Limited")) {
                 let lids = state.Epic.limitedMacros[attacker.id];
@@ -2897,7 +2945,7 @@ log(weapon)
         })
 
         if (terrainHits.length > 0) {
-            //TerrainHits();
+            TerrainHits();
         }
 
         if (moraleCheck === true && (combatType === "Ranged" || combatType === "Spell")) {
