@@ -14,11 +14,11 @@ const Spells = {
     },
     "Death Bolt": {
         cost: 1,
-        description: "Pick one enemy unit within 3 Hexes, which takes 1 hit with Deadly[3] and Tear.",
+        description: "Pick one enemy unit within 6 Hexes, which takes 1 hit with Deadly[3] and Tear.",
         type: "Damage",
         friendly: false,
         targets: 1,
-        range: 3,
+        range: 6,
         hits: 1,
         ap: 0,
         keywords: ["Deadly(3)","Tear"],
