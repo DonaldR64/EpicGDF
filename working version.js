@@ -2964,18 +2964,8 @@ log(weapon)
             })
         }
 
-
-
-log("Check")
-log(combatType)
-log(defendersAliveFlag)
-log(attacker.keywords)
-
-
         if (combatType === "Melee" && defendersAliveFlag.some((e)=> e !== false)) {
             let fear = attacker.KeyNum("Fear");
-log(fear)
-
             if (fear > 0) {
                 fear = " + Fear " + fear + " = " + (fear + meleeWounds);
             } else {
@@ -4477,6 +4467,9 @@ log(spellCast)
                 let pt3 = new Point(i+1,0);
                 let pt4 = new Point(i+1,(interHex.elevation + interHex.terrainHeight));
                 let line1 = lineLine(pt1,pt2,pt3,pt4); //intersection
+log(interHex.label)
+log(line1)
+
                 if (line1) {
                     //does hex block LOS (unless is targetHex)
                     if (interHex.blockLOS === true && i<(len-1)) {
@@ -4669,9 +4662,14 @@ log(spellCast)
     }
     
     const destroyGraphic = (obj) => {
-
-
-
+        let id = obj.get("id");
+        if (id) {
+            let unit = UnitArray[id];
+            if (unit) {
+                log(unit.name + " removed from Unit Array")
+                delete UnitArray[id];
+            }
+        }
     }
 
 
