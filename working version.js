@@ -235,7 +235,7 @@ const Main = (() => {
         "Ruined Building": {name: "Ruined Building", cover: true,building: false, blockLOS: false,height: buildingLevelHeight * .5, type: "Difficult"},
         "Ruined Concrete": {name: "Ruined Concrete Building", cover: true,building: false, blockLOS: false, height: buildingLevelHeight * .5, type: "Difficult"},
         "Existing Ruins": {name: "Existing Ruins", cover: true,building: false, blockLOS: false, height: buildingLevelHeight * .5, type: "Difficult"},
-
+        "Burning Woods": {name: "Burning Woods",cover: true, building: false, blockLOS: true,height: 25, type: "Dangerous",breakable: false},
 
         "Hill 1": {name: "Hill 1", cover: false,building: false, blockLOS: false, height: 30, type: "Open"},
         "Hill 2": {name: "Hill 2", cover: false,building: false, blockLOS: false, height: 60, type: "Open"},
@@ -892,28 +892,23 @@ const Main = (() => {
 
             if (this.type === "Terrain") {
                 if (this.name.includes("Woods") || this.name.includes("Orchard")) {
-                    this.wounds = 3;
                     this.toughness = 1;
                     this.defense = 4;
+                    this.keywords = ["Flammable"];
                 }
                 if (this.name.includes("Brick")) {
-                    this.wounds = 6;
                     this.toughness = 1;
                     this.defense = 4;
                     this.keywords = ["Protected"];
                 }
                 if (this.name.includes("Concrete")) {
-                    this.wounds = 6;
                     this.toughness = 1;
                     this.defense = 3;
                     this.keywords = ["Protected"];
                 }
 
-
-
+                this.wounds = parseInt(this.token.get("bar1_value")) || 1;
                 this.models = this.wounds/this.toughness;
-
-
             }
 
 
@@ -1262,7 +1257,7 @@ const Main = (() => {
 
 
 
-    summonToken = function(cID,left,top,size = 70) {
+    summonToken = function(cID,left,top,size = 70,rotation = 0,layer = "map") {
         let character = getObj("character", cID);
         let newToken;
         character.get('defaulttoken',function(defaulttoken){
@@ -1273,8 +1268,9 @@ const Main = (() => {
                 dt.imgsrc=img;
                 dt.left=left;
                 dt.top=top;
+                dt.rotation = rotation;
                 dt.pageid = pageInfo.page.get('id');
-                dt.layer = "objects";
+                dt.layer = layer;
                 dt.width = size;
                 dt.height = size;
                 newToken = createObj("graphic", dt);
@@ -2505,7 +2501,8 @@ log(weapon)
                 } else {
                     missRolls.push(roll);
                     if (weapon.keywords.includes("Destructive") === false && defenderHex.breakable === true) {
-                        terrainHits.push(weapon);
+                        //only some hits
+                        //terrainHits.push(weapon);
                     }
                 }
 
@@ -2952,7 +2949,7 @@ log(weapon)
         })
 
         if (terrainHits.length > 0) {
-            //TerrainHits();
+            TerrainHits();
         }
 
         if (moraleCheck === true && (combatType === "Ranged" || combatType === "Spell")) {
@@ -3020,7 +3017,10 @@ log(weapon)
     const PlaceCraters = (hex) => {
         sendChat("","Place artillery craters in hex " + hex.label)
         //place graphic
-        
+        let cIDs = ["-OhNIW12IYL36oEBZO2A","-OhNI9XVYd1EHy1sEc6e"];
+        let cID = cIDs[randomInteger(2) - 1];
+        let crater = summonToken(cID,hex.centre.x,hex.centre.y,105,randomInteger(360));
+        toFront(crater);
         //change info in hex
         if (hex.terrain === "Open") {
             hex.terrain = "Artillery Craters";
@@ -3030,7 +3030,6 @@ log(weapon)
         if (hex.cover === false) {hex.cover = "Infantry"};
         hex.type = "Difficult";
     }
-
 
 
 
@@ -3920,8 +3919,8 @@ log(playerID);
         let Tag = msg.content.split(";");
         let tokens;
 
+
         LoadPage();
-        BuildMap();
         RemoveLines(["Deploy","LOS"]);
         RemoveDead();
         if (Tag[1] === "All") {
@@ -3939,7 +3938,43 @@ log(playerID);
                 layer: "foreground",
             });
             _.each(tokens,token => token.remove());
+            let tempTerrain = ["Artillery Craters","Burning Woods","Ruined Building","Ruined Concrete"];
+            tokens = findObjs({
+                _pageid: Campaign().get("playerpageid"),
+                _type: "graphic",
+                _subtype: "token",
+                layer: "map",
+            });
+            _.each(tokens,token => {
+                if (token.name) {
+                    if (token.name.includes("Woods") || token.name.includes("Orchard")) {
+                        token.set({
+                            bar1_value: 3,
+                            bar1_max: 3,
+                        })
+                    }
+                    if (token.name.includes("Brick")) {
+                        token.set({
+                            bar1_value: 4,
+                            bar1_max: 4,
+                        })
+                    }
+                    if (token.name.includes("Concrete")) {
+                        token.set({
+                            bar1_value: 6,
+                            bar1_max: 6,
+                        })
+                    }
+                    if (tempTerrain.includes(token.name)) {
+                        token.remove();
+                    }
+
+                }
+            })
         }
+
+        BuildMap();
+
 
 
         //clear arrays
