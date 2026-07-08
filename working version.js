@@ -836,9 +836,7 @@ const Main = (() => {
             this.keywords = keywords;
             this.flavours = flavours;
 
-            let casterKey = keywords.find((e) => e.includes("Caster")) || "0";
-            this.casterLevel = parseInt(casterKey.replace(/\D/g,''));
-
+            this.casterLevel = this.KeyNum("Caster");
             let weapons = [];
             for (let i=1;i<11;i++) {
                 if (aa["weapon" + i + "equipped"] === "Equipped") {
