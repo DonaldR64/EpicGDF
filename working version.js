@@ -726,6 +726,7 @@ const Main = (() => {
             this.label = offset.label();
             this.elevation = 0;
             this.terrain = "Open";
+            this.open = true;
             this.offboard = false;
             this.cover = false;
             this.hill = false;
@@ -1755,6 +1756,9 @@ const Main = (() => {
                     hex.terrain = terrain.name;
                 }
 
+
+
+
                 hex.cover = (hex.cover === false) ? terrain.cover:false;
                 if (terrain.building === true) {
                     hex.building = true;
@@ -2505,8 +2509,8 @@ log(weapon)
                     }
                 }
 
-                if (weapon.keywords.includes("Indirect") && weapon.keywords.find((e) => e.includes("Blast"))) {
-                    //PlaceCraters(defenderHex);
+                if (weapon.keywords.includes("Indirect") && weapon.keywords.find((e) => e.includes("Blast")) && weapon.ap > 0 && defenderHex.type === "Open") {
+                    PlaceCraters(defenderHex);
                 }
                 attacks--;
             } while (attacks > 0);
@@ -3013,7 +3017,19 @@ log(weapon)
 
 
 
-
+    const PlaceCraters = (hex) => {
+        sendChat("","Place artillery craters in hex " + hex.label)
+        //place graphic
+        
+        //change info in hex
+        if (hex.terrain === "Open") {
+            hex.terrain = "Artillery Craters";
+        } else {
+            hex.terrain += ", Artillery Craters";
+        }
+        if (hex.cover === false) {hex.cover = "Infantry"};
+        hex.type = "Difficult";
+    }
 
 
 
