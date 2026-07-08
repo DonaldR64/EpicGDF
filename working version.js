@@ -78,7 +78,6 @@ const Main = (() => {
 
     const LargeUnits = ["Vehicle/Monster","Artillery","Titan"]
 
-
     let outputCard = {title: "",subtitle: "",side: "",body: [],buttons: [],};
 
     const Factions = {
@@ -1153,6 +1152,14 @@ const Main = (() => {
             this.token.set("rotation",angle);
         }
 
+        KeyNum(keyword) {
+            let match = this.keywords.find((e) => e.includes(keyword)) || "0";
+            let num = parseInt(match.replace(/\D/g, ""));
+            return num;
+        }
+
+
+
 
 
 
@@ -1423,13 +1430,11 @@ const Main = (() => {
             AddAbility("Cast Spell",action,unit.charID);
         }
 
-
-
-
-
-
-
-
+        //ambush
+        if (unit.keywords.includes("Ambush")) {
+            action = "!AmbushAura";
+            AddAbility("Show Ambush Distance",action,unit.charID);
+        }
 
 
         //keywords list 
@@ -2961,11 +2966,16 @@ log(weapon)
 
 
 
+log("Check")
+log(combatType)
+log(defendersAliveFlag)
+log(attacker.keywords)
 
 
-        if (combatType === "Melee" && defendersAliveFlag.some((e)=> e === true)) {
-            let fear = attacker.keywords.find((e) => e.includes("Fear")) || "0";
-            fear = parseInt(fear.replace(/\D/g,''));
+        if (combatType === "Melee" && defendersAliveFlag.some((e)=> e !== false)) {
+            let fear = attacker.KeyNum("Fear");
+log(fear)
+
             if (fear > 0) {
                 fear = " + Fear " + fear + " = " + (fear + meleeWounds);
             } else {
@@ -3757,6 +3767,7 @@ log(weapon)
                 showplayers_bar1: true,
                 aura1_color: a1c,
                 aura1_radius: 0.1,
+                aura2_color: "transparent",
                 showplayers_aura1: true,
                 tooltip: "",
                 show_tooltip: true,
@@ -3774,13 +3785,6 @@ log(weapon)
                     showplayers_bar2: true,
                 })
             };
-            if (unit.keywords.includes("Ambush")) {
-                unit.token.set({
-                    aura2_color: "#ffffff",
-                    aura2_radius: 4,
-                    showplayers_aura2: true,
-                })
-            }
 
 
             AddAbilities2(unit)
@@ -4385,6 +4389,21 @@ log(spellCast)
     }
 
 
+    const AmbushAura = (msg) => {
+        if (!msg.selected) {return};
+        let id = msg.selected[0]._id;
+        let ambusher = UnitArray[id];
+        if (!ambusher) {return};
+        let colour = (ambusher.token.get("aura2_color") !== "transparent" ) ? 'transparent':"#ffffff";
+        ambusher.token.set({
+            aura2_radius: 4,
+            aura2_color: colour,
+            showplayers_aura2: true,
+        })
+    }
+
+
+
     const LOS = (shooter,target) => {
         let notes = [];
         let shooterHex = HexMap[shooter.hexLabel];
@@ -4733,6 +4752,10 @@ log(spellCast)
             case '!Cast3':
                 Cast3(msg);
                 break;
+            case '!AmbushAura':
+                AmbushAura(msg);
+                break;
+
 
 
             case '!RemoveLines2':
