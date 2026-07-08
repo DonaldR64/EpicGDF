@@ -1204,7 +1204,7 @@ const Main = (() => {
                         let verb = (this.type === "Infantry") ? " has now taken heavy casualties!": " is now badly injured/damaged!";
                         outputCard.body.push(this.name + verb);
                     }
-                    if (this.token.get("tint_color") === "#ff0000") {
+                    if (this.token.get("tint_color") !== "#ff0000") {
                         outputCard.body.push("The Unit must take a Morale Test");
                     }
                 }
@@ -2954,8 +2954,9 @@ log(weapon)
         if (moraleCheck === true && (combatType === "Ranged" || combatType === "Spell")) {
             _.each(defendersAliveFlag,id => {
                 if (id !== false) {
-                    if (UnitArray[id].type !== "Hero") {
-                        outputCard.body.push(UnitArray[id].name + " must take a Morale Check");
+                    let u2 = UnitArray[id];
+                    if (u2.type !== "Hero" && u2.token.get("tint_color") !== "#ff0000") {
+                        outputCard.body.push(u2.name + " must take a Morale Check");
                         ButtonInfo("Morale Check","!Morale;" + id)
                     }
                 }
@@ -3104,20 +3105,23 @@ log(weapon)
 
 
         let move = 3;
+        let preface = [];
+
+
         if (unit.keywords.includes("Fast")) {
             addBreak = true;
             move++
-            outputCard.body.push("Unit has Fast and has +1 to Move");
+            preface.push("Unit has Fast and has +1 to Move");
         };
         if (unit.keywords.includes("Very Fast")) {
             addBreak = true;
             move += 2
-            outputCard.body.push("Unit has Very Fast and has +2 to Move");
+            preface.push("Unit has Very Fast and has +2 to Move");
         }
         if (unit.keywords.includes("Slow")) {
             addBreak = true;
             move--;
-            outputCard.body.push("Unit has Slow and has -1 to Move");
+            preface.push("Unit has Slow and has -1 to Move");
         }
 
 
@@ -3131,28 +3135,23 @@ log(weapon)
 
         if (unit.keywords.includes("Agile") && order === "Charge/Rush") {
             charge += 1, rush+= 1;
-            addBreak = true;
-            outputCard.body.push("Unit has Agile gets +1 Hex to Charge/Rush");
+            preface.push("Unit has Agile gets +1 Hex to Charge/Rush");
         }
         if ((unit.keywords.includes("Rapid Charge") || unitAuras.includes("Rapid Charge") && order === "Charge/Rush")) {
-            addBreak = true;
-            outputCard.body.push("Unit has Rapid Charge gets +2 Hexes to Charge");
+            preface.push("Unit has Rapid Charge gets +2 Hexes to Charge");
             charge += 2;
         }
         if ((unit.keywords.includes("Rapid Rush") || unitAuras.includes("Rapid Rush") || unit.token.get(Buffs["Rapid Rush"])) && order === "Charge/Rush") {
-            addBreak = true;
-            outputCard.body.push("Unit has Rapid Rush and gets +3 Hexes to Rush");
+            preface.push("Unit has Rapid Rush and gets +3 Hexes to Rush");
             rush += 3;
         }
 
         if (unit.keywords.includes("Strider") && order !== "Hold" && order !== "Rally") {
-            addBreak = true;
-            outputCard.body.push("Unit has Strider and may ignore the effects of Difficult Terrain");
+            preface.push("Unit has Strider and may ignore the effects of Difficult Terrain");
             ignoreDifficult = true;
         }
-        if ((unit.keywords.includes("Flying") || unit.keywords.includes("Fly")) && order !== "Hold" && order !== "Rally") {
-            addBreak = true;
-            outputCard.body.push("Unit has Flying and may Ignore Terrain and Units while Moving");
+        if ((unit.keywords.includes("Flying") || unit.keywords.includes("Fly"))) {
+            preface.push("Unit has Flying and may Ignore Terrain and Units while Moving");
             ignoreDifficult = true;
         }
         if (unit.type === "Aircraft") {
@@ -3162,8 +3161,7 @@ log(weapon)
             outputCard.body.push("Unit is an Aircraft and Ignores Units and Terrain");
         }
         if (unit.token.get(Buffs.speedFeat) === true) {
-            addBreak = true;
-            outputCard.body.push("The Unit has Speed Feat Active and Added");
+            preface.push("The Unit has Speed Feat Active and Added");
             move += 1;
             charge += 2, rush+= 2;
             unit.token.set(Buffs.speedFeat,false);
@@ -3171,6 +3169,7 @@ log(weapon)
         }
         if (shaken === true && order !== "Rally") {
             lastStand = true;
+            addBreak = true;
             outputCard.body.push("The Unit is taking a Last Stand!");
             if (unit.type !== "Aircraft") {
                 outputCard.body.push("It Moves at 1/2 Speed");
@@ -3180,6 +3179,12 @@ log(weapon)
             }
         }
 
+        if (order !== "Rally" && order !== "Hold") {
+            _.each(preface,line => {
+                outputCard.body.push(line);
+            })
+            addBreak === true;
+        }
         if (addBreak === true) {
             outputCard.body.push("[hr]");
         }
@@ -3952,7 +3957,6 @@ log(playerID);
         let remaining = false;
 
         SetupCard("Activations Remaining","","Neutral");
-
         for (let i=0;i<keys.length;i++) {
             let unit = UnitArray[keys[i]];
             let token = unit.token;
@@ -3962,18 +3966,20 @@ log(playerID);
             }
             if (token && token.get("aura1_color") === Factions[unit.faction].objColour) {
                 names[unit.player].push(unit.name);
+                remaining = true;
             }
         }
-        for (let p=0;p<2;p++) {
-            let list = names[p];
-            outputCard.body.push("[U][B]" + state.Epic.factions[p] + "[/b][/u]");
-            if (list.length === 0) {
-                outputCard.body.push("All Units Activated");
-            } else {
-                for (i=0;i<list.length;i++) {
-                    outputCard.body.push(list[i]);
+        if (remaining === true) {
+            for (let p=0;p<2;p++) {
+                if (names[p].length > 0) {
+                    outputCard.body.push("[U][B]" + state.Epic.factions[p] + "[/b][/u]");
+                    for (i=0;i<names[p].length;i++) {
+                        outputCard.body.push(names[p][i]);
+                    }
                 }
             }
+        } else {
+            outputCard.body.push("All Units Activated");
         }
         PrintCard();
     }
@@ -4193,7 +4199,7 @@ log(spellCast)
         let target = Math.min(Math.max(2,4 - delta),6);
         let tip = "Base 4+";
         if (spellCast.extraPoints > 0) {
-            tip += "<br>Extra Points from Caster: +" + spellCast.extraPoints;
+            tip += "<br>Extra Points from Caster/Allies: +" + spellCast.extraPoints;
         }
         if (spellCast.oppPoints > 0) {
             tip += "<br>Points from Opposing: -" + spellCast.oppPoints;
@@ -4669,7 +4675,7 @@ log(spellCast)
                 log(unit.name + " removed from Unit Array")
                 let index = HexMap[unit.hexLabel].tokenIDs.indexOf(id);
                 if (index > -1) {
-                    exMap[unit.hexLabel].tokenIDs.splice(index,1);
+                    HexMap[unit.hexLabel].tokenIDs.splice(index,1);
                 }
                 delete UnitArray[id];
             }
