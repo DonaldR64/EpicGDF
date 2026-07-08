@@ -4422,6 +4422,7 @@ log(spellCast)
         }
         let pt1 = new Point(0,shooterHeight);
         let pt2 = new Point(distance,targetHeight);
+        let pt3,pt4,line1;
 
         if (shooter.type === "Aircraft" || target.type === "Aircraft") {
             let result = {los: true,distance: distance,hexCover: false,interCover: false,building: false};
@@ -4450,6 +4451,7 @@ log(spellCast)
         for (let side=0;side<2;side++) {
             for (let i=0;i<len;i++) {
                 let interHex = HexMap[labels[side][i]];
+                //Hills
                 if (interHex.hill === true) {
                     if (interHex.elevation > shooterHeight && interHex.elevation > targetHeight) {
                         los[side] = false;
@@ -4461,34 +4463,34 @@ log(spellCast)
                         break;
                     }
                 }
-
-                let pt3 = new Point(i+1,0);
-                let pt4 = new Point(i+1,(interHex.elevation + interHex.terrainHeight));
-                let line1 = lineLine(pt1,pt2,pt3,pt4); //intersection
-log(interHex.label)
-log(line1)
-
-                if (line1) {
-                    //does hex block LOS (unless is targetHex)
-                    if (interHex.blockLOS === true && i<(len-1)) {
-                        los[side] = false;
-                        losReason[side] = interHex.terrain;
-                        blockedHexLabel = interHex.label;
-                        break;
-                    }
-
-                    //if there a unit in the hex
-                    if (interHex.tokenIDs.length > 0 && interHex.label !== targetHex.label) {
-                        let u2 = UnitArray[interHex.tokenIDs[0]];
-                        if (u2.type !== "Objective" && u2.type !== "Aircraft") {
+                //Intervening Units
+                if (interHex.tokenIDs.length > 0 && interHex.label !== targetHex.label) {
+                    let u2 = UnitArray[interHex.tokenIDs[0]];
+                    if (u2.type !== "Objective" && u2.type !== "Aircraft") {
+                        let h = 1;
+                        if (u2.keywords.includes("Tall")) {h = 3};
+                        pt3 = new Point(i+1,0);
+                        pt4 = new Point(i+1,(interHex.elevation + interHex.terrainHeight + h));
+                        line1 = lineLine(pt1,pt2,pt3,pt4); //intersection
+                        if (line1) {
                             los[side] = false;
                             losReason[side] = u2.name;
                             blockedHexLabel = interHex.label;
                             break;
                         }
                     }
-
-                    //does it provide cover for beyond
+                }
+                //Blocking Terrain or Cover Terrain
+                pt3 = new Point(i+1,0);
+                pt4 = new Point(i+1,(interHex.elevation + interHex.terrainHeight));
+                line1 = lineLine(pt1,pt2,pt3,pt4); //intersection
+                if (line1) {
+                    if (interHex.blockLOS === true && i<(len-1)) {
+                        los[side] = false;
+                        losReason[side] = interHex.terrain;
+                        blockedHexLabel = interHex.label;
+                        break;
+                    }
                     if (interHex.cover === true && target.keywords.includes("Tall") === false) {
                         interCover[side] = true;
                     } 
@@ -4665,6 +4667,10 @@ log(line1)
             let unit = UnitArray[id];
             if (unit) {
                 log(unit.name + " removed from Unit Array")
+                let index = HexMap[unit.hexLabel].tokenIDs.indexOf(id);
+                if (index > -1) {
+                    exMap[unit.hexLabel].tokenIDs.splice(index,1);
+                }
                 delete UnitArray[id];
             }
         }
