@@ -222,13 +222,13 @@ const Main = (() => {
     const buildingLevelHeight = 25;
     const TerrainInfo = {
         "Open": {name: "Open",cover: false, building: false, blockLOS: false,height: 0, type: "Open"},
-        "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 50, type: "Difficult",breakable: true},
-        "Orchards": {name: "Orchards",cover: true, building: false, blockLOS: true,height: 25, type: "Difficult",breakable: true},
+        "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 50, type: "Difficult",breakable: true, flammable: true},
+        "Orchards": {name: "Orchards",cover: true, building: false, blockLOS: true,height: 25, type: "Difficult",breakable: true, flammable: true},
         "Brick Building 1": {name: "Brick Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult",breakable: true},
         "Brick Building 2": {name: "Brick Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult",breakable: true},
         "Concrete Building 1": {name: "Concrete Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult",breakable: true},
         "Concrete Building 2": {name: "Concrete Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult",breakable: true},
-        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 3, type: "Open",breakable: true},
+        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 3, type: "Open",breakable: true, flammable: true},
         "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
         "Craters": {name: "Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
         "Artillery Craters": {name: "Artillery Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
@@ -734,6 +734,7 @@ const Main = (() => {
             this.blockLOS = false;
             this.building = false;
             this.breakable = false;
+            this.flammable = false;
             this.terrainID = "";
             this.ridgeline = false;
             this.ridgelineAngles = [];
@@ -1100,9 +1101,9 @@ const Main = (() => {
 
         Killed() {
             if (this.type === "Terrain") {
-
-
-
+                this.token.set("bar1_value",0);
+                DamagedTerrain(this.name,this.hexLabel);                
+                delete UnitArray[this.id];
             } else {
                 this.token.set({
                     "statusmarkers": "dead",
@@ -1194,7 +1195,7 @@ const Main = (() => {
                 outputCard.body.push(this.name + verb);
             } else {
                 this.token.set("bar1_value",hp);
-                if (hp <= (this.wounds/2)) {
+                if (hp <= (this.wounds/2) && this.type !== "Terrain") {
                     this.token.set(SM.halfStr,true);
                     if (fullStr === true) {
                         let verb = (this.type === "Infantry") ? " has now taken heavy casualties!": " is now badly injured/damaged!";
@@ -1719,11 +1720,6 @@ const Main = (() => {
         log("Hex Map Built in " + elapsed/1000 + " seconds");
     };
 
-
-
-
-
-
     const AddTerrain = () => {
         //part 1 - add hex terrain
         let tokens = findObjs({_pageid: Campaign().get("playerpageid"),_type: "graphic",_subtype: "token",layer: "map",});
@@ -1776,7 +1772,10 @@ const Main = (() => {
                     hex.breakable = true;
                     hex.terrainID = token.id;
                 }
-
+                if (terrain.flammable && terrain.flammable === true) {
+                    hex.flammable = true;
+                    hex.terrainID = token.id;
+                }
             }
 
 
@@ -2094,11 +2093,6 @@ log(defender)
             _.each(terWeaponArray,weapon => {
                 WeaponAttack(weapon,true);
             })
-
-
-
-
-
         }
 
 
@@ -2591,7 +2585,7 @@ log(weapon)
             let attWord = ((combatType === "Ranged") ? " fire":" strike") + s2;
 
             if (terAttack === true) {
-                outputCard.body.push(weaponOut + " Collateral Hit" + s);
+                outputCard.body.push(weaponOut + " Hit" + s + " on the Terrain");
             } else {
                 outputCard.body.push(weapon.name + attWord + attDisplay + " time" + s3);
                 outputCard.body.push(weaponOut + " hit" + s + " scored");
@@ -2940,6 +2934,9 @@ log(weapon)
             if (weapon.keywords.includes("Destructive")) {
                 terrainHits.push(weapon);
             }
+            if (weapon.keywords.includes("Flame") && defenderHex.flammable === true) {
+                terrainHits.push(weapon);
+            }
             if (defendersAliveFlag.some((e) => e !== false)) {
                 WeaponAttack(weapon);
                 outputCard.body.push("[hr]");
@@ -2957,6 +2954,7 @@ log(weapon)
                 if (id !== false) {
                     let u2 = UnitArray[id];
                     if (u2.type !== "Hero" && u2.token.get("tint_color") !== "#ff0000") {
+                        outputCard.body.push("[hr]")
                         outputCard.body.push(u2.name + " must take a Morale Check");
                         ButtonInfo("Morale Check","!Morale;" + id)
                     }
@@ -3015,11 +3013,10 @@ log(weapon)
 
 
     const PlaceCraters = (hex) => {
-        sendChat("","Place artillery craters in hex " + hex.label)
         //place graphic
         let cIDs = ["-OhNIW12IYL36oEBZO2A","-OhNI9XVYd1EHy1sEc6e"];
         let cID = cIDs[randomInteger(2) - 1];
-        let crater = summonToken(cID,hex.centre.x,hex.centre.y,105,randomInteger(360));
+        let crater = summonToken(cID,hex.centre.x,hex.centre.y,105,(randomInteger(6) - 1) * 60);
         toFront(crater);
         //change info in hex
         if (hex.terrain === "Open") {
@@ -3031,7 +3028,58 @@ log(weapon)
         hex.type = "Difficult";
     }
 
+    const DamagedTerrain = (name,hexLabel) => {
+        let cID;
+        let hex = HexMap[hexLabel];
+        let terList = hex.terrain.split(",");
+        let element = terList.find((e) => e.includes(name));
+        let index = terList.indexOf(element);
+        terList.splice(index,1);
+        if (name.includes("Woods")) {
+            cID = "-OhNGbWrGVzigHCAytih";
+            terList.push("Burning Woods");
+            hex.flammable = false;
+            hex.type = "Dangerous";
+            hex.terrainHeight = 25;
+        }
+        if (name.includes("Orchards")) {
+            cID = "-OhNGbWrGVzigHCAytih";
+            terList.push("Burning Woods");
+            hex.flammable = false;
+            hex.type = "Dangerous";
+            hex.terrainHeight = 25;
+        }
+        if (name.includes("Brick")) {
+            cID = "-OhNJMSCrMgwndDoYCH4";
+            terList.push("Ruined Building");
+            hex.breakable = false;
+            hex.type = "Difficult";
+            hex.building = false;
+            hex.blockLOS = false;
+            hex.terrainHeight = buildingLevelHeight * .5;
+        }
+        if (name.includes("Concrete")) {
+            cID = "-OhNLNwgdI6SjQ9WUHRw";
+            terList.push("Ruined Concrete");
+            hex.breakable = false;
+            hex.type = "Difficult";
+            hex.building = false;
+            hex.blockLOS = false;
+            hex.terrainHeight = buildingLevelHeight * .5;
+        }
+        let dt = summonToken(cID,hex.centre.x,hex.centre.y,105,(randomInteger(6)-1) * 60);
+        toFront(dt);
+        hex.terrain = terList.toString();
 
+
+
+
+
+
+
+
+
+    }
 
 
 
@@ -3946,26 +3994,26 @@ log(playerID);
                 layer: "map",
             });
             _.each(tokens,token => {
-                if (token.name) {
-                    if (token.name.includes("Woods") || token.name.includes("Orchard")) {
+                if (token.get("name")) {
+                    if (token.get("name").includes("Woods") || token.get("name").includes("Orchard")) {
                         token.set({
                             bar1_value: 3,
                             bar1_max: 3,
                         })
                     }
-                    if (token.name.includes("Brick")) {
+                    if (token.get("name").includes("Brick")) {
                         token.set({
                             bar1_value: 4,
                             bar1_max: 4,
                         })
                     }
-                    if (token.name.includes("Concrete")) {
+                    if (token.get("name").includes("Concrete")) {
                         token.set({
                             bar1_value: 6,
                             bar1_max: 6,
                         })
                     }
-                    if (tempTerrain.includes(token.name)) {
+                    if (tempTerrain.includes(token.get("name"))) {
                         token.remove();
                     }
 
@@ -4523,7 +4571,7 @@ log(spellCast)
                 //Intervening Units
                 if (interHex.tokenIDs.length > 0 && interHex.label !== targetHex.label) {
                     let u2 = UnitArray[interHex.tokenIDs[0]];
-                    if (u2.type !== "Objective" && u2.type !== "Aircraft") {
+                    if (u2.type && u2.type !== "Objective" && u2.type !== "Aircraft") {
                         let h = 1;
                         if (u2.keywords.includes("Tall")) {h = 3};
                         pt3 = new Point(i+1,0);
