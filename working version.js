@@ -1,5 +1,5 @@
 const Main = (() => {
-    const version = '2026.6.10';
+    const version = '2026.7.9';
     if (!state.Epic) {state.Epic = {}};
 
     const pageInfo = {};
@@ -1190,9 +1190,9 @@ const Main = (() => {
             tip = '[' + wounds + '](#" class="showtip" title="' + tip + ')';
             outputCard.body.push("Unit takes " + tip + " Wound" +s);
             if (hp <= 0) {
-                this.Killed();
                 let verb = (this.type === "Hero" || this.type === "Infantry") ? " was killed!": " was destroyed!";
                 outputCard.body.push(this.name + verb);
+                this.Killed();
             } else {
                 this.token.set("bar1_value",hp);
                 if (hp <= (this.wounds/2) && this.type !== "Terrain") {
@@ -1272,7 +1272,7 @@ const Main = (() => {
                 dt.rotation = rotation;
                 dt.pageid = pageInfo.page.get('id');
                 dt.layer = layer;
-                dt.width = size;
+                dt.width = size * 1.186;
                 dt.height = size;
                 newToken = createObj("graphic", dt);
             } else {
@@ -1941,6 +1941,19 @@ log(tsides)
             return;
         }
 
+        _.each(HexMap,hex => {
+            let fix = [];
+            let tIDs = hex.tokenIDs;
+            _.each(tIDs,tID => {
+                let unit = UnitArray[tID];
+                if (unit && unit.token && unit.type !== "Terrain") {
+                    fix.push(tID);
+                } 
+            })
+            hex.tokenIDs = fix;
+        })
+
+
         //check if any units havent activated
         let keys = Object.keys(UnitArray);
 
@@ -2257,8 +2270,13 @@ log(defender)
                 neededTip = "<br>Spell - Auto Hit"
             }
             if (terAttack === true) {
-                needed = 4;
-                neededTip = "<br>Terrain - 4+";
+                if (weapon.keywords.includes("Destructive")) {
+                    needed = 2;
+                    neededTip = "<br>Destructive vs Terrain - 2+";
+                } else {
+                    needed = 4;
+                    neededTip = "<br>Terrain - 4+";
+                }
             }
 
             let blast = weapon.keywords.find(key => key.includes("Blast")) || "0";
@@ -2494,9 +2512,8 @@ log(weapon)
 
                 } else {
                     missRolls.push(roll);
-                    if (weapon.keywords.includes("Destructive") === false && defenderHex.breakable === true) {
-                        //only some hits
-                        //terrainHits.push(weapon);
+                    if (weapon.keywords.includes("Destructive") === false && defenderHex.breakable === true && combatType === "Ranged") {
+                        terrainHits.push(weapon);
                     }
                 }
 
@@ -2561,8 +2578,11 @@ log(weapon)
                 }
             }
 
-            finalTip = hitRolls.length + " Hits: " + hitRolls.sort().reverse().toString();
-            finalTip += "<br>" + missRolls.length + " Misses: " + missRolls.sort().reverse().toString();
+            let h = hitRolls.length === 1 ? " Hit: ":" Hits: ";
+            let m = missRolls.length === 1 ? " Miss: ":" Misses: ";
+
+            finalTip = hitRolls.length + h + hitRolls.sort().reverse().toString();
+            finalTip += "<br>" + missRolls.length + m + missRolls.sort().reverse().toString();
             if (extraHits > 0) {
                 finalTip += "<br>Total Extra Hits: " + extraHits;
             }
@@ -2744,23 +2764,34 @@ log(weapon)
                 if (d===1) {
                     outputCard.body.push("[hr]");
                 }
-                outputCard.body.push(defender.name + ' suffers ' + saveOut + " Wounds");
+                let noun = " Wounds";
+                if (defender.type === "Terrain") {
+                    noun = " Damage";
+                }
+
+                outputCard.body.push(defender.name + ' suffers ' + saveOut + noun);
 
                 defender.RemoveBuffs("Defense");
                 if (hp > 0) {
                     defender.token.set("bar1_value",hp);
-                    if (hp <= Math.floor(defender.wounds/2) && totalWounds > 0) {
+                    if (hp <= Math.floor(defender.wounds/2) && totalWounds > 0 && defender.type !== "Terrain") {
                         defender.token.set(SM.halfStr,true);
                         if (defender.type !== "Hero") {
                             moraleCheck = true;
                         }
                     }
                 } else {
-                    defender.Killed();
                     defendersAliveFlag[d] = false;
                     let verb = (defender.type === "Infantry" || defender.type === "Hero") ? " was killed":" was destroyed";
+                    if (defender.name.includes("Woods")) {
+                        verb = " was set on Fire!";
+                    }
+                    if (defender.name.includes("Concrete") || defender.name.includes("Brick")) {
+                        verb = " collapses, taking any adjacent Building Hexes with it!";
+                    }
                     outputCard.body.push(defender.name + verb);
                     moraleCheck = false;
+                    defender.Killed();
                 }
                 //if hits are > 0 then will apply them to hero if there is one
                 //if hits are 0 then will hit the continue above
@@ -3031,45 +3062,93 @@ log(weapon)
     const DamagedTerrain = (name,hexLabel) => {
         let cID;
         let hex = HexMap[hexLabel];
-        let terList = hex.terrain.split(",");
-        let element = terList.find((e) => e.includes(name));
-        let index = terList.indexOf(element);
-        terList.splice(index,1);
+        let collapse = false;
+        let hexes = [hex];
+        let units = [];
+        _.each(hex.tokenIDs,tokenID => {
+            let unit = UnitArray[tokenID];
+            if (unit && unit.type !== "Terrain" && unit.token) {
+                units.push(unit);
+            }
+        })
+        let type,terrainHeight
+        let blockLOS = false;
+
         if (name.includes("Woods")) {
             cID = "-OhNGbWrGVzigHCAytih";
-            terList.push("Burning Woods");
-            hex.flammable = false;
-            hex.type = "Dangerous";
-            hex.terrainHeight = 25;
+            newName = "Burning Woods";
+            type = "Dangerous";
+            terrainHeight = 25;
+            blockLOS = true;
         }
         if (name.includes("Orchards")) {
             cID = "-OhNGbWrGVzigHCAytih";
-            terList.push("Burning Woods");
-            hex.flammable = false;
-            hex.type = "Dangerous";
-            hex.terrainHeight = 25;
+            newName = "Burning Woods";
+            type = "Dangerous";
+            terrainHeight = 25;
+            blockLOS = true;
         }
         if (name.includes("Brick")) {
             cID = "-OhNJMSCrMgwndDoYCH4";
-            terList.push("Ruined Building");
-            hex.breakable = false;
-            hex.type = "Difficult";
-            hex.building = false;
-            hex.blockLOS = false;
-            hex.terrainHeight = buildingLevelHeight * .5;
+            newName = "Ruined Building";
+            type = "Difficult";
+            terrainHeight = buildingLevelHeight * .5;
+            collapse = true;
         }
         if (name.includes("Concrete")) {
             cID = "-OhNLNwgdI6SjQ9WUHRw";
-            terList.push("Ruined Concrete");
-            hex.breakable = false;
-            hex.type = "Difficult";
-            hex.building = false;
-            hex.blockLOS = false;
-            hex.terrainHeight = buildingLevelHeight * .5;
+            newName = "Ruined Concrete";
+            type = "Difficult";
+            terrainHeight = buildingLevelHeight * .5;
+            collapse = true;
         }
-        let dt = summonToken(cID,hex.centre.x,hex.centre.y,105,(randomInteger(6)-1) * 60);
-        toFront(dt);
-        hex.terrain = terList.toString();
+
+        if (collapse === true) {
+            //check surrounding hexes, add up ids
+            let cubes = hex.cube.neighbours();
+            _.each(cubes,cube => {
+                let label = cube.label();
+                let hex2 = HexMap[label];
+                if (hex2.building === true) {
+                    hexes.push(hex2);
+                    _.each(hex2.tokenIDs,tokenID => {
+                        let unit = UnitArray[tokenID];
+                        if (unit && unit.type !== "Terrain" && unit.token) {
+                            units.push(unit);
+                        }
+                    })
+                }
+            })
+        }
+
+        _.each(hexes,hex => {
+            let dt = summonToken(cID,hex.centre.x,hex.centre.y,140,(randomInteger(6)-1) * 60);
+            toFront(dt);
+            let terList = hex.terrain.split(",");
+            let element = terList.find((e) => e.includes(name));
+            let index = terList.indexOf(element);
+            terList.splice(index,1);
+            terList.push(newName);
+            hex.terrain = terList.toString();
+            hex.breakable = false;
+            hex.flammable = false;
+            hex.building = false;
+            hex.blockLOS = blockLOS;
+            hex.type = type;
+            hex.terrainHeight = terrainHeight;
+        })
+
+        _.each(units,unit => {
+            if (collapse === true && unit.token.get("tint_color") !== "#ff0000") {
+                outputCard.body.push("The unit must take a Dangerous Terrain Test and is also Shaken");
+                outputCard.body.push("The unit MAY displace 1 Hex");
+                unit.token.set("tint_color","#ff0000");
+            } else {
+                outputCard.body.push(unit.name + " MUST displace 1 Hex and take a Dangerous Terrain Test.");
+            }
+        })
+
+
 
 
 
