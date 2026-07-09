@@ -229,6 +229,9 @@ const Main = (() => {
         "Concrete Building 1": {name: "Concrete Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult",breakable: true},
         "Concrete Building 2": {name: "Concrete Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult",breakable: true},
         "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 3, type: "Open",breakable: true, flammable: true},
+        "Burning Crops": {name: "Burning Crops", cover: "true", building: false, blockLOS: true, height: 10, type: "Dangerous",breakable: false, flammable: false},
+
+
         "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
         "Craters": {name: "Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
         "Artillery Craters": {name: "Artillery Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
@@ -895,6 +898,11 @@ const Main = (() => {
                 if (this.name.includes("Woods") || this.name.includes("Orchard")) {
                     this.toughness = 1;
                     this.defense = 4;
+                    this.keywords = ["Flammable"];
+                }
+                if (this.name.includes("Crops")) {
+                    this.toughness = 1;
+                    this.defense = 5;
                     this.keywords = ["Flammable"];
                 }
                 if (this.name.includes("Brick")) {
@@ -3088,6 +3096,15 @@ log(weapon)
             terrainHeight = 25;
             blockLOS = true;
         }
+        if (name.includes("Crops")) {
+            cID = "-Ox7_Am1NUBlEDOMx9Zn";
+            newName = "Burning Crops";
+            type = "Dangerous";
+            terrainHeight = 10;
+            blockLOS = true;
+        }
+
+
         if (name.includes("Brick")) {
             cID = "-OhNJMSCrMgwndDoYCH4";
             newName = "Ruined Building";
@@ -4065,7 +4082,7 @@ log(playerID);
                 layer: "foreground",
             });
             _.each(tokens,token => token.remove());
-            let tempTerrain = ["Artillery Craters","Burning Woods","Ruined Building","Ruined Concrete"];
+            let tempTerrain = ["Artillery Craters","Burning Woods","Ruined Building","Ruined Concrete","Burning Crops"];
             tokens = findObjs({
                 _pageid: Campaign().get("playerpageid"),
                 _type: "graphic",
@@ -4078,6 +4095,12 @@ log(playerID);
                         token.set({
                             bar1_value: 3,
                             bar1_max: 3,
+                        })
+                    }
+                    if (token.get("name").includes("Crops")) {
+                        token.set({
+                            bar1_value: 2,
+                            bar1_max: 2,
                         })
                     }
                     if (token.get("name").includes("Brick")) {
