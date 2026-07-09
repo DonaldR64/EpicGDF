@@ -896,28 +896,28 @@ const Main = (() => {
 
             if (this.type === "Terrain") {
                 if (this.name.includes("Woods") || this.name.includes("Orchard")) {
-                    this.toughness = 1;
+                    this.toughness = 3;
                     this.defense = 4;
                     this.keywords = ["Flammable"];
                 }
                 if (this.name.includes("Crops")) {
-                    this.toughness = 1;
+                    this.toughness = 2;
                     this.defense = 5;
                     this.keywords = ["Flammable"];
                 }
                 if (this.name.includes("Brick")) {
-                    this.toughness = 1;
+                    this.toughness = 4;
                     this.defense = 4;
                     this.keywords = ["Protected"];
                 }
                 if (this.name.includes("Concrete")) {
-                    this.toughness = 1;
+                    this.toughness = 6;
                     this.defense = 3;
                     this.keywords = ["Protected"];
                 }
 
                 this.wounds = parseInt(this.token.get("bar1_value")) || 1;
-                this.models = this.wounds/this.toughness;
+                this.models = 1;
             }
 
 
@@ -1744,20 +1744,35 @@ const Main = (() => {
                 let centreLabel = centre.toCube().label();
                 let hex = HexMap[centreLabel];
                 if (hex.terrain !== "Open") {
-                    //check if found the 2nd terrain before original terrain
-                    if (name === "Woods" && hex.terrain === "Burning Woods") {
+                    //burning/ruined
+                    if (name === "Woods" && hex.terrain.includes("Burning Woods")) {
+                        return;
+                    }
+                    if (name === "Orchards" && hex.terrain.includes("Burning Woods")) {
+                        return;
+                    }
+                    if (name === "Crops" && hex.terrain.includes("Burning Crops")) {
                         return;
                     }
                     if (name.includes("Building") && hex.terrain.includes("Ruined")) {
                         return;
                     }
-                    hex.terrain += ", " + terrain.name;
+                    if (name === "Burning Woods") {
+                        hex.terrain = hex.terrain.replace("Woods","Burning Woods");
+                        hex.terrain = hex.terrain.replace("Orchards","Burning Woods");
+                    } else if (name === "Burning Crops") {
+                        hex.terrain = hex.terrain.replace("Crops","Burning Crops");
+                    } else if (name.includes("Ruined")) { 
+                        hex.terrain = hex.terrain.replace("Brick Building 1","Ruined Building");
+                        hex.terrain = hex.terrain.replace("Brick Building 2","Ruined Building");
+                        hex.terrain = hex.terrain.replace("Concrete Building 1","Ruined Concrete");                      
+                        hex.terrain = hex.terrain.replace("Concrete Building 1","Ruined Concrete");
+                    } else {
+                        hex.terrain += ", " + terrain.name;
+                    }
                 } else {
                     hex.terrain = terrain.name;
                 }
-
-
-
 
                 hex.cover = (hex.cover === false) ? terrain.cover:false;
                 if (terrain.building === true) {
@@ -2791,7 +2806,7 @@ log(weapon)
                 } else {
                     defendersAliveFlag[d] = false;
                     let verb = (defender.type === "Infantry" || defender.type === "Hero") ? " was killed":" was destroyed";
-                    if (defender.name.includes("Woods")) {
+                    if (defender.name.includes("Woods") || defender.name.includes("Crops")) {
                         verb = " was set on Fire!";
                     }
                     if (defender.name.includes("Concrete") || defender.name.includes("Brick")) {
@@ -2867,6 +2882,11 @@ log(weapon)
                 defendersAliveFlag.push(defenderHero.id);
             }
         }
+
+        if (defender.type === "Terrain") {
+            defenderModels = 1;
+        }
+
 
         //error checks
         let errorMsg = [];
