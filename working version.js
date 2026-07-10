@@ -235,8 +235,8 @@ const Main = (() => {
         "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
         "Craters": {name: "Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
         "Artillery Craters": {name: "Artillery Craters", cover: "Infantry",building: false, blockLOS: false,height: 0, type: "Difficult"},
-        "Ruined Building": {name: "Ruined Building", cover: true,building: false, blockLOS: false,height: buildingLevelHeight * .5, type: "Difficult"},
-        "Ruined Concrete": {name: "Ruined Concrete Building", cover: true,building: false, blockLOS: false, height: buildingLevelHeight * .5, type: "Difficult"},
+        "Ruined Building": {name: "Ruined Building", cover: true,building: false, blockLOS: false,height: buildingLevelHeight * .5, type: "Dangerous"},
+        "Ruined Concrete": {name: "Ruined Concrete Building", cover: true,building: false, blockLOS: false, height: buildingLevelHeight * .5, type: "Dangerous"},
         "Existing Ruins": {name: "Existing Ruins", cover: true,building: false, blockLOS: false, height: buildingLevelHeight * .5, type: "Difficult"},
         "Burning Woods": {name: "Burning Woods",cover: true, building: false, blockLOS: true,height: 25, type: "Dangerous",breakable: false},
 
@@ -896,28 +896,28 @@ const Main = (() => {
 
             if (this.type === "Terrain") {
                 if (this.name.includes("Woods") || this.name.includes("Orchard")) {
-                    this.toughness = 3;
+                    this.toughness = 4;
                     this.defense = 4;
                     this.keywords = ["Flammable"];
                 }
                 if (this.name.includes("Crops")) {
-                    this.toughness = 2;
+                    this.toughness = 3;
                     this.defense = 5;
                     this.keywords = ["Flammable"];
                 }
                 if (this.name.includes("Brick")) {
-                    this.toughness = 4;
-                    this.defense = 4;
-                    this.keywords = ["Protected"];
-                }
-                if (this.name.includes("Concrete")) {
                     this.toughness = 6;
                     this.defense = 3;
                     this.keywords = ["Protected"];
                 }
+                if (this.name.includes("Concrete")) {
+                    this.toughness = 9;
+                    this.defense = 2;
+                    this.keywords = ["Protected"];
+                }
 
                 this.wounds = parseInt(this.token.get("bar1_value")) || 1;
-                this.models = 1;
+                this.models = this.toughness;
             }
 
 
@@ -2221,7 +2221,7 @@ log(defender)
                         }
                     }
                 }
-                if (losResult.building === true  && ((combatType === "Melee" && LargeUnits.includes(attacker.type)) || combatType === "Ranged")) {
+                if (defender.type !== "Terrain" && losResult.building === true  && ((combatType === "Melee" && LargeUnits.includes(attacker.type)) || combatType === "Ranged")) {
                     defense--;
                     defenseTip += "<br>Building +1 Defense";
                 }
@@ -2883,10 +2883,6 @@ log(weapon)
             }
         }
 
-        if (defender.type === "Terrain") {
-            defenderModels = 1;
-        }
-
 
         //error checks
         let errorMsg = [];
@@ -3105,21 +3101,18 @@ log(weapon)
         if (name.includes("Woods")) {
             cID = "-OhNGbWrGVzigHCAytih";
             newName = "Burning Woods";
-            type = "Dangerous";
             terrainHeight = 25;
             blockLOS = true;
         }
         if (name.includes("Orchards")) {
             cID = "-OhNGbWrGVzigHCAytih";
             newName = "Burning Woods";
-            type = "Dangerous";
             terrainHeight = 25;
             blockLOS = true;
         }
         if (name.includes("Crops")) {
             cID = "-Ox7_Am1NUBlEDOMx9Zn";
             newName = "Burning Crops";
-            type = "Dangerous";
             terrainHeight = 10;
             blockLOS = true;
         }
@@ -3128,14 +3121,12 @@ log(weapon)
         if (name.includes("Brick")) {
             cID = "-OhNJMSCrMgwndDoYCH4";
             newName = "Ruined Building";
-            type = "Difficult";
             terrainHeight = buildingLevelHeight * .5;
             collapse = true;
         }
         if (name.includes("Concrete")) {
             cID = "-OhNLNwgdI6SjQ9WUHRw";
             newName = "Ruined Concrete";
-            type = "Difficult";
             terrainHeight = buildingLevelHeight * .5;
             collapse = true;
         }
@@ -3171,19 +3162,20 @@ log(weapon)
             hex.flammable = false;
             hex.building = false;
             hex.blockLOS = blockLOS;
-            hex.type = type;
+            hex.type = "Dangerous";
             hex.terrainHeight = terrainHeight;
         })
 
         _.each(units,unit => {
             if (collapse === true && unit.token.get("tint_color") !== "#ff0000") {
                 outputCard.body.push("The unit must take a Dangerous Terrain Test and is also Shaken");
-                outputCard.body.push("The unit MAY displace 1 Hex");
                 unit.token.set("tint_color","#ff0000");
-            } else {
-                outputCard.body.push(unit.name + " MUST displace 1 Hex and take a Dangerous Terrain Test.");
-            }
+            } 
+            outputCard.body.push(unit.name + " MUST displace 1 Hex and take a Dangerous Terrain Test.");
         })
+
+
+
 
 
 
@@ -4113,26 +4105,26 @@ log(playerID);
                 if (token.get("name")) {
                     if (token.get("name").includes("Woods") || token.get("name").includes("Orchard")) {
                         token.set({
-                            bar1_value: 3,
-                            bar1_max: 3,
-                        })
-                    }
-                    if (token.get("name").includes("Crops")) {
-                        token.set({
-                            bar1_value: 2,
-                            bar1_max: 2,
-                        })
-                    }
-                    if (token.get("name").includes("Brick")) {
-                        token.set({
                             bar1_value: 4,
                             bar1_max: 4,
                         })
                     }
-                    if (token.get("name").includes("Concrete")) {
+                    if (token.get("name").includes("Crops")) {
+                        token.set({
+                            bar1_value: 3,
+                            bar1_max: 3,
+                        })
+                    }
+                    if (token.get("name").includes("Brick")) {
                         token.set({
                             bar1_value: 6,
                             bar1_max: 6,
+                        })
+                    }
+                    if (token.get("name").includes("Concrete")) {
+                        token.set({
+                            bar1_value: 9,
+                            bar1_max: 9,
                         })
                     }
                     if (tempTerrain.includes(token.get("name"))) {
