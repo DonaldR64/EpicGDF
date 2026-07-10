@@ -3086,42 +3086,27 @@ log(weapon)
 
         let hex = HexMap[unit.hexLabel];
         let cID = "-OxC7CI-vYDMyV59NSj4";
-        let target = summonToken(cID,hex.centre.x,hex.centre.y,105,0,"objects");
-        toFront(target);
-        target = new Unit(target.get("id"));
-        state.Epic.targetID = target.id;
-
-        let abilArray = findObjs({_type: "ability", _characterid: unit.charID});
-        let array = abilArray.map(item => item.attributes);
+        let t = summonToken(cID,hex.centre.x,hex.centre.y,105,0,"objects");
+        toFront(t);
+        t = new Unit(t.get("id"));
+        state.Epic.targetID = t.id;
         //clear old abilities of target
-        let targetAbilArray = findObjs({_type: "ability", _characterid: target.charID});
+        let targetAbilArray = findObjs({_type: "ability", _characterid: t.charID});
+
+log(targetAbilArray)
+
+
         for(let a=0;a<targetAbilArray.length;a++) {
             targetAbilArray[a].remove();
         } 
-        let macros = [];
-
-        macroLoop:
-        for (let i=0;i<array.length;i++) {
-            let name = array[i].name;
-            if (isNaN(name.charAt(0))) {
-                continue;
-            }
-            if (name.includes("CCW")) {
-                for (let j=0;j<unit.weapons.length;j++) {
-                    let weapon = unit.weapons[j];
-                    if (name.includes(weapon.name) && weapon.keywords.includes("Destructive") === false) {
-                        continue macroLoop;
-                    }
-                }
-            };
-            let key = array[i].action.split(";")[3];
-key = key.slice(0,key.indexOf("/fx") - 1);
 
 
-            action = "!Attack;" + id + ";" + target.id + ";" + key
-log(action)
-            AddAbility(name,action,target.charID);
-        }
+
+
+        AddAbility("Morale","!Morale;" + unit.id,t.charID);
+
+
+
 
 
 
@@ -5007,7 +4992,7 @@ log(spellCast)
                 break;
 
             case '!Attack':
-                Attack(msg);
+                //Attack(msg);
                 break;
 
 
