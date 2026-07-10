@@ -1330,12 +1330,12 @@ const Main = (() => {
             "Heavy2": [],
             "Heavy3": [],
             "Mod": [],
-            "CCW": [],
             "Sniper": [],
             "Bomb": [],
             "Limited": [],
             "Limited2": [],
-            "Limited3": [],   
+            "Limited3": [], 
+            "CCW": [],
         }
 
   
@@ -1439,6 +1439,17 @@ const Main = (() => {
             action = "!AmbushAura";
             AddAbility("Show Ambush Distance",action,unit.charID);
         }
+
+        //place target
+        if (weaponNum > 1) {
+            AddAbility("Place Target","!PlaceTarget",unit.charID);
+        }
+
+        //LOS
+        if (unit.type !== "Terrain" && unit.type !== "Objective") {
+            AddAbility("LOS","!CheckLOS;@{selected|token_id};@{target|token_id}",unit.charID);
+        }
+
 
 
         //keywords list 
@@ -2986,10 +2997,10 @@ log(weapon)
 
         _.each(weaponArray,weapon => {
             //terrain
-            if (weapon.keywords.includes("Destructive") || (weapon.keywords.includes("Flame") && defenderHex.flammable === true)) {
+            if (weapon.keywords.includes("Destructive") || (weapon.keywords.includes("Flame") && defenderHex.flammable === true) || defender.name === "Target") {
                 terrainHits.push(weapon);
             }
-            if (defendersAliveFlag.some((e) => e !== false)) {
+            if (defender.name !== "Target" && defendersAliveFlag.some((e) => e !== false)) {
                 WeaponAttack(weapon);
                 outputCard.body.push("[hr]");
                 PlaySound(weapon.sound);
@@ -3056,7 +3067,64 @@ log(weapon)
 
 
 
+    const PlaceTarget = (msg) => {
+        if (!msg.selected) {
+            sendChat("","No Unit Selected");
+            return;
+        }
+        let id = msg.selected[0]._id;
+        let unit = UnitArray[id];
+        if (id !== state.Epic.activeID) {
+            sendChat("","Unit has to Activate");
+            return;
+        }
+        let oldTarget = UnitArray[state.Epic.targetID];
+        if (oldTarget) {
+            oldTarget.token.remove();
+            delete UnitArray[state.Epic.targetID];
+        }
 
+        let hex = HexMap[unit.hexLabel];
+        let cID = "-OxC7CI-vYDMyV59NSj4";
+        let target = summonToken(cID,hex.centre.x,hex.centre.y,105,0,"objects");
+        toFront(target);
+        target = new Unit(target.get("id"));
+        state.Epic.targetID = target.id;
+
+        let abilArray = findObjs({_type: "ability", _characterid: unit.charID});
+        let array = abilArray.map(item => item.attributes);
+        //clear old abilities of target
+        let targetAbilArray = findObjs({_type: "ability", _characterid: target.charID});
+        for(let a=0;a<targetAbilArray.length;a++) {
+            targetAbilArray[a].remove();
+        } 
+        let macros = [];
+
+        macroLoop:
+        for (let i=0;i<array.length;i++) {
+            let name = array[i].name;
+            if (isNaN(name.charAt(0))) {
+                continue;
+            }
+            if (name.includes("CCW")) {
+                for (let j=0;j<unit.weapons.length;j++) {
+                    let weapon = unit.weapons[j];
+                    if (name.includes(weapon.name) && weapon.keywords.includes("Destructive") === false) {
+                        continue macroLoop;
+                    }
+                }
+            };
+            let action = array[i].action.replaceAll("@{selected|token_id}",id);
+            action = action.replaceAll("@{target|token_id}",target.id);
+log(action)
+            AddAbility(name,action,target.charID);
+        }
+
+
+
+
+
+    }
 
 
 
@@ -4134,6 +4202,10 @@ log(playerID);
 
         BuildMap();
 
+        let target = UnitArray[state.targetID];
+        if (target) {
+            target.token.remove();
+        }
 
 
         //clear arrays
@@ -4149,6 +4221,7 @@ log(playerID);
             losLines: [],
             heroes: ["",""],
             limitedMacros: {},
+            targetID: "",
         }
 
         
@@ -4973,8 +5046,9 @@ log(spellCast)
             case '!AmbushAura':
                 AmbushAura(msg);
                 break;
-
-
+            case '!PlaceTarget':
+                PlaceTarget(msg);
+                break;
 
             case '!RemoveLines2':
                 RemoveLines2();
