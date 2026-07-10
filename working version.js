@@ -2535,7 +2535,7 @@ log(weapon)
 
                 } else {
                     missRolls.push(roll);
-                    if (weapon.keywords.includes("Destructive") === false && defenderHex.breakable === true && combatType === "Ranged") {
+                    if (defenderHex.breakable === true && combatType === "Ranged" && weapon.keywords.includes("Destructive") === false && (defenderHex.flammable === false || weapon.keywords.includes("Flame") === false)) {
                         terrainHits.push(weapon);
                     }
                 }
@@ -2986,10 +2986,7 @@ log(weapon)
 
         _.each(weaponArray,weapon => {
             //terrain
-            if (weapon.keywords.includes("Destructive")) {
-                terrainHits.push(weapon);
-            }
-            if (weapon.keywords.includes("Flame") && defenderHex.flammable === true) {
+            if (weapon.keywords.includes("Destructive") || (weapon.keywords.includes("Flame") && defenderHex.flammable === true)) {
                 terrainHits.push(weapon);
             }
             if (defendersAliveFlag.some((e) => e !== false)) {
