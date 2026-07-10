@@ -3114,8 +3114,11 @@ log(weapon)
                     }
                 }
             };
-            let action = array[i].action.replaceAll("@{selected|token_id}",id);
-            action = action.replaceAll("@{target|token_id}",target.id);
+            let key = array[i].action.split(";")[3];
+key = key.slice(0,key.indexOf("/fx") - 1);
+
+
+            action = "!Attack;" + id + ";" + target.id + ";" + key
 log(action)
             AddAbility(name,action,target.charID);
         }
