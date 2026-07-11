@@ -1203,7 +1203,7 @@ const Main = (() => {
                 this.Killed();
             } else {
                 this.token.set("bar1_value",hp);
-                if (hp <= (this.wounds/2) && this.type !== "Terrain") {
+                if (hp <= (this.wounds/2)) {
                     this.token.set(SM.halfStr,true);
                     if (fullStr === true) {
                         let verb = (this.type === "Infantry") ? " has now taken heavy casualties!": " is now badly injured/damaged!";
@@ -2149,7 +2149,11 @@ log(tsides)
             for (let i=0;i<terrainHits.length;i++) {
                 let weap = terrainHits[i];
                 if (terWeaponArray.find((e) => e.name === weap.name)) {continue};
-                weap.attacks = terrainHits.filter((e) => e.name === weap.name).length; //# of misses, now used as # of attacks
+                if (weap.keywords.includes("Destructive") || iconAttack === true || (weap.keywords.includes("Flame") && defenderHex.flammable === true)) {
+                    //attacks will be normal
+                } else {
+                    weap.attacks = terrainHits.filter((e) => e.name === weap.name).length; //# of misses, now used as # of attacks
+                }
                 terWeaponArray.push(weap);
             }
             let defender = UnitArray[defenderHex.terrainID];
@@ -2625,6 +2629,9 @@ log(tsides)
 
             if (blast > 0 && hits > 0) {
                 let blastHits = Math.min(defenderModels,blast);
+                if (terAttack === true) {
+                    blastHits = blast;
+                }
                 if (blastHits > 1) {
                     //if 1 model, blast does no extra hits
                     let extra = (blastHits - 1) * hits;
@@ -2651,7 +2658,7 @@ log(tsides)
                 weaponOut = '[' + hits + '](#" class="showtip" title="' + finalTip + ')';
             } else {
                 s = "s";
-                let word = terAttack === true ? "No":"Zero";
+                let word = (terAttack === true) ? "No":"Zero";
                 weaponOut = '['+ word + '](#" class="showtip" title="' + finalTip + ')';
             }
             
@@ -2661,7 +2668,8 @@ log(tsides)
             let attWord = ((combatType === "Ranged") ? " fire":" strike") + s2;
 
             if (terAttack === true) {
-                outputCard.body.push(weaponOut + " Hit" + s + " on the Terrain");
+                let adverb = (iconAttack === true) ? " Direct Hit": " Collateral Hit";
+                outputCard.body.push(weaponOut + adverb + s + " on the Terrain");
             } else {
                 outputCard.body.push(weapon.name + attWord + attDisplay + " time" + s3);
                 outputCard.body.push(weaponOut + " hit" + s + " scored");
@@ -2830,8 +2838,8 @@ log(tsides)
                 defender.RemoveBuffs("Defense");
                 if (hp > 0) {
                     defender.token.set("bar1_value",hp);
-                    if (hp <= Math.floor(defender.wounds/2) && totalWounds > 0 && defender.type !== "Terrain") {
-                        if (defender.type === "Terrain") {
+                    if (hp <= Math.floor(defender.wounds/2) && totalWounds > 0) {
+                        if (defender.type !== "Terrain") {
                             defender.token.set(SM.halfStr,true);
                             if (defender.type !== "Hero") {
                                 moraleCheck = true;
@@ -2851,9 +2859,14 @@ log(tsides)
                     if (defender.name.includes("Woods") || defender.name.includes("Crops")) {
                         verb = " was set on Fire!";
                     }
-                    if (defender.name.includes("Concrete") || defender.name.includes("Brick")) {
+                    if (defender.name.includes("Concrete")) {
                         verb = " collapses, taking any adjacent Building Hexes with it!";
                     }
+                    if (defender.name.includes("Brick")) {
+                        verb = " collapses!";
+                    }
+
+
                     outputCard.body.push(defender.name + verb);
                     moraleCheck = false;
                     defender.Killed();
@@ -2865,12 +2878,7 @@ log(tsides)
 
 
 
-
-
-
         } //end WeaponAttack
-
-
 
         let Tag = msg.content.split(";");
         let attacker = UnitArray[Tag[1]];
@@ -2885,10 +2893,10 @@ log(tsides)
             SetupCard(attacker.name,"Attack",attacker.faction);
         }
 
+
         let attackerHex = HexMap[attacker.hexLabel];
         let defenderHex = HexMap[defender.hexLabel];
     
-
         let friendly = false;
         //due to overlap, check if accidentally clicked own unit
         if (attacker.faction === defender.faction) {
@@ -2988,6 +2996,15 @@ log(tsides)
                         notE += "[Ranged Shrouding in effect]";
                     }
                 }
+                if (iconAttack === true) {
+                    let proceed = false;
+                    if (defenderHex.breakable === true) {proceed = true};
+                    if (proceed === false && defenderHex.flammable === true && (weapon.keywords.includes("Flame") || weapon.keywords.includes("Destructive"))) {proceed = true};
+                    if (proceed === false) {
+                        notE = weapon.name + " - unable to Damage this Terrain";
+                    }
+                }
+
                 if (notE) {
                     notEligible.push(notE)
                 } else {
@@ -2999,6 +3016,11 @@ log(tsides)
 
                 }
             }
+
+
+
+
+
             if (weaponArray.length === 0) {
                 errorMsg = errorMsg.concat(notEligible);
             }
@@ -3154,11 +3176,12 @@ log(targetUnit.name)
         let cID;
         let hex = HexMap[hexLabel];
         let collapse = false;
+        let surround = false;
         let hexes = [hex];
         let units = [];
         _.each(hex.tokenIDs,tokenID => {
             let unit = UnitArray[tokenID];
-            if (unit && unit.type !== "Terrain" && unit.token) {
+            if (unit && unit.type !== "Terrain" && unit.type !== "System" && unit.token) {
                 units.push(unit);
             }
         })
@@ -3196,9 +3219,10 @@ log(targetUnit.name)
             newName = "Ruined Concrete";
             terrainHeight = buildingLevelHeight * .5;
             collapse = true;
+            surround = true;
         }
 
-        if (collapse === true) {
+        if (surround === true) {
             //check surrounding hexes, add up ids
             let cubes = hex.cube.neighbours();
             _.each(cubes,cube => {
@@ -3208,7 +3232,8 @@ log(targetUnit.name)
                     hexes.push(hex2);
                     _.each(hex2.tokenIDs,tokenID => {
                         let unit = UnitArray[tokenID];
-                        if (unit && unit.type !== "Terrain" && unit.token) {
+
+                        if (unit && unit.type !== "Terrain" && unit.type !== "System" && unit.token) {
                             units.push(unit);
                         }
                     })
@@ -3304,7 +3329,6 @@ log(targetUnit.name)
             })
         }
 
-
         if (unit.token.get("aura1_color") === "transparent") {
             SetupCard(unit.name,"Change Order ?",unit.faction);
             outputCard.body.push("Unit has Activated already, ?Redo")
@@ -3316,6 +3340,13 @@ log(targetUnit.name)
     }
 
     const ActivateTwo = (unit,order) => {
+        //clear placed target icons
+        let oldTarget = UnitArray[state.Epic.targetID];
+        if (oldTarget) {
+            oldTarget.token.remove();
+            delete UnitArray[state.Epic.targetID];
+        }
+        
         SetupCard(unit.name,order,unit.faction);
         let unitAuras = unit.Auras();
         let unitTT = unit.TTip();
@@ -4934,7 +4965,7 @@ log(spellCast)
                 outputCard.body.push("The Unit must take a Dangerous Terrain Test");
                 PrintCard();
             }
-            if ((newHex.type === "Dangerous" || prevHex.type === "Dangerous")) {
+            if ((newHex.type === "Dangerous" || prevHex.type === "Dangerous") && unit.type !== "System") {
                 SetupCard(unit.name,"Dangerous Terrain",unit.faction);
                 outputCard.body.push("The Unit must take a (single) Dangerous Terrain Test");
                 PrintCard();
