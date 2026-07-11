@@ -1317,9 +1317,8 @@ const Main = (() => {
         AddAbilities2(unit)
     }
         
-    const AddAbilities2 = (unit) => {
+    const AddAbilities2 = (unit,unit2 = false) => {
         let keywordList = unit.keywords;
-
         let abilityName,action;
         let abilArray = findObjs({_type: "ability", _characterid: unit.charID});
         //clear old abilities
@@ -1342,13 +1341,20 @@ const Main = (() => {
             "CCW": [],
         }
 
-  
-        for (let i=0;i<unit.weapons.length;i++) {
-            let weapon = unit.weapons[i];
+        let sampled = unit;
+        if (unit2 !== false) {
+            sampled = unit2
+        }
+
+        for (let i=0;i<sampled.weapons.length;i++) {
+            let weapon = sampled.weapons[i];
             let name = weapon.name;
             if (weapon.type === " " || weapon.name === " ") {continue}
             if (weapon.keywords.includes("Limited")) {
                 name += " (Limited)";
+            }
+            if (unit2 !== false && weapon.type === "CCW" && weapon.keywords.includes("Destructive") === false) {
+                continue;
             }
             keywordList = keywordList.concat(weapon.keywords)
             types[weapon.type].push(name); 
@@ -1363,13 +1369,19 @@ const Main = (() => {
             if (names.length === 0) {continue};
             let fx = "";
             let ccwTag = "";
-            for (let j=0;j<unit.weapons.length;j++) {
+            for (let j=0;j<sampled.weapons.length;j++) {
                 if (keys[i] === "CCW") {
                     ccwTag = " [CCW]";
                     fx = "/fx bubbling-blood @{target|token_id}";
                     break;
-                } else if (names[0].includes(unit.weapons[j].name) && unit.weapons[j].fx) {
-                    fx = "/fx " + unit.weapons[j].fx + " @{selected|token_id} @{target|token_id}";
+                } else if (names[0].includes(sampled.weapons[j].name) && sampled.weapons[j].fx) {
+                    let fxList = ["breath","beam","missile","rocket"];
+                    let s = sampled.weapons[j].fx;
+                    if (fxList.some(keyword => sampled.weapons[j].fx.includes(keyword))) {
+                        fx = "/fx " + sampled.weapons[j].fx + " @{selected|token_id} @{target|token_id}";
+                    } else {
+                        fx = "/fx " + sampled.weapons[j].fx + " @{target|token_id}";
+                    }
                     break;
                 }
             }
@@ -1381,7 +1393,15 @@ const Main = (() => {
             action = "!Attack;@{selected|token_id};@{target|token_id};" + keys[i];
             action += '\n' + fx;
 
+            if (unit2 !== false) {
+                action = action.replaceAll("@{selected|token_id}",unit2.id);
+                action = action.replaceAll("@{target|token_id}",unit.id);
+            }
+
             let id = AddAbility(abilityName,action,unit.charID);
+
+//limited on targets ?
+
             if (keys[i].includes("Limited")) {
                 let info = {
                     key: keys[i],
@@ -1395,98 +1415,98 @@ const Main = (() => {
             }
         }
 
-        //activation 
-        let orders = ";?{Order|Hold|Advance|Charge/Rush|Rally|Overwatch}";
-        if (unit.type === "Aircraft") {orders = ";Advance"};
-        if (unit.keywords.includes("Artillery") || unit.keywords.includes("Immobile")) {orders = ";Hold|Rally|Overwatch"}
+        if (unit2 === false) {
+            //activation 
+            let orders = ";?{Order|Hold|Advance|Charge/Rush|Rally|Overwatch}";
+            if (unit.type === "Aircraft") {orders = ";Advance"};
+            if (unit.keywords.includes("Artillery") || unit.keywords.includes("Immobile")) {orders = ";Hold|Rally|Overwatch"}
 
-        action = "!Activate;@{selected|token_id}" + orders;
-        AddAbility("Activate",action,unit.charID);
+            action = "!Activate;@{selected|token_id}" + orders;
+            AddAbility("Activate",action,unit.charID);
 
 
-       //special ability macros
-        let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6},{name: "Speed Feat", targets: 1, range: 0},{name: "Speed Feat Aura", targets: 2, range: 0}];
+        //special ability macros
+            let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6},{name: "Speed Feat", targets: 1, range: 0},{name: "Speed Feat Aura", targets: 2, range: 0}];
 
-        _.each(specials,special => {
-            let t = "";
-            if (unit.keywords.includes(special.name)) {
-                if (special.targets === "Self") {
-                    t = ";@{selected|token_id}";
-                } else {
-                    if (special.targets === 1) {
-                        t = ";@{target|token_id}";
+            _.each(specials,special => {
+                let t = "";
+                if (unit.keywords.includes(special.name)) {
+                    if (special.targets === "Self") {
+                        t = ";@{selected|token_id}";
                     } else {
-                        for (let i=1;i<=special.targets;i++) {
-                            t += ";@{target|Target " + i + "|token_id}";
+                        if (special.targets === 1) {
+                            t = ";@{target|token_id}";
+                        } else {
+                            for (let i=1;i<=special.targets;i++) {
+                                t += ";@{target|Target " + i + "|token_id}";
+                            }
                         }
                     }
+                    abilityName = unit.flavours[special.name];
+                    action = "!Special;" + special.name + ";" + special.range + ";@{selected|token_id}" + t;
+                    AddAbility(abilityName,action,unit.charID);
                 }
-                abilityName = unit.flavours[special.name];
-                action = "!Special;" + special.name + ";" + special.range + ";@{selected|token_id}" + t;
-                AddAbility(abilityName,action,unit.charID);
+            })
+
+
+            //morale
+            AddAbility("Morale","!Morale;" + unit.id,unit.charID);
+            //Dangerous
+            AddAbility("Dangerous","!DangerousTest",unit.charID);
+
+            if (unit.casterLevel > 0) {
+                action = "!CastSpell";
+                AddAbility("Cast Spell",action,unit.charID);
             }
-        })
 
-
-        //morale
-        AddAbility("Morale","!Morale;" + unit.id,unit.charID);
-        //Dangerous
-        AddAbility("Dangerous","!DangerousTest",unit.charID);
-
-        if (unit.casterLevel > 0) {
-            action = "!CastSpell";
-            AddAbility("Cast Spell",action,unit.charID);
-        }
-
-        //ambush
-        if (unit.keywords.includes("Ambush")) {
-            action = "!AmbushAura";
-            AddAbility("Show Ambush Distance",action,unit.charID);
-        }
-
-        //place target
-        if (weaponNum > 1) {
-            AddAbility("Place Target","!PlaceTarget",unit.charID);
-        }
-
-        //LOS
-        if (unit.type !== "Terrain" && unit.type !== "Objective") {
-            AddAbility("LOS","!CheckLOS;@{selected|token_id};@{target|token_id}",unit.charID);
-        }
-
-
-
-        //keywords list 
-        keywordList = [...new Set(keywordList)];
-        keywordList = keywordList.filter(Boolean);
-        keywordList = keywordList.map((e) => {
-            if (e.includes("(")) {
-                e = e.split("(")[0] + "(X)";
+            //ambush
+            if (unit.keywords.includes("Ambush")) {
+                action = "!AmbushAura";
+                AddAbility("Show Ambush Distance",action,unit.charID);
             }
-            let item = {
-                name: e,
-                text: Keywords[e] || "Not in Database",
+
+            //place target
+            if (weaponNum > 1) {
+                AddAbility("Place Target","!PlaceTarget",unit.charID);
             }
-            return item;
-        })
-        
-        keywordList = keywordList.sort((a,b) => a.name.localeCompare(b.name))
-        for (let i=0;i<12;i++) {
-            let abName = "spec" + i + "Name";
-            let abTextName = "spec" + i + "Text";
-            let name = " ";
-            let text = " ";
-            if (i < keywordList.length) {
-                name = keywordList[i].name;
-                text = keywordList[i].text;
+
+            //LOS
+            if (unit.type !== "Terrain" && unit.type !== "Objective") {
+                AddAbility("LOS","!CheckLOS;@{selected|token_id};@{target|token_id}",unit.charID);
             }
 
 
-            AttributeSet(unit.charID,abName,name);
-            AttributeSet(unit.charID,abTextName,text);
-        }
 
-        sendChat("","Abilities Added")
+            //keywords list 
+            keywordList = [...new Set(keywordList)];
+            keywordList = keywordList.filter(Boolean);
+            keywordList = keywordList.map((e) => {
+                if (e.includes("(")) {
+                    e = e.split("(")[0] + "(X)";
+                }
+                let item = {
+                    name: e,
+                    text: Keywords[e] || "Not in Database",
+                }
+                return item;
+            })
+            
+            keywordList = keywordList.sort((a,b) => a.name.localeCompare(b.name))
+            for (let i=0;i<12;i++) {
+                let abName = "spec" + i + "Name";
+                let abTextName = "spec" + i + "Text";
+                let name = " ";
+                let text = " ";
+                if (i < keywordList.length) {
+                    name = keywordList[i].name;
+                    text = keywordList[i].text;
+                }
+
+
+                AttributeSet(unit.charID,abName,name);
+                AttributeSet(unit.charID,abTextName,text);
+            }
+        }
     }
 
 
@@ -2464,12 +2484,14 @@ log(tsides)
                 } else if (weapon.keywords.includes("Flame") && defenderHex.flammable === true) {
                     needed = 2;
                     neededTip = "<br>Flame vs Flammable - 2+";
+                } else if (iconAttack === true) {
+                    needed = 2;
+                    neededTip = "<br>Direct Attack vs Terrain - 2+";
                 } else {
                     needed = 4;
                     neededTip = "<br>Terrain - 4+";
                 }
             }
-
 
             //Number of Attacks
             let attacks = weapon.number * weapon.attacks;
@@ -2853,6 +2875,7 @@ log(tsides)
         let Tag = msg.content.split(";");
         let attacker = UnitArray[Tag[1]];
         let defender = UnitArray[Tag[2]];
+        let iconAttack = (defender.name === "Icon") ? true:false;
 
         if (!attacker || !defender) {return};
         let weaponType = Tag[3]; //CCW, Rifle etc
@@ -3006,10 +3029,10 @@ log(tsides)
 
         _.each(weaponArray,weapon => {
             //terrain
-            if (weapon.keywords.includes("Destructive") || (weapon.keywords.includes("Flame") && defenderHex.flammable === true) || defender.name === "Target") {
+            if (weapon.keywords.includes("Destructive") || (weapon.keywords.includes("Flame") && defenderHex.flammable === true) || iconAttack === true) {
                 terrainHits.push(weapon);
             }
-            if (defender.name !== "Target" && defendersAliveFlag.some((e) => e !== false)) {
+            if (iconAttack === false && defendersAliveFlag.some((e) => e !== false)) {
                 WeaponAttack(weapon);
                 outputCard.body.push("[hr]");
                 PlaySound(weapon.sound);
@@ -3095,32 +3118,14 @@ log(tsides)
 
         let hex = HexMap[unit.hexLabel];
         let cID = "-OxDpUN1kl9gvdLwyKN1";
-        let t = summonToken(cID,hex.centre.x,hex.centre.y,105,0,"objects");
-        if (t) {
-            toFront(t);
-            t = new Unit(t.get("id"));
-            state.Epic.targetID = t.id;
-            //clear old abilities of target
-            let targetAbilArray = findObjs({_type: "ability", _characterid: t.charID});
-    log(targetAbilArray)
-            for(let a=0;a<targetAbilArray.length;a++) {
-                targetAbilArray[a].remove();
-            } 
-
-
-
-
-
-
-
-
+        let icon = summonToken(cID,hex.centre.x,hex.centre.y,105,0,"objects");
+        if (icon) {
+            targetUnit = new Unit(icon.get("id"));
+log(targetUnit.name)
+            state.Epic.targetID = targetUnit.id;
+            AddAbilities2(targetUnit,unit);
+            toFront(icon);
         }
-   
-
-
-
-
-
     }
 
 
