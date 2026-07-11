@@ -1467,7 +1467,7 @@ const Main = (() => {
 
             //place target
             if (weaponNum > 1) {
-                AddAbility("Place Target","!PlaceTarget",unit.charID);
+                AddAbility("Target Terrain","!PlaceTarget",unit.charID);
             }
 
             //LOS
@@ -2328,7 +2328,10 @@ log(tsides)
                 needed = 1;
                 neededTip = "<br>Spell - Auto Hit"
             }
-
+            if (iconAttack === true) {
+                needed -= 1;
+                neededTip = "<br>Direct Attack vs. Terrain +1 to Hit";
+            }
 
             let blast = weapon.keywords.find(key => key.includes("Blast")) || "0";
             blast = parseInt(blast.replace(/\D/g,''));
@@ -2481,20 +2484,9 @@ log(tsides)
 
             }
 
-            if (terAttack === true) {
-                if (weapon.keywords.includes("Destructive")) {
-                    needed = 2;
-                    neededTip = "<br>Destructive vs Terrain - 2+";
-                } else if (weapon.keywords.includes("Flame") && defenderHex.flammable === true) {
-                    needed = 2;
-                    neededTip = "<br>Flame vs Flammable - 2+";
-                } else if (iconAttack === true) {
-                    needed = 2;
-                    neededTip = "<br>Direct Attack vs Terrain - 2+";
-                } else {
-                    needed = 4;
-                    neededTip = "<br>Terrain - 4+";
-                }
+            if (terAttack === true && iconAttack === false) {
+                needed = 4;
+                neededTip = "<br>Collateral vs. Terrain - 4+";
             }
 
             //Number of Attacks
@@ -3259,11 +3251,12 @@ log(targetUnit.name)
         })
 
         _.each(units,unit => {
-            if (collapse === true && unit.token.get("tint_color") !== "#ff0000") {
-                outputCard.body.push("The unit must take a Dangerous Terrain Test and is also Shaken");
+            let ext = "";
+            if (unit.token.get("tint_color") !== "#ff0000" && collapse === true) {
+                ext = " and is also Shaken";
                 unit.token.set("tint_color","#ff0000");
-            } 
-            outputCard.body.push(unit.name + " MUST displace 1 Hex and take a Dangerous Terrain Test.");
+            }
+            outputCard.body.push(unit.name + " must take a Dangerous Terrain Test, moving out of the Hex" + ext);
         })
 
 
