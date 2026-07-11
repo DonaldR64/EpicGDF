@@ -228,7 +228,7 @@ const Main = (() => {
         "Brick Building 2": {name: "Brick Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult",breakable: true},
         "Concrete Building 1": {name: "Concrete Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult",breakable: true},
         "Concrete Building 2": {name: "Concrete Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult",breakable: true},
-        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 3, type: "Open",breakable: true, flammable: true},
+        "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 3, type: "Open",breakable: false, flammable: true},
         "Burning Crops": {name: "Burning Crops", cover: "true", building: false, blockLOS: true, height: 10, type: "Dangerous",breakable: false, flammable: false},
 
 
@@ -1268,6 +1268,10 @@ const Main = (() => {
 
     summonToken = function(cID,left,top,size = 70,rotation = 0,layer = "map") {
         let character = getObj("character", cID);
+        if (!character) {
+            sendChat("","No Character")
+            return
+        }
         let newToken;
         character.get('defaulttoken',function(defaulttoken){
             const dt = JSON.parse(defaulttoken);
@@ -2121,7 +2125,6 @@ log(tsides)
     const Attack = (msg) => {
 
         const TerrainHits = () => {
-log("Terrain Hits")
             let terWeaponArray = [];
             for (let i=0;i<terrainHits.length;i++) {
                 let weap = terrainHits[i];
@@ -2129,12 +2132,10 @@ log("Terrain Hits")
                 weap.attacks = terrainHits.filter((e) => e.name === weap.name).length; //# of misses, now used as # of attacks
                 terWeaponArray.push(weap);
             }
-log(terWeaponArray);
             let defender = UnitArray[defenderHex.terrainID];
             if (!defender) {
                 defender = new Unit(defenderHex.terrainID);
             }
-log(defender)
             defenders = [defender];
             outputCard.body.push("[B][U]" + defender.name + "[/u][/b]");
             _.each(terWeaponArray,weapon => {
@@ -2303,15 +2304,7 @@ log(defender)
                 needed = 1;
                 neededTip = "<br>Spell - Auto Hit"
             }
-            if (terAttack === true) {
-                if (weapon.keywords.includes("Destructive")) {
-                    needed = 2;
-                    neededTip = "<br>Destructive vs Terrain - 2+";
-                } else {
-                    needed = 4;
-                    neededTip = "<br>Terrain - 4+";
-                }
-            }
+
 
             let blast = weapon.keywords.find(key => key.includes("Blast")) || "0";
             blast = parseInt(blast.replace(/\D/g,''));
@@ -2463,11 +2456,18 @@ log(defender)
 
 
             }
-log(weapon)
 
             if (terAttack === true) {
-                needed = 4;
-                neededTip = "<br>Terrain - 4+";
+                if (weapon.keywords.includes("Destructive")) {
+                    needed = 2;
+                    neededTip = "<br>Destructive vs Terrain - 2+";
+                } else if (weapon.keywords.includes("Flame") && defenderHex.flammable === true) {
+                    needed = 2;
+                    neededTip = "<br>Flame vs Flammable - 2+";
+                } else {
+                    needed = 4;
+                    neededTip = "<br>Terrain - 4+";
+                }
             }
 
 
@@ -2809,10 +2809,19 @@ log(weapon)
                 if (hp > 0) {
                     defender.token.set("bar1_value",hp);
                     if (hp <= Math.floor(defender.wounds/2) && totalWounds > 0 && defender.type !== "Terrain") {
-                        defender.token.set(SM.halfStr,true);
-                        if (defender.type !== "Hero") {
-                            moraleCheck = true;
+                        if (defender.type === "Terrain") {
+                            defender.token.set(SM.halfStr,true);
+                            if (defender.type !== "Hero") {
+                                moraleCheck = true;
+                            }
+                        } else {
+                            cID = "-OxDiGwwCt6-g2vdUauU";
+                            let smoke = summonToken(cID,defenderHex.centre.x,defenderHex.centre.y);
+                            toFront(smoke);
                         }
+
+
+                        
                     }
                 } else {
                     defendersAliveFlag[d] = false;
@@ -3085,28 +3094,28 @@ log(weapon)
         }
 
         let hex = HexMap[unit.hexLabel];
-        let cID = "-OxC7CI-vYDMyV59NSj4";
+        let cID = "-OxDpUN1kl9gvdLwyKN1";
         let t = summonToken(cID,hex.centre.x,hex.centre.y,105,0,"objects");
-        toFront(t);
-        t = new Unit(t.get("id"));
-        state.Epic.targetID = t.id;
-        //clear old abilities of target
-        let targetAbilArray = findObjs({_type: "ability", _characterid: t.charID});
-
-log(targetAbilArray)
-
-
-        for(let a=0;a<targetAbilArray.length;a++) {
-            targetAbilArray[a].remove();
-        } 
+        if (t) {
+            toFront(t);
+            t = new Unit(t.get("id"));
+            state.Epic.targetID = t.id;
+            //clear old abilities of target
+            let targetAbilArray = findObjs({_type: "ability", _characterid: t.charID});
+    log(targetAbilArray)
+            for(let a=0;a<targetAbilArray.length;a++) {
+                targetAbilArray[a].remove();
+            } 
 
 
 
 
-        AddAbility("Morale","!Morale;" + unit.id,t.charID);
 
 
 
+
+        }
+   
 
 
 
@@ -4075,8 +4084,15 @@ log(targetAbilArray)
         outputCard.body.push("Unit Keywords: " + unit.keywords.toString());
         outputCard.body.push("Unit Auras: " + unit.Auras().toString());
         outputCard.body.push("Unit Tips: " + unit.TTip().toString());
-
-        outputCard.body.push("Ridgeline Angles: " + hex.ridgelineAngles.toString())
+        let terrainID = hex.terrainID;
+        if (terrainID) {
+            let terrain = UnitArray[terrainID];
+            if (!terrain) {
+                terrain = new Unit(terrainID);
+            }
+            let hp = terrain.token.get("bar1_value");
+            outputCard.body.push(terrain.name + ": " + hp + " HP Left");
+        }
 
         PrintCard();
     }
@@ -4147,7 +4163,7 @@ log(playerID);
                 layer: "foreground",
             });
             _.each(tokens,token => token.remove());
-            let tempTerrain = ["Artillery Craters","Burning Woods","Ruined Building","Ruined Concrete","Burning Crops"];
+            let tempTerrain = ["Artillery Craters","Burning Woods","Ruined Building","Ruined Concrete","Burning Crops","Smoke"];
             tokens = findObjs({
                 _pageid: Campaign().get("playerpageid"),
                 _type: "graphic",
@@ -4992,7 +5008,7 @@ log(spellCast)
                 break;
 
             case '!Attack':
-                //Attack(msg);
+                Attack(msg);
                 break;
 
 
