@@ -1983,8 +1983,6 @@ const Main = (() => {
                 tsides.push(tokenImage(Factions[state.Epic.factions[1]].logo));
                 tsides = tsides.toString().replaceAll(",","|");
 log(tsides)
-
-
                 unit.token.set({
                     layer: 'foreground',
                     aura1_color: "#ffffff",
@@ -1993,7 +1991,9 @@ log(tsides)
                     currentSide: 0,
                 })
             }
+            unit.prevHexLabel = unit.hexLabel;
         })
+
         RemoveLines(["Deploy"]);
         PrintCard();
         state.Epic.turn = 1;
