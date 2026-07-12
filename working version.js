@@ -1356,6 +1356,9 @@ const Main = (() => {
             if (unit2 !== false && weapon.type === "CCW" && weapon.keywords.includes("Destructive") === false) {
                 continue;
             }
+            if (unit2 !== false && weapon.ap === 0) {
+                continue;
+            }
             keywordList = keywordList.concat(weapon.keywords)
             types[weapon.type].push(name); 
         }
@@ -1795,13 +1798,22 @@ const Main = (() => {
                     if (name === "Burning Woods") {
                         hex.terrain = hex.terrain.replace("Woods","Burning Woods");
                         hex.terrain = hex.terrain.replace("Orchards","Burning Woods");
+                        hex.terrainID = "";
+                        hex.breakable = false;
+                        hex.flammable = false;
                     } else if (name === "Burning Crops") {
                         hex.terrain = hex.terrain.replace("Crops","Burning Crops");
+                        hex.terrainID = "";
+                        hex.breakable = false;
+                        hex.flammable = false;
                     } else if (name.includes("Ruined")) { 
                         hex.terrain = hex.terrain.replace("Brick Building 1","Ruined Building");
                         hex.terrain = hex.terrain.replace("Brick Building 2","Ruined Building");
                         hex.terrain = hex.terrain.replace("Concrete Building 1","Ruined Concrete");                      
                         hex.terrain = hex.terrain.replace("Concrete Building 1","Ruined Concrete");
+                        hex.terrainID = "";
+                        hex.breakable = false;
+                        hex.flammable = false;
                     } else {
                         hex.terrain += ", " + terrain.name;
                     }
@@ -2494,6 +2506,7 @@ log(tsides)
 
             //Number of Attacks
             let attacks = weapon.number * weapon.attacks;
+
             if (attacker.token.get(SM.halfStr) === true  && combatType !== "Spell" && attacker.type !== "Hero") {
                 attacks = Math.floor(attacks/2);
             }
@@ -2518,6 +2531,12 @@ log(tsides)
             if (combatType !== "Spell") {
                 needed = Math.min(6,Math.max(2,needed)); //1 is always a miss, 6 a hit
             }
+
+            if (terAttack === true && iconAttack === false) {
+                attacks = weapon.attacks;
+            }
+
+
 
             do {
                 let roll = randomInteger(6);
@@ -2567,7 +2586,9 @@ log(tsides)
 
                 } else {
                     missRolls.push(roll);
-                    if (defenderHex.breakable === true && combatType === "Ranged" && weapon.keywords.includes("Destructive") === false && (defenderHex.flammable === false || weapon.keywords.includes("Flame") === false)) {
+                    let proceed = false;
+                    if (dfFlag === false && defenderHex.breakable === true && weapon.ap > 0 && weapon.type !== "Sniper" && combatType === "Ranged") {
+                        //dfFLag is true if already added
                         terrainHits.push(weapon);
                     }
                 }
@@ -2579,6 +2600,17 @@ log(tsides)
             } while (attacks > 0);
 
             let s;
+
+
+            if (iconAttack === false && terAttack === true) {
+                butcher = 0;
+                furious = 0;
+                relentless = 0;
+                surge = 0;
+                devout = 0;
+                ferocious = 0;
+            }
+
             if (predator > 0) {
                 s = (predator === 1) ? "":"s";
                 hitTip += "<br<Predator Fighter added " + predator + " Attack" + s;
@@ -2615,9 +2647,6 @@ log(tsides)
                 if (ferBoost === true) {add = " Boost"};
                 hitTip += "<br>Ferocious" + add + " added " + ferocious + " hit" + s;
             }
-
-
-
 
 
             extraHits += butcher + furious + relentless + surge + devout + ferocious;
@@ -2664,7 +2693,7 @@ log(tsides)
 
             if (terAttack === true) {
                 let adverb = (iconAttack === true) ? " Direct Hit": " Collateral Hit";
-                outputCard.body.push(weaponOut + adverb + s + " on the Terrain");
+                outputCard.body.push(weapon.name + " gets " + weaponOut + adverb + s);
             } else {
                 outputCard.body.push(weapon.name + attWord + attDisplay + " time" + s3);
                 outputCard.body.push(weaponOut + " hit" + s + " scored");
@@ -2879,6 +2908,7 @@ log(tsides)
         let attacker = UnitArray[Tag[1]];
         let defender = UnitArray[Tag[2]];
         let iconAttack = (defender.name === "Icon") ? true:false;
+        let dfFlag = false;
 
         if (!attacker || !defender) {return};
         let weaponType = Tag[3]; //CCW, Rifle etc
@@ -2993,7 +3023,7 @@ log(tsides)
                 }
                 if (iconAttack === true) {
                     let proceed = false;
-                    if (defenderHex.breakable === true) {proceed = true};
+                    if (defenderHex.breakable === true && weapon.ap > 0 && weapon.type !== "Sniper") {proceed = true};
                     if (proceed === false && defenderHex.flammable === true && (weapon.keywords.includes("Flame") || weapon.keywords.includes("Destructive"))) {proceed = true};
                     if (proceed === false) {
                         notE = weapon.name + " - unable to Damage this Terrain";
@@ -3045,9 +3075,11 @@ log(tsides)
         let terrainHits = [];
 
         _.each(weaponArray,weapon => {
+            dfFlag = false;
             //terrain
-            if (weapon.keywords.includes("Destructive") || (weapon.keywords.includes("Flame") && defenderHex.flammable === true) || iconAttack === true) {
+            if ((weapon.keywords.includes("Destructive") && defenderHex.breakable === true) || (weapon.keywords.includes("Flame") && defenderHex.flammable === true) || iconAttack === true) {
                 terrainHits.push(weapon);
+                dfFlag = true; //flag to stop misses being added
             }
             if (iconAttack === false && defendersAliveFlag.some((e) => e !== false)) {
                 WeaponAttack(weapon);
@@ -3251,6 +3283,7 @@ log(targetUnit.name)
             hex.blockLOS = blockLOS;
             hex.type = "Dangerous";
             hex.terrainHeight = terrainHeight;
+            hex.terrainID = "";
         })
 
         _.each(units,unit => {
