@@ -371,14 +371,12 @@ const Main = (() => {
 
     const KeyNum = (unit,keyword) => {
         let key = unit.keywords.split(",");
-        log(key)
         let num = 1;
         _.each(key,word => {
             if (word.includes(keyword)) {
                 word = word.trim().replace(keyword,"").replace("(","").replace(")","");
                 num = parseInt(word);
             }
-            log(num)
         })
         return num;
     }
@@ -1982,7 +1980,6 @@ const Main = (() => {
                 tsides.push(tokenImage(Factions[state.Epic.factions[0]].logo));
                 tsides.push(tokenImage(Factions[state.Epic.factions[1]].logo));
                 tsides = tsides.toString().replaceAll(",","|");
-log(tsides)
                 unit.token.set({
                     layer: 'foreground',
                     aura1_color: "#ffffff",
@@ -3170,7 +3167,6 @@ log(tsides)
         let icon = summonToken(cID,hex.centre.x,hex.centre.y,105,0,"objects");
         if (icon) {
             targetUnit = new Unit(icon.get("id"));
-log(targetUnit.name)
             state.Epic.targetID = targetUnit.id;
             AddAbilities2(targetUnit,unit);
             toFront(icon);
@@ -4166,7 +4162,6 @@ log(targetUnit.name)
         PlaySound("Dice");
         let roll = randomInteger(6);
         let playerID = msg.playerid;
-log(playerID);
         let id,unit,player;
         if (msg.selected) {
             id = msg.selected[0]._id;
@@ -4174,7 +4169,6 @@ log(playerID);
         let faction = "Neutral";
 
         if (!id && !playerID) {
-            log("Back")
             return;
         }
         if (id) {
@@ -4480,7 +4474,7 @@ log(playerID);
             let id = Tag[i];
             let targetUnit = UnitArray[id];
             if (!targetUnit) {
-                log("Error in Targetting of Spell")
+                sendChat("","Error in Targetting of Spell")
                 continue;
             }
             let losResult = LOS(caster,targetUnit);
@@ -4542,7 +4536,6 @@ log(playerID);
 
     //cast4 - rolls for success, pays cost
     const Cast4 = () => {
-log(spellCast)
         SpendSpellPoints();
         let caster = UnitArray[spellCast.casterID];
         let spellInfo = Spells[spellCast.spellName];
@@ -4728,7 +4721,6 @@ log(spellCast)
         if (weaponWith === false && weaponWithout === false) {
             outputCard.body.push("Only CCW Weapons");
         }
-        log(set)
         DrawLine(set,colour,"LOS");
         ButtonInfo("Remove Line","!RemoveLines2");
         PrintCard();
