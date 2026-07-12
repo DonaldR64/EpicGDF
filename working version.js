@@ -1,5 +1,5 @@
 const Main = (() => {
-    const version = '2026.7.9';
+    const version = '2026.7.11';
     if (!state.Epic) {state.Epic = {}};
 
     const pageInfo = {};
@@ -2154,6 +2154,9 @@ log(tsides)
                 } else {
                     weap.attacks = terrainHits.filter((e) => e.name === weap.name).length; //# of misses, now used as # of attacks
                 }
+                if (combatType === "Melee" && weap.keywords.includes("Destructive") === false) {
+                    continue;
+                }
                 terWeaponArray.push(weap);
             }
             let defender = UnitArray[defenderHex.terrainID];
@@ -2430,7 +2433,7 @@ log(tsides)
 */
             //Negative To Hits - removed by Unstoppable
             if (weapon.keywords.includes("Unstoppable") === false) {
-                if (cover === true && (combatType === "Ranged" || (combatType === "Melee" && LargeUnits.includes(attacker.type))))  {
+                if (cover === true && iconAttack === false && (combatType === "Ranged" || (combatType === "Melee" && LargeUnits.includes(attacker.type))))  {
                     needed += 1;
                     neededTip += "<br>Cover -1 to Hit";
                 }
@@ -3071,7 +3074,7 @@ log(tsides)
             })
         }
 
-        if (combatType === "Melee" && defendersAliveFlag.some((e)=> e !== false)) {
+        if (combatType === "Melee" && defendersAliveFlag.some((e)=> e !== false) && iconAttack === false) {
             let fear = attacker.KeyNum("Fear");
             if (fear > 0) {
                 fear = " + Fear " + fear + " = " + (fear + meleeWounds);
@@ -3938,7 +3941,7 @@ log(targetUnit.name)
                 break;
             case 'Capture and Hold':
                 number = 3;
-                missionInfo = "The Objectives represent important Information or Personnel. If a unit seizes a Objective, remove it from the table, and it counts as being carried by the unit. If the unit is shaken or destroyed at any point, the marker is dropped within 1” (placed by the opponent). At the end of EACH round, players get 1VP for each objective they control, and at the end they get an additional 1 VP if they control more markers than their opponent."
+                missionInfo = "The Objectives represent important Information or Personnel. If a unit seizes a Objective, remove it from the table, and it counts as being carried by the unit. If the unit is shaken or destroyed at any point, the marker is dropped within 1 hex (placed by the opponent). At the end of EACH round, players get 1VP for each objective they control, and at the end they get an additional 1 VP if they control more markers than their opponent."
                 break;
         }
 
