@@ -224,12 +224,16 @@ const Main = (() => {
         "Open": {name: "Open",cover: false, building: false, blockLOS: false,height: 0, type: "Open"},
         "Woods": {name: "Woods",cover: true, building: false, blockLOS: true,height: 50, type: "Difficult",breakable: true, flammable: true},
         "Orchards": {name: "Orchards",cover: true, building: false, blockLOS: true,height: 25, type: "Difficult",breakable: true, flammable: true},
+        "Desert Scrub": {name: "Desert Scrub",cover: true, building: false, blockLOS: true,height: 10, type: "Difficult",breakable: true, flammable: true},
+
+
         "Brick Building 1": {name: "Brick Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult",breakable: true},
         "Brick Building 2": {name: "Brick Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult",breakable: true},
         "Concrete Building 1": {name: "Concrete Building 1", cover: true,building: true, blockLOS: true,height: buildingLevelHeight, type: "Difficult",breakable: true},
         "Concrete Building 2": {name: "Concrete Building 2", cover: true, building: true, blockLOS: true,height: buildingLevelHeight * 2, type: "Difficult",breakable: true},
         "Crops": {name: "Crops", cover: "Infantry", building: false, blockLOS: false, height: 3, type: "Open",breakable: false, flammable: true},
         "Burning Crops": {name: "Burning Crops", cover: "true", building: false, blockLOS: true, height: 10, type: "Dangerous",breakable: false, flammable: false},
+        "Burning Scrub": {name: "Burning Scrub", cover: "true", building: false, blockLOS: true, height: 10, type: "Dangerous",breakable: false, flammable: false},
 
 
         "Water": {name: "Water", cover: false, building: false, blockLOS: false,height: 0, type: "Impassable"},
@@ -242,9 +246,8 @@ const Main = (() => {
 
         "Hill 1": {name: "Hill 1", cover: false,building: false, blockLOS: false, height: 30, type: "Open"},
         "Hill 2": {name: "Hill 2", cover: false,building: false, blockLOS: false, height: 60, type: "Open"},
-
-
-
+        "Hill 3": {name: "Hill 3", cover: false,building: false, blockLOS: false, height: 90, type: "Open"},
+        "Hill 4": {name: "Hill 4", cover: false,building: false, blockLOS: false, height: 120, type: "Open"},
 
     }
 
@@ -893,7 +896,7 @@ const Main = (() => {
 
 
             if (this.type === "Terrain") {
-                if (this.name.includes("Woods") || this.name.includes("Orchard")) {
+                if (this.name.includes("Woods") || this.name.includes("Orchard") || this.name.includes("Desert Scrub")) {
                     this.toughness = 4;
                     this.defense = 4;
                     this.keywords = ["Flammable"];
@@ -1779,70 +1782,80 @@ const Main = (() => {
                 let centre = new Point(token.get("left"),token.get('top'));
                 let centreLabel = centre.toCube().label();
                 let hex = HexMap[centreLabel];
-                if (hex.terrain !== "Open") {
-                    //burning/ruined
-                    if (name === "Woods" && hex.terrain.includes("Burning Woods")) {
-                        return;
-                    }
-                    if (name === "Orchards" && hex.terrain.includes("Burning Woods")) {
-                        return;
-                    }
-                    if (name === "Crops" && hex.terrain.includes("Burning Crops")) {
-                        return;
-                    }
-                    if (name.includes("Building") && hex.terrain.includes("Ruined")) {
-                        return;
-                    }
-                    if (name === "Burning Woods") {
-                        hex.terrain = hex.terrain.replace("Woods","Burning Woods");
-                        hex.terrain = hex.terrain.replace("Orchards","Burning Woods");
-                        hex.terrainID = "";
-                        hex.breakable = false;
-                        hex.flammable = false;
-                    } else if (name === "Burning Crops") {
-                        hex.terrain = hex.terrain.replace("Crops","Burning Crops");
-                        hex.terrainID = "";
-                        hex.breakable = false;
-                        hex.flammable = false;
-                    } else if (name.includes("Ruined")) { 
-                        hex.terrain = hex.terrain.replace("Brick Building 1","Ruined Building");
-                        hex.terrain = hex.terrain.replace("Brick Building 2","Ruined Building");
-                        hex.terrain = hex.terrain.replace("Concrete Building 1","Ruined Concrete");                      
-                        hex.terrain = hex.terrain.replace("Concrete Building 1","Ruined Concrete");
-                        hex.terrainID = "";
-                        hex.breakable = false;
-                        hex.flammable = false;
+                if (hex) {
+                    if (hex.terrain !== "Open") {
+                        //burning/ruined
+                        if (name === "Woods" && hex.terrain.includes("Burning Woods")) {
+                            return;
+                        }
+                        if (name === "Orchards" && hex.terrain.includes("Burning Woods")) {
+                            return;
+                        }
+                        if (name === "Crops" && hex.terrain.includes("Burning Crops")) {
+                            return;
+                        }
+                        if (name === "Desert Scrub" && hex.terrain.includes("Burning Scrub")) {
+                            return;
+                        }
+                        if (name.includes("Building") && hex.terrain.includes("Ruined")) {
+                            return;
+                        }
+                        if (name === "Burning Woods") {
+                            hex.terrain = hex.terrain.replace("Woods","Burning Woods");
+                            hex.terrain = hex.terrain.replace("Orchards","Burning Woods");
+                            hex.terrainID = "";
+                            hex.breakable = false;
+                            hex.flammable = false;
+                        } else if (name === "Burning Scrub") {
+                            hex.terrain = hex.terrain.replace("Desert Scrub","Burning Scrub");
+                            hex.terrainID = "";
+                            hex.breakable = false;
+                            hex.flammable = false;
+                        } else if (name === "Burning Crops") {
+                            hex.terrain = hex.terrain.replace("Crops","Burning Crops");
+                            hex.terrainID = "";
+                            hex.breakable = false;
+                            hex.flammable = false;
+                        } else if (name.includes("Ruined")) { 
+                            hex.terrain = hex.terrain.replace("Brick Building 1","Ruined Building");
+                            hex.terrain = hex.terrain.replace("Brick Building 2","Ruined Building");
+                            hex.terrain = hex.terrain.replace("Concrete Building 1","Ruined Concrete");                      
+                            hex.terrain = hex.terrain.replace("Concrete Building 1","Ruined Concrete");
+                            hex.terrainID = "";
+                            hex.breakable = false;
+                            hex.flammable = false;
+                        } else {
+                            hex.terrain += ", " + terrain.name;
+                        }
                     } else {
-                        hex.terrain += ", " + terrain.name;
+                        hex.terrain = terrain.name;
                     }
-                } else {
-                    hex.terrain = terrain.name;
-                }
 
-                hex.cover = (hex.cover === false) ? terrain.cover:false;
-                if (terrain.building === true) {
-                    hex.building = true;
-                }
-                if (terrain.blockLOS === true) {
-                    hex.blockLOS = true;
-                }
-                if (terrain.name.includes("Hill") === false) {
-                    hex.terrainHeight = Math.max(hex.terrainHeight,terrain.height);
-                }
-                if (terrain.type !== "Open") {
-                    hex.type = terrain.type;
-                }
-                if (terrain.name.includes("Hill")) {
-                    hex.elevation = terrain.height;
-                    hex.hill = true;
-                }
-                if (terrain.breakable && terrain.breakable === true) {
-                    hex.breakable = true;
-                    hex.terrainID = token.id;
-                }
-                if (terrain.flammable && terrain.flammable === true) {
-                    hex.flammable = true;
-                    hex.terrainID = token.id;
+                    hex.cover = (hex.cover === false) ? terrain.cover:false;
+                    if (terrain.building === true) {
+                        hex.building = true;
+                    }
+                    if (terrain.blockLOS === true) {
+                        hex.blockLOS = true;
+                    }
+                    if (terrain.name.includes("Hill") === false) {
+                        hex.terrainHeight = Math.max(hex.terrainHeight,terrain.height);
+                    }
+                    if (terrain.type !== "Open") {
+                        hex.type = terrain.type;
+                    }
+                    if (terrain.name.includes("Hill")) {
+                        hex.elevation = terrain.height;
+                        hex.hill = true;
+                    }
+                    if (terrain.breakable && terrain.breakable === true) {
+                        hex.breakable = true;
+                        hex.terrainID = token.id;
+                    }
+                    if (terrain.flammable && terrain.flammable === true) {
+                        hex.flammable = true;
+                        hex.terrainID = token.id;
+                    }
                 }
             }
 
@@ -4231,7 +4244,7 @@ const Main = (() => {
             });
             _.each(tokens,token => {
                 if (token.get("name")) {
-                    if (token.get("name").includes("Woods") || token.get("name").includes("Orchard")) {
+                    if (token.get("name").includes("Woods") || token.get("name").includes("Orchard") || token.get("name").includes("Desert Scrub") ) {
                         token.set({
                             bar1_value: 4,
                             bar1_max: 4,
@@ -4936,6 +4949,30 @@ const Main = (() => {
         toBack(unit.token);
     }
 
+    const SizeHex = (msg) => {
+        if (!msg.selected) {return};
+        _.each(msg.selected,selected => {
+            let id = selected._id;
+            let token = findObjs({_type:"graphic", id: id})[0];
+            if (token) {
+                token.set({
+                    width: 165,
+                    height: 140,
+                })
+            }
+        })
+    }
+
+    const RotateHex = (msg) => {
+        if (!msg.selected) {return};
+        let token = findObjs({_type:"graphic", id: msg.selected[0]._id})[0];
+        if (token) {
+            token.set({
+                rotation: token.get("rotation") + 60,
+            })
+        }
+    }
+
 
 
 
@@ -5067,6 +5104,14 @@ const Main = (() => {
             case '!Attack':
                 Attack(msg);
                 break;
+
+            case '!SizeHex':
+                SizeHex(msg);
+                break;
+            case '!RotateHex':
+                RotateHex(msg);
+                break;
+
 
 
 
