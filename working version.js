@@ -1769,7 +1769,7 @@ const Main = (() => {
         let tokens = findObjs({_pageid: Campaign().get("playerpageid"),_type: "graphic",_subtype: "token",layer: "map",});
         _.each(tokens,token => {
             let name = token.get("name") || " ";
-            if (name === "Map") {
+            if (name.includes("Map")) {
                 mapEdge = Math.round(token.get("left") + (token.get("width")/2));
                 return;
             }
