@@ -1577,6 +1577,11 @@ const Main = (() => {
             let out = "";
             let line = outputCard.body[i];
             if (!line || line === "") {continue};
+
+
+
+
+            
             if (line.includes("[INLINE")) {
                 let end = line.indexOf("]");
                 let substring = line.substring(0,end+1);
