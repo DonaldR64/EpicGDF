@@ -40,6 +40,8 @@ const Keywords = {
 
     "Decimate": "Ignores Cover and has AP+2 vs Defense 2 or 3",
 
+    "Destructive": "Attacks Terrain Directly as well as the Unit fired at",
+
     "Devout": "When attacking, unmodified results of 6 to hit deal 1 extra hit (only the original hit counts as a 6 for special rules).",
 
     "Evasive": "Enemies get -1 to hit",
@@ -129,6 +131,8 @@ const Keywords = {
 
     "Rapid Rush": "Unit moves +3 Hexes when Rushing",
     "Rapid Rush Aura": "[Aura] - Unit moves +3 Hexes when Rushing",
+
+    "Ravage(X)": "When it's this model's turn to attack in melee, roll X dice. For each 6+ the target takes one wound.",
 
     "Regeneration": "When the unit takes wounds, roll one die for each. On a 5+ it is ignored.",
     "Regeneration Aura": "[Aura] - When the unit takes wounds, roll one die for each. On a 5+ it is ignored.",
