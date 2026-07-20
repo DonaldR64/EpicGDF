@@ -4759,17 +4759,19 @@ const Main = (() => {
         let notes = [];
         let shooterHex = HexMap[shooter.hexLabel];
         let targetHex = HexMap[target.hexLabel];
-        if (shooter.type === "Titan") {
-            let cubes = shooterHex.cube.linedraw(targetHex.cube);
-            let cube = cubes[0];
-            shooterHex = HexMap[cube.label()];
-        }
-        if (target.type === "Titan") {
-            let cubes = targetHex.cube.linedraw(shooterHex.cube);
-            let cube = cubes[0];
-            targetHex = HexMap[cube.label()];
-        }
 
+        if (shooter.id !== target.id) {
+            if (shooter.type === "Titan") {
+                let cubes = shooterHex.cube.linedraw(targetHex.cube);
+                let cube = cubes[0];
+                shooterHex = HexMap[cube.label()];
+            }
+            if (target.type === "Titan") {
+                let cubes = targetHex.cube.linedraw(shooterHex.cube);
+                let cube = cubes[0];
+                targetHex = HexMap[cube.label()];
+            }
+        }
 
 
         let distance = targetHex.cube.distance(shooterHex.cube);
