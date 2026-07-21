@@ -4492,13 +4492,13 @@ const Main = (() => {
             }
             let losResult = LOS(caster,targetUnit);
             if (losResult.los === false) {
-                errorMsg.push("#ff0000" + targetUnit.name + " is not in LOS[/#]");
+                errorMsg.push("[#ff0000]" + targetUnit.name + " is not in LOS[/#]");
             } else if (losResult.distance > spellInfo.range) {
-                errorMsg.push("#ff0000" + targetUnit.name + ' is Out of Range[/#]');
+                errorMsg.push("[#ff0000]" + targetUnit.name + ' is Out of Range[/#]');
             } else if (spellInfo.friendly === true && targetUnit.faction !== caster.faction) {
-                errorMsg.push("#ff0000" + unit.name + " is not Friendly[/#]");
+                errorMsg.push("[#ff0000]" + unit.name + " is not Friendly[/#]");
             } else if (spellInfo.friendly === false && targetUnit.faction === caster.faction) {
-                errorMsg.push("#ff0000" + unit.name + " is Friendly[/#]");
+                errorMsg.push("[#ff0000]" + unit.name + " is Friendly[/#]");
             } else {
                 tIDs.push(id);
             }
