@@ -4618,6 +4618,7 @@ const Main = (() => {
             } else {
                 for (k=0;k<spellCasterAssistIDs.length;k++) {
                     let unit3 = UnitArray[spellCasterAssistIDs[k]];
+                    if (!unit3 || !unit3.token) {continue};
                     let sp = parseInt(unit3.token.get("bar2_value"));
                     if (unit3.faction === caster.faction && sp > 0) {
                         sp--;
