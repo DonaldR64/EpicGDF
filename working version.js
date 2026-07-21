@@ -2708,7 +2708,7 @@ const Main = (() => {
                 outputCard.body.push(weapon.name + attWord + attDisplay + " time" + s3);
                 outputCard.body.push(weaponOut + " hit" + s + " scored");
             }
-
+/*
             if (weapon.keywords.includes("Limited")) {
                 let lids = state.Epic.limitedMacros[attacker.id];
                 for (let l=0;l<lids.length;l++) {
@@ -2719,7 +2719,7 @@ const Main = (() => {
                     }
                 }
             }
-
+*/
             for (let d=0;d<defenders.length;d++) {
                 defender = defenders[d];
                 if (!defender) {continue}
