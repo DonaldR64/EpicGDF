@@ -2567,6 +2567,9 @@ const Main = (() => {
                         if (attacker.keywords.includes("Furious") || attackerAuras.includes("Furious")) {
                             furious++;
                         }
+                        if (attacker.keywords.includes("Ferocious") || attackerAuras.includes("Ferocious")) {
+                            furious++;
+                        }
                         if (attacker.keywords.includes("Predator Fighter") && combatType !== "Spell") {
                             predator++;
                             let roll = randomInteger(6);
@@ -4011,6 +4014,7 @@ const Main = (() => {
         });
         tokens = tokens.concat(tokens2);
         let names = {};
+
 
         for (let i=0;i<tokens.length;i++) {
             let token = tokens[i];
