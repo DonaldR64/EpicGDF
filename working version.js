@@ -2797,18 +2797,26 @@ const Main = (() => {
                 outputCard.body.push(weapon.name + attWord + attDisplay + " time" + s3);
                 outputCard.body.push(weaponOut + " hit" + s + " scored");
             }
-/*
+
             if (weapon.keywords.includes("Limited")) {
                 let lids = state.Epic.limitedMacros[attacker.id];
-                for (let l=0;l<lids.length;l++) {
-                    let info = lids[l];
-                    if (info.key === weapon.type) {
-                        let abil = findObjs({_type: "ability", _id: info.id})[0];
-                        if (abil) {abil.remove()};
+                if (lids.length && lids.length > 0) {
+                    let newLids = []
+                    for (let l=0;l<lids.length;l++) {
+                        let info = lids[l];
+                        if (info.key === weapon.type) {
+                            let abil = findObjs({_type: "ability", _id: info.id})[0];
+                            if (abil) {
+                                abil.remove()
+                            };
+                        } else {
+                            newLids.push(info);
+                        }
                     }
+                    state.Epic.limitedMacros[attacker.id] = newLids;
                 }
             }
-*/
+
             for (let d=0;d<defenders.length;d++) {
                 defender = defenders[d];
                 if (!defender) {continue}

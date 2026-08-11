@@ -125,7 +125,7 @@ const Keywords = {
 
     "Protected": "Wounds are ignored on a roll of 6",
 
-    "Precision Shooter Buff": "Once per activation, before attacking, pick up to 4 friendly units within 6, which gets +1 to hit rolls when shooting once (next time the effect would apply).",
+    "Precision Shooter Buff": "Once per activation, before attacking, pick up 1 friendly unit within 6, which gets +1 to hit rolls when shooting once (next time the effect would apply).",
 
 
     "Precision Spotter": "Once per activation, pick one enemy unit within 18 hexes and in LOS. On a 4+ a Spotting Marker is placed. The next shot against that unit get +1 to hit per marker",
