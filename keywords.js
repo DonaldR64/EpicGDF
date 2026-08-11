@@ -108,7 +108,7 @@ const Keywords = {
     "Mend": "Once per activation, pick one friendly unit within 2 Hexes in LOS and heal D3 wounds",
     "Morale Debuff": "Once per activation, before attacking, pick up to 4 enemy units within 9 in line of sight, which gets -1 to morale test rolls once (next time the effect would apply).",
 
-    "No Retreat Buff": "Once per activation, before attacking, pick up to 4 friendly units within 6, which gets No Retreat once (next time the effect would apply).",
+    "No Retreat Buff": "Once per activation, before attacking, pick up to 1 friendly unit within 6, which gets No Retreat once (next time the effect would apply).",
 
 
     "Piercing Assault": "This model gets AP(+1) when charging",
