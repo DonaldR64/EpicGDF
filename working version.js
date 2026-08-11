@@ -932,7 +932,7 @@ const Main = (() => {
 
         }
 
-        Morale() {
+        Morale(reason) {
             let target = this.quality;
             let tip = "Quality: " + target;
             let extra = [];
@@ -958,6 +958,13 @@ const Main = (() => {
                     tip += "<br>Hive Bond +1";
                 }
             }
+
+            if (reason && reason !== "Spell") {
+                target -= 1;
+                tip += "<br>Hold the Line +1";
+            }
+
+
 
             target = Math.min(6,Math.max(2,target));
             if (shaken === true) {target = 7};
@@ -1430,7 +1437,7 @@ const Main = (() => {
 
 
         //special ability macros
-            let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6},{name: "Speed Feat", targets: 1, range: 0},{name: "Speed Feat Aura", targets: 2, range: 0}];
+            let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6},{name: "Speed Feat", targets: 1, range: 0},{name: "Speed Feat Aura", targets: 2, range: 0},{name: "Entrenched Buff", targets: 1, range: 6}];
 
             _.each(specials,special => {
                 let t = "";
@@ -1454,7 +1461,7 @@ const Main = (() => {
 
 
             //morale
-            AddAbility("Morale","!Morale;" + unit.id,unit.charID);
+            AddAbility("Morale","!Morale;" + unit.id,unit.charID + ";?{Reason|Melee|Ranged|Spell}");
             //Dangerous
             AddAbility("Dangerous","!DangerousTest",unit.charID);
 
@@ -2492,10 +2499,18 @@ const Main = (() => {
                     needed++;
                     neededTip += "<br>Evasive -1 to Hit";
                 }
+
+                let art = false;
                 if (defender.keywords.includes("Artillery") && losResult.distance > 4) {
                     needed += 2;
                     neededTip += "<br>Artillery being shot at > 4 hexes";
+                    art = true;
                 }
+                if (defender.keywords.includes("Entrenched") && losResult.distance > 4 && art === false) {
+                    needed += 2;
+                    neededTip += "<br>Entrenched being shot at > 4 hexes";
+                }
+
 
                 if (attacker.keywords.includes("Bad Shot") && combatType === "Ranged") {
                     needed++;
@@ -2732,7 +2747,7 @@ const Main = (() => {
                 let totalWounds = 0;
                 let savePass = [];
                 let saveFail = [];
-                let bane = 0, shred = 0, slam = 0, rending = 0;
+                let bane = 0, shred = 0, slam = 0, rending = 0;crack = 0;
                 let deadlyWeapon = false, deadlyNum = 1;
                 let ignoreRegenList = ["Bane","Butcher","Rending","Unstoppable"];
                 let ignoreRegen = ignoreRegenList.find((e) => weapon.keywords.includes(e));
@@ -2773,6 +2788,10 @@ const Main = (() => {
                         if (weapon.keywords.includes("Rending") || ignoreRegen && ignoreRegen.includes("Rending")) {
                             rending++;
                             target += 4;
+                        }
+                        if (weapon.keywords.includes("Crack")) {
+                            crack++;
+                            target += 2;
                         }
                     }
                     target = Math.min(6,Math.max(2,target));
@@ -2831,6 +2850,10 @@ const Main = (() => {
                 if (rending > 0) {
                     s = (rending === 1) ? "":"s";
                     saveTip += "<br>Rending affected " + rending + " Save" + s;
+                }
+                if (crack > 0) {
+                    s = (crack === 1) ? "":"s";
+                    saveTip += "<br>Crack affected " + crack + " Save" + s;
                 }
                 if (bane > 0) {
                     s = (bane === 1) ? "":"s";
@@ -3113,7 +3136,7 @@ const Main = (() => {
                     if (u2.type !== "Hero" && u2.token.get("tint_color") !== "#ff0000") {
                         outputCard.body.push("[hr]")
                         outputCard.body.push(u2.name + " must take a Morale Check");
-                        ButtonInfo("Morale Check","!Morale;" + id)
+                        ButtonInfo("Morale Check","!Morale;" + id + ";" + combatType);
                     }
                 }
             })
@@ -3345,9 +3368,10 @@ const Main = (() => {
 
     const Morale = (msg) => {
         let id = msg.content.split(";")[1];
+        let reason = msg.content.split(";")[2];
         let unit = UnitArray[id];
         if (!unit) {return};
-        unit.Morale();
+        unit.Morale(reason);
     }
 
   
@@ -4115,6 +4139,7 @@ const Main = (() => {
             "Dao Union": ["Shi'ur","Por'o","Kai","Vor","Shi","Ru","Ni","Chi-Ha","Tor-lak"],
             "Alien Hives": ["Swarmlord","Deathleaper","Old One-Eye","The Doom of Vasta","Razor"],
             "Orks": ["Blaktoof","Teef Pulla", "Klawfist","Ghazghkull", "Grimgor", "Grotsnik", "Gorgutz", "Zodgrod", "Spleenrippa", "Ironfist", "Bugslaya", "Headsnagga"],
+            "Imperial Guard": ["Ardentshield","Vortek","Ghaldir","Kaelor","Ironpact","Flintsear","Stormwarden","Hollowbane","Dawnsteel","Vorrin"],
         }
 
         if (charName.includes("Champion")) {name = "Champion "};
@@ -4125,6 +4150,9 @@ const Main = (() => {
         if (charName.includes("Boss")) {name = "Boss "};
         if (charName.includes("Warboss")) {name = "Warboss "};
         if (charName.includes("Weirdboy")) {name = "Weirdboy "};
+        if (charName.includes("Commissar")) {name = "Commissar "};
+        if (charName.includes("Storm Leader")) {name = "Storm Leader "};
+        if (charName.includes("Commander")) {name = "Commander "};
 
 
 
