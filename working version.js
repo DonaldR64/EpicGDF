@@ -995,7 +995,7 @@ const Main = (() => {
 
 
             //after failure changes - automatic
-            if ((this.keywords.includes("No Retreat") || this.token.get(Buffs["No Retreat"])) && success === false) {
+            if ((this.keywords.includes("No Retreat") || this.token.get(Buffs["No Retreat Buff"])) && success === false) {
                 success = true;
                 extra.push("The Test is still Passed due to No Retreat");
                 let hp = parseInt(this.token.get("bar1_value"));
@@ -1007,10 +1007,10 @@ const Main = (() => {
                     if (roll < 4) {wounds++};
                 }
                 noRRolls = noRRolls.sort((a,b) => b-a);
-                let wtip = "Rolls: " + noRRolls.toString() + " vs. 4+";
+                let wtip = "Rolls: " + noRRolls.toString() + "<br>Rolls 1-3 = 1 Wound";
                 wtip = '[' + wounds + '](#" class="showtip" title="' + wtip + ')';
                 if (this.faction === "Imperial Guard") {
-                    extra.push("The Commissar shoots " + wtip + " Men to stop the Rout");
+                    extra.push("The Commissar has to shoot " + wtip + " Men to stop the Rout!");
                 } else {
                     extra.push("No Retreat causes " + wtip + " Wounds");
                 }
@@ -1445,7 +1445,7 @@ const Main = (() => {
             //activation 
             let orders = ";?{Order|Hold|Advance|Charge/Rush|Rally|Overwatch}";
             if (unit.type === "Aircraft") {orders = ";Advance"};
-            if (unit.keywords.includes("Artillery") || unit.keywords.includes("Immobile")) {orders = ";Hold|Rally|Overwatch"}
+            if (unit.keywords.includes("Artillery") || unit.keywords.includes("Immobile")) {orders = ";?{Order|Hold|Rally|Overwatch}"};
 
             action = "!Activate;@{selected|token_id}" + orders;
             AddAbility("Activate",action,unit.charID);
@@ -1543,11 +1543,8 @@ const Main = (() => {
         //check if endUnit has a radio
         let assocStart = startUnit.Associated();
         let assocEnd = endUnit.Associated();
-
-
-
-        let condition1 = (startUnit.keywords.includes("Extended Buff Range") || (assocStart && assocStart.keywords.includes("Extended Range Buff"))) ? true:false;
-        let condition2 = (endUnit.keywords.includes("Extended Buff Range") || (assocEnd && assocEnd.keywords.includes("Extended Range Buff"))) ? true:false;
+        let condition1 = (startUnit.keywords.includes("Extended Buff Range") || (assocStart && assocStart.keywords.includes("Extended Buff Range"))) ? true:false;
+        let condition2 = (endUnit.keywords.includes("Extended Buff Range") || (assocEnd && assocEnd.keywords.includes("Extended Buff Range"))) ? true:false;
         if (endUnit.faction !== startUnit.faction) {
             return false;
         }
@@ -2558,12 +2555,12 @@ const Main = (() => {
                 }
                 if ((defender.keywords.includes("Entrenched")) && losResult.distance > 4 && art === false && defender.moved === false) {
                     needed += 2;
-                    neededTip += "<br>Entrenched being shot at > 4 hexes";
+                    neededTip += "<br>Entrenched -2 to Hit";
                     art = true;
                 }
                 if ((defender.token.get(Buffs["Entrenched Buff"])) && losResult.distance > 4 && art === false && defender.moved === false) {
                     needed += 2;
-                    neededTip += "<br>Entrenched Buff being shot at > 4 hexes";
+                    neededTip += "<br>Entrenched Buff -2 to Hit";
                     let info = {type: "Buff", name: "Entrenched Buff"}
                     if (Removals[defender.id]) {
                         Removals[defender.id].push(info);
@@ -3832,16 +3829,31 @@ const Main = (() => {
         let targets = [];
         let errorMsg = [];
         let targetHex;
+        let rcDisplay = false;
+        let flavour = unit.flavours[specialName] || specialName;
+        SetupCard(unit.name,flavour,unit.faction);
+
+
+
         for (let i=4;i<Tag.length;i++) {
             let target = UnitArray[Tag[i]];
             if (!target) {continue};
             let losResult = LOS(unit,target);
             let rc = RadioCheck(unit,target);
-            if ((losResult.distance > range && rc === false) || (losResult.distance > 12 && rc === true)) {
-                errorMsg.push(target.name + " Is Out of Range");
-            }
-            if (losResult.los === false && rc === false) {
-                errorMsg.push(target.name + " is not in LOS");
+
+            if (rc === true && losResult.distance < 12) {
+                if (rcDisplay === false) {                
+log(unit.flavours)
+                    outputCard.body.push("[Radio used]");
+                    rcDisplay = true;
+                }
+            } else {
+                if (losResult.distance > range) {
+                    errorMsg.push(target.name + " Is Out of Range");
+                }
+                if (losResult.los === false) {
+                    errorMsg.push(target.name + " is not in LOS");
+                }
             }
             targets.push(target);
             targetHex = HexMap[target.hexLabel];
@@ -3855,11 +3867,9 @@ const Main = (() => {
         }
 
         if (unit.token.get("tint_color") === "#ff0000") {
-            errorMsg.push("Unit is Shaken");
+            errorMsg.push("Unit is Shaken and Cannot use Ability");
         }
 
-        let flavour = unit.flavours[specialName] || specialName;
-        SetupCard(unit.name,flavour,unit.faction);
         if (ErrorMsg(errorMsg) === true) {
             PrintCard();
             return;
@@ -3917,14 +3927,13 @@ const Main = (() => {
         }
 
 
-        let buffList = ["Entrenched Buff","No Retreat Buff","Precision Shooter Buff","Bane in Melee Buff","Relentless Mark"];
-        if (buffList.includes(specialName)) {
+        let markList = ["Entrenched Buff","No Retreat Buff","Precision Shooter Buff","Bane in Melee Buff","Relentless Mark"];
+        if (markList.includes(specialName)) {
             _.each(targets,target => {
                 target.token.set(Buffs[specialName],true);
+                target.token.set(Debuffs[specialName],true);
+                outputCard.body.push(target.name + ' now has ' + specialName);
             })
-            let s = targets.length > 1 ? "s ":" ";
-            let verb = (s === "s") ? " have ":" has "
-            outputCard.body.push("Target" + s + "now" + verb + specialName);
         }
 
 
