@@ -158,6 +158,9 @@ const Keywords = {
 
     "Relentless": "When this model shoots at enemies over 4 hexes away, unmodified results of 6 to hit deal 1 extra hit (only the original hit counts as a 6 for special rules).",
     "Relentless Aura": "[Aura] - When this model shoots at enemies over 4 hexes away, unmodified results of 6 to hit deal 1 extra hit (only the original hit counts as a 6 for special rules).",
+    "Relentless Mark": "Once per activation, before attacking, pick one enemy unit within 9 in line of sight, which friendly units gets Relentless against once (next time the effect would apply).",
+
+
 
     "Reliable": "Models attacks at Quality 2+ with this weapon. Note that Reliable only changes the Quality value, so the roll can still be modified, Fatigue still applies, etc.",
 
@@ -238,6 +241,6 @@ const Keywords = {
     "Versatile Defense": "When this unit is activated, pick one effect: +1 to Defense or -1 to be Hit. Lasts until next Activation",
     "Versatile Defense Aura": "[Aura] - When this unit is activated, pick one effect: +1 to Defense or -1 to be Hit. Lasts until next Activation",
 
-
+    "Weapon Team": "One of the men in the squad has been replaced by a Weapons Team",
 
 }

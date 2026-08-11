@@ -1324,6 +1324,9 @@ const Main = (() => {
             istokenaction: true,
         })
         if (newObj) {return newObj.id};
+        log("Error in Add Ability")
+        log("Name: " + abilityName)
+        log("character ID: " + characterID)
     }    
 
 
@@ -1473,7 +1476,9 @@ const Main = (() => {
 
 
             //morale
-            AddAbility("Morale","!Morale;" + unit.id,unit.charID + ";?{Reason|Melee|Ranged|Spell}");
+            if (unit.type !== "Hero") {
+                AddAbility("Morale","!Morale;" + unit.id + ";?{Reason|Melee|Ranged|Spell}",unit.charID);
+            }
             //Dangerous
             AddAbility("Dangerous","!DangerousTest",unit.charID);
 
@@ -1536,10 +1541,13 @@ const Main = (() => {
     const RadioCheck = (startUnit,endUnit) => {
         //check if startUnit has a radio or is attached to a unit with a radio
         //check if endUnit has a radio
-        let assocStart = startUnit.Associated;
-        let assocEnd = endUnit.Associated;
-        let condition1 = (startUnit.keywords.includes("Extended Buff Range") || assocStart.keywords.includes("Extended Range Buff")) ? true:false;
-        let condition2 = (endUnit.keywords.includes("Extended Buff Range") || assocEnd.keywords.includes("Extended Range Buff")) ? true:false;
+        let assocStart = startUnit.Associated();
+        let assocEnd = endUnit.Associated();
+
+
+
+        let condition1 = (startUnit.keywords.includes("Extended Buff Range") || (assocStart && assocStart.keywords.includes("Extended Range Buff"))) ? true:false;
+        let condition2 = (endUnit.keywords.includes("Extended Buff Range") || (assocEnd && assocEnd.keywords.includes("Extended Range Buff"))) ? true:false;
         if (endUnit.faction !== startUnit.faction) {
             return false;
         }
@@ -3794,7 +3802,7 @@ const Main = (() => {
                 if (item.type === "Buff") {
                     unit.token.set(Buffs[item.name],false);
                 }
-                if (iten.type === "Debuff") {
+                if (item.type === "Debuff") {
                     unit.token.set(Debuffs[item.name],false);
                 }
             })
@@ -3829,7 +3837,7 @@ const Main = (() => {
             if (!target) {continue};
             let losResult = LOS(unit,target);
             let rc = RadioCheck(unit,target);
-            if (losResult.distance > range && rc === false) {
+            if ((losResult.distance > range && rc === false) || (losResult.distance > 12 && rc === true)) {
                 errorMsg.push(target.name + " Is Out of Range");
             }
             if (losResult.los === false && rc === false) {
