@@ -186,6 +186,7 @@ const Main = (() => {
         "Ferocious Boost": "status_strong",
         "Rapid Rush": "status_half-haze",
         "Plaguebound Boost": "status_bleeding-eye",
+        "No Retreat": "status_padlock",
 
     }
 
@@ -988,7 +989,7 @@ const Main = (() => {
 
 
             //after failure changes - automatic
-            if (this.keywords.includes("No Retreat") && success === false) {
+            if ((this.keywords.includes("No Retreat") || this.token.get(Buffs["No Retreat"])) && success === false) {
                 success = true;
                 extra.push("The Test is still Passed due to No Retreat");
                 let hp = parseInt(this.token.get("bar1_value"));
@@ -1002,13 +1003,18 @@ const Main = (() => {
                 noRRolls = noRRolls.sort((a,b) => b-a);
                 let wtip = "Rolls: " + noRRolls.toString() + " vs. 4+";
                 wtip = '[' + wounds + '](#" class="showtip" title="' + wtip + ')';
-                extra.push("No Retreat causes " + wtip + " Wounds");
+                if (this.faction === "Imperial Guard") {
+                    extra.push("The Commissar shoots " + wtip + " Men to stop the Rout");
+                } else {
+                    extra.push("No Retreat causes " + wtip + " Wounds");
+                }
                 hp = Math.max(0,hp - wounds);
                 if (hp <= 0) {
                     this.Killed();
                     outputCard.body(this.name + " is Destroyed!");
                 } else {
                     this.token.set("bar1_value",hp);
+                    this.token.set(Buffs["No Retreat"],false);
                 }
             }
 
@@ -1437,7 +1443,7 @@ const Main = (() => {
 
 
         //special ability macros
-            let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6},{name: "Speed Feat", targets: 1, range: 0},{name: "Speed Feat Aura", targets: 2, range: 0},{name: "Entrenched Buff", targets: 1, range: 6}];
+            let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6},{name: "Speed Feat", targets: 1, range: 0},{name: "Speed Feat Aura", targets: 2, range: 0},{name: "Entrenched Buff", targets: 1, range: 6},{name: "No Retreat Buff", targets: 1, range: 6},{name: "Precision Shooter Buff", targets: 1, range: 6},{name: "Relentless Mark", targets: 1, range: 9}];
 
             _.each(specials,special => {
                 let t = "";
