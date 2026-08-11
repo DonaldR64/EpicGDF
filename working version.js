@@ -2654,7 +2654,7 @@ const Main = (() => {
                             furious++;
                         }
                         if (attacker.keywords.includes("Ferocious") || attackerAuras.includes("Ferocious")) {
-                            furious++;
+                            ferocious++;
                         }
                         if (attacker.keywords.includes("Predator Fighter") && combatType !== "Spell") {
                             predator++;
