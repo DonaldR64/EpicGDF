@@ -1533,6 +1533,25 @@ const Main = (() => {
     }
 
 
+    const RadioCheck = (startUnit,endUnit) => {
+        //check if startUnit has a radio or is attached to a unit with a radio
+        //check if endUnit has a radio
+        let assocStart = startUnit.Associated;
+        let assocEnd = endUnit.Associated;
+        let condition1 = (startUnit.keywords.includes("Extended Buff Range") || assocStart.keywords.includes("Extended Range Buff")) ? true:false;
+        let condition2 = (endUnit.keywords.includes("Extended Buff Range") || assocEnd.keywords.includes("Extended Range Buff")) ? true:false;
+        if (endUnit.faction !== startUnit.faction) {
+            return false;
+        }
+        if (condition1 === true && condition2 === true) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+
     const InlineButtons = (array) => {
         let output = "";
         for (let i=0;i<array.length;i++) {
@@ -3800,7 +3819,7 @@ const Main = (() => {
         let Tag = msg.content.split(";");
         let specialName = Tag[1];
         let range = Tag[2]
-        let unit = UnitArray[Tag[3]];
+        let unit = UnitArray[Tag[3]]; //unit using the special
         let unitHex = HexMap[unit.hexLabel];
         let targets = [];
         let errorMsg = [];
@@ -3809,10 +3828,11 @@ const Main = (() => {
             let target = UnitArray[Tag[i]];
             if (!target) {continue};
             let losResult = LOS(unit,target);
-            if (losResult.distance > range) {
+            let rc = RadioCheck(unit,target);
+            if (losResult.distance > range && rc === false) {
                 errorMsg.push(target.name + " Is Out of Range");
             }
-            if (losResult.los === false) {
+            if (losResult.los === false && rc === false) {
                 errorMsg.push(target.name + " is not in LOS");
             }
             targets.push(target);
