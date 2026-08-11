@@ -78,6 +78,7 @@ const Keywords = {
     "Good Shot": "+1 to Hit when Shooting",
     "Guardian": "Hits count as having AP -1 to a min of AP 0",
 
+    "Heavy Armour": "Unit has had its Defense Increased",
 
     "Hit & Run": "May Move up to 2 Hexes after shooting or melee",
     "Hit & Run Aura": "[Aura] - May Move up to 2 Hexes after shooting or melee",
