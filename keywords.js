@@ -34,6 +34,9 @@ const Keywords = {
     "Counter-Attack": "Strikes first when charged",
     "Counter-Attack Aura": "[Aura] = Strikes first when charged",
 
+    "Crack": "On unmodified results of 6 to hit, those hits get AP(+2).",
+
+
     "Dangerous Terrain Debuff": "Once per activation, before attacking, pick one enemy unit within 9 Hexes in LOS, it (and any associated hero) count as being in Dangerous Terrain the next time they move",
 
     "Deadly(X)": "Hits from Deadly are resolved first. Each hit from Deadly does X wounds, to a max of the target Unit's toughness.",
@@ -43,6 +46,13 @@ const Keywords = {
     "Destructive": "Attacks Terrain Directly as well as the Unit fired at",
 
     "Devout": "When attacking, unmodified results of 6 to hit deal 1 extra hit (only the original hit counts as a 6 for special rules).",
+
+    "Entrenched": "As long as a unit where all models have this rule hasn't moved during the round, enemy units shooting at it from 5+ away get -2 to hit rolls",
+
+    "Entrenched Buff": "Once per activation, before attacking, pick one friendly unit within 6, which gets Entrenched once (next time the effect would apply).",
+
+    "Extended Buff Range": "If this unit is within 12 of another friendly unit with this rule that has a Hero in it, then that Hero may use special rules that allow it to pick friendly units within 6 (except for spells) on this unit as if it was in range.",
+
 
     "Evasive": "Enemies get -1 to hit",
 
@@ -65,10 +75,9 @@ const Keywords = {
 
     "Flying": "Models with this special rule may move through units and terrain, and ignore terrain effects whilst moving.",
 
+    "Good Shot": "+1 to Hit when Shooting",
     "Guardian": "Hits count as having AP -1 to a min of AP 0",
 
-
-    "Good Shot": "+1 to Hit when Shooting",
 
     "Hit & Run": "May Move up to 2 Hexes after shooting or melee",
     "Hit & Run Aura": "[Aura] - May Move up to 2 Hexes after shooting or melee",
@@ -78,6 +87,7 @@ const Keywords = {
     "Hit & Run Shooter Aura": "[Aura] - May Move up to 2 Hexes after shooting",
 
     "Hold the Line": "Units get +1 to Morale triggered by Shooting or Melee",
+    "Hold the Line Boost Aura": "This model and up to 3 friendly units picked before the start of the game get Hold the Line Boost. If this model is killed, picked models that are deployed lose the rule.",
 
     "Immobile": "Models with this special rule may only use Hold actions.",
 
@@ -96,7 +106,9 @@ const Keywords = {
     "Melee Shrouding Aura": "[Aura] - Enemies have -2 Hex Movement when charging this Unit",
 
     "Mend": "Once per activation, pick one friendly unit within 2 Hexes in LOS and heal D3 wounds",
+    "Morale Debuff": "Once per activation, before attacking, pick up to 4 enemy units within 9 in line of sight, which gets -1 to morale test rolls once (next time the effect would apply).",
 
+    "No Retreat Buff": "Once per activation, before attacking, pick up to 4 friendly units within 6, which gets No Retreat once (next time the effect would apply).",
 
 
     "Piercing Assault": "This model gets AP(+1) when charging",
@@ -112,6 +124,9 @@ const Keywords = {
 
     "Protected": "Wounds are ignored on a roll of 6",
 
+    "Precision Shooter Buff": "Once per activation, before attacking, pick up to 4 friendly units within 6, which gets +1 to hit rolls when shooting once (next time the effect would apply).",
+
+
     "Precision Spotter": "Once per activation, pick one enemy unit within 18 hexes and in LOS. On a 4+ a Spotting Marker is placed. The next shot against that unit get +1 to hit per marker",
 
 
@@ -125,6 +140,8 @@ const Keywords = {
 
     "Ranged Slayer": "This unit's ranged attacks get AP +2 against units with Tough 3 or higher",
     "Ranged Slayer Aura": "[Aura] - This unit's ranged attacks get AP +2 against units with Tough 3 or higher",
+
+    "Rapid Advance Buff": "Once per activation, before attacking, pick up to 4 friendly units within 6, which gets Rapid Advance once (next time the effect would apply).",
 
     "Rapid Charge": "Unit moves +3 Hexes when Charging",
     "Rapid Charge Aura": "[Aura] - Unit moves +3 Hexes when Charging",
@@ -146,7 +163,7 @@ const Keywords = {
     "Rending": "Ignores Regeneration, and on unmodified results of 6 to hit, those hits get AP(+4).",
     "Rending Mark": "Once per activation, before attacking, pick one enemy unit within 9 hexes in line of sight, which a friendly unit gets Rending against the next time the effect would apply.",
 
-    "Repel Ambushers": "Enemy units using Ambush must be set up over 7 hexes or more from this model's unit.",
+    "Repel Ambushers": "Enemy units using Ambush must be set up 7 hexes or more from this model's unit.",
 
 
     "Resistance": "Wounds are ignored on a roll of 6; if from a spell ignored on a 2+ instead",
