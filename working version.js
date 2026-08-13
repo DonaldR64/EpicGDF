@@ -2557,12 +2557,12 @@ const Main = (() => {
                     neededTip += "<br>Artillery being shot at > 4 hexes";
                     art = true;
                 }
-                if ((defender.keywords.includes("Entrenched")) && losResult.distance > 4 && art === false && defender.moved === false) {
+                if ((defender.keywords.includes("Entrenched")) && losResult.distance > 4 && art === false) {
                     needed += 2;
                     neededTip += "<br>Entrenched -2 to Hit";
                     art = true;
                 }
-                if ((defender.token.get(Buffs["Entrenched Buff"])) && losResult.distance > 4 && art === false && defender.moved === false) {
+                if ((defender.token.get(Buffs["Entrenched Buff"])) && losResult.distance > 4 && art === false) {
                     needed += 2;
                     neededTip += "<br>Entrenched Buff -2 to Hit";
                     let info = {type: "Buff", name: "Entrenched Buff"}
