@@ -134,6 +134,7 @@ const Main = (() => {
             "fontColour": "#000000",
             "borderColour": "#000000",
             "borderStyle": "5px groove",
+            "logo": "https://s3.amazonaws.com/files.d20.io/images/354557308/CrRWn51EJHMtijUM1wqB-g/thumb.webp?1691958030",
         },
         "Blessed Sisters": {
             "image": "https://s3.amazonaws.com/files.d20.io/images/378405665/zZCv4Z4TRaEkLeveAhLAiQ/thumb.png?1706900477",
@@ -144,6 +145,7 @@ const Main = (() => {
             "fontColour": "#FFFFFF",
             "borderColour": "#be0b07",
             "borderStyle": "3px groove",
+            "logo": "https://files.d20.io/images/489765576/2x9rlPhZ-M0TwguakuET_w/thumb.png?1780790327",
         },
         "Adeptus Custodes": {
             "image": "https://files.d20.io/images/487769356/hvkxqPn9i5zD5TDnhrEoeg/thumb.png?1779330819",
@@ -2031,6 +2033,7 @@ const Main = (() => {
     const StartGame = () => {
         SetupCard("Start New Game","Turn 1","Neutral");
         _.each(UnitArray,unit => {
+
             if (unit.name.includes("Objective")) {
                 let tsides = [unit.token.get("imgsrc")];
                 tsides.push(tokenImage(Factions[state.Epic.factions[0]].logo));
@@ -2044,9 +2047,10 @@ const Main = (() => {
                     currentSide: 0,
                 })
             }
+
+
             unit.prevHexLabel = unit.hexLabel;
         })
-
         RemoveLines(["Deploy"]);
         PrintCard();
         state.Epic.turn = 1;
