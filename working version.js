@@ -968,7 +968,7 @@ const Main = (() => {
                 }
             }
 
-            if (reason && reason !== "Spell") {
+            if (reason && reason !== "Spell" && this.keywords.includes("Hold the Line")) {
                 target -= 1;
                 tip += "<br>Hold the Line +1";
             }
