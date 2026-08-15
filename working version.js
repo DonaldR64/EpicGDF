@@ -135,6 +135,7 @@ const Main = (() => {
             "borderColour": "#000000",
             "borderStyle": "5px groove",
             "logo": "https://s3.amazonaws.com/files.d20.io/images/354557308/CrRWn51EJHMtijUM1wqB-g/thumb.webp?1691958030",
+            "spells": ["Psy-Injected Courage","Electric Tempest","Calculated Foresight","Searing Burst","Shock Speed","Expel Threat"],
         },
         "Blessed Sisters": {
             "image": "https://s3.amazonaws.com/files.d20.io/images/378405665/zZCv4Z4TRaEkLeveAhLAiQ/thumb.png?1706900477",
@@ -193,12 +194,14 @@ const Main = (() => {
         "Entrenched Buff": "status_Cover-Full-2::2006475",
         "No Retreat Buff": "status_Torch::2006649",
         "Precision Shooter Buff": "status_Bullseye-Red::2006541",
-        "Bane in Melee Buff": "status_tread",
+        "Bane in Melee Buff": "status_broken-heart",
+        "Hold the Line Boost": "status_padlock",
+        "Shock Speed": "status_tread"
     }
 
     const Debuffs = {
         dangerous: "status_Tentacle::7757514",
-        "Difficult Terrain": "status_tread",
+        "Difficult Terrain": "status_edge-crack",
         "Relentless Mark": "status_broken-skull",
         "Rending Mark": "status_grab",
 
@@ -970,6 +973,11 @@ const Main = (() => {
             if (reason && reason !== "Spell" && this.keywords.includes("Hold the Line")) {
                 target -= 1;
                 tip += "<br>Hold the Line +1";
+                if (this.token.get(Buffs["Hold the Line Boost"])) {
+                    target -= 1;
+                    tip += "<br>Hold the Line Boost +1";
+                    this.AddRemoval("Buff","Hold the Line Boost");
+                }
             }
 
 
@@ -3560,6 +3568,14 @@ const Main = (() => {
             unit.AddRemoval("Buff","speeFeat");
             unit.SetTT2("Speed Feat Used");
         }
+        if (unit.token.get(Buffs["Shock Speed"])) {
+            preface.push("The Unit has Shock Speed, adding 1 to Move, 2 to Charge/Rush");
+            move += 1;
+            charge += 2, rush+= 2;
+            unit.AddRemoval("Buff","Shock Speed");
+        }
+
+
         if (shaken === true && order !== "Rally") {
             lastStand = true;
             addBreak = true;
@@ -4239,7 +4255,7 @@ log(unit.flavours)
             "Dao Union": ["Shi'ur","Por'o","Kai","Vor","Shi","Ru","Ni","Chi-Ha","Tor-lak"],
             "Alien Hives": ["Swarmlord","Deathleaper","Old One-Eye","The Doom of Vasta","Razor"],
             "Orks": ["Blaktoof","Teef Pulla", "Klawfist","Ghazghkull", "Grimgor", "Grotsnik", "Gorgutz", "Zodgrod", "Spleenrippa", "Ironfist", "Bugslaya", "Headsnagga"],
-            "Imperial Guard": ["Ardentshield","Vortek","Ghaldir","Kaelor","Ironpact","Flintsear","Stormwarden","Hollowbane","Dawnsteel","Vorrin"],
+            "Imperial Guard": ["Ardentshield","Vortek","Ghaldir","Kaelor","Ironpact","Flintsear","Stormwarden","Hollowbane","Dawnsteel","Vorrin","Quist","Caidan","Covenant","Mordant","Erasmus","Drusus","Hyperion","Kail","Lucien"],
         }
 
         if (charName.includes("Champion")) {name = "Champion "};
@@ -4253,6 +4269,7 @@ log(unit.flavours)
         if (charName.includes("Commissar")) {name = "Commissar "};
         if (charName.includes("Storm Leader")) {name = "Storm Leader "};
         if (charName.includes("Commander")) {name = "Commander "};
+        if (charName.includes("Psyker")) {name = "Psyker "};
 
 
 
@@ -4630,7 +4647,7 @@ log(unit.flavours)
             } else if (spellInfo.friendly === true && targetUnit.faction !== caster.faction) {
                 errorMsg.push("[#ff0000]" + unit.name + " is not Friendly[/#]");
             } else if (spellInfo.friendly === false && targetUnit.faction === caster.faction) {
-                errorMsg.push("[#ff0000]" + unit.name + " is Friendly[/#]");
+                errorMsg.push("[#ff0000]" + targetUnit.name + " is Friendly[/#]");
             } else {
                 tIDs.push(id);
             }
