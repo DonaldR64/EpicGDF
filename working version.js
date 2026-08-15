@@ -190,7 +190,6 @@ const Main = (() => {
         "Ferocious Boost": "status_strong",
         "Rapid Rush": "status_half-haze",
         "Plaguebound Boost": "status_bleeding-eye",
-        "No Retreat": "status_padlock",
         "Entrenched Buff": "status_Cover-Full-2::2006475",
         "No Retreat Buff": "status_Torch::2006649",
         "Precision Shooter Buff": "status_Bullseye-Red::2006541",
@@ -199,9 +198,9 @@ const Main = (() => {
 
     const Debuffs = {
         dangerous: "status_Tentacle::7757514",
-        "Rending Against": "status_overdrive",
         "Difficult Terrain": "status_tread",
         "Relentless Mark": "status_broken-skull",
+        "Rending Mark": "status_grab",
 
     }
 
@@ -1008,12 +1007,12 @@ const Main = (() => {
                     extra.push("No Retreat causes " + wounds + " Wounds");
                 }
                 hp = Math.max(0,hp - wounds);
+                this.token.set(Buffs["No Retreat Buff"],false);
                 if (hp <= 0) {
                     this.Killed();
                     outputCard.body(this.name + " is Destroyed!");
                 } else {
                     this.token.set("bar1_value",hp);
-                    this.token.set(Buffs["No Retreat"],false);
                 }
             }
 
@@ -1140,27 +1139,16 @@ const Main = (() => {
             }
         }
 
-        RemoveBuffs(phase) {
-            if (phase === "Defense") {
-                let bffs = ["Resistance"];
-                _.each(bffs,b => {
-                    this.token.set(Buffs[b],false);
-                })
-            }
-            if (phase === "Activation") {
-                let TTlist = [TT.vAAP,TT.vATH,TT.vDD,TT.vDTH,];
-                let markerList = [Buffs.AP1,Buffs.TH1,SM.evade,SM.laststand,];
+        RemoveBuffs() {
+            let TTlist = [TT.vAAP,TT.vATH,TT.vDD,TT.vDTH,];
+            let markerList = [Buffs.AP1,Buffs.TH1,SM.evade,SM.laststand,Buffs["Ferocious Boost"]];
 
-                _.each(TTlist,tip => {
-                    this.RemoveTTip(tip);
-                });
-                _.each(markerList,marker => {
-                    this.token.set(marker,false);
-                })
-            }
-
-
-
+            _.each(TTlist,tip => {
+                this.RemoveTTip(tip);
+            });
+            _.each(markerList,marker => {
+                this.token.set(marker,false);
+            })
         }
 
         Rotate(hex2) {
@@ -1226,6 +1214,14 @@ const Main = (() => {
                         outputCard.body.push("The Unit must take a Morale Test");
                     }
                 }
+            }
+        }
+
+        AddRemoval(type,name) {
+            if (Removals[this.id]) {
+                Removals[this.id].push({type: type, name: name});
+            } else {
+                Removals[this.id]= [{type: type, name: name}];
             }
         }
 
@@ -1418,8 +1414,6 @@ const Main = (() => {
             }
 
             let id = AddAbility(abilityName,action,unit.charID);
-
-//limited on targets ?
 
             if (keys[i].includes("Limited")) {
                 let info = {
@@ -2175,6 +2169,7 @@ const Main = (() => {
         PrintCard();
     }
 
+
     const ObjectiveCheck = (objective) => {
         let factions = [];
         let objHex = HexMap[objective.hexLabel];
@@ -2485,12 +2480,7 @@ const Main = (() => {
             if (attacker.token.get(Buffs["Precision Shooter Buff"]) && combatType === "Ranged") {
                 needed--;
                 neededTip += "<br>Precision Shooter Buff +1 to Hit";
-                let info = {type: "Buff", name: "Precision Shooter Buff"}
-                if (Removals[attacker.id]) {
-                    Removals[attacker.id].push(info);
-                } else {
-                    Removals[attacker.id]= [info];
-                }
+                attacker.AddRemoval("Buff","Precision Shooter Buff");
             }
 
 /*
@@ -2558,12 +2548,7 @@ const Main = (() => {
                 if ((defender.token.get(Buffs["Entrenched Buff"])) && losResult.distance > 4 && art === false && defender.moved === false) {
                     needed += 2;
                     neededTip += "<br>Entrenched Buff -2 to Hit";
-                    let info = {type: "Buff", name: "Entrenched Buff"}
-                    if (Removals[defender.id]) {
-                        Removals[defender.id].push(info);
-                    } else {
-                        Removals[defender.id]= [info];
-                    }
+                    defender.AddRemoval("Buff","Entrenched Buff");
                 }
 
 
@@ -2632,12 +2617,7 @@ const Main = (() => {
                         }
                         if (defender.token.get(Debuffs["Relentless Mark"]) && losResult.distance > 4 && combatType !== "Spell") {
                             relentless++;
-                            let info = {type: "Debuff", name: "Relentless Mark"}
-                            if (Removals[defender.id]) {
-                                Removals[defender.id].push(info);
-                            } else {
-                                Removals[defender.id]= [info];
-                            }
+                            defender.AddRemoval("Debuff","Relentless Mark");
                         }
 
 
@@ -2827,14 +2807,11 @@ const Main = (() => {
                 let deadlyWeapon = false, deadlyNum = 1;
                 let ignoreRegenList = ["Bane","Butcher","Rending","Unstoppable"];
                 let ignoreRegen = ignoreRegenList.find((e) => weapon.keywords.includes(e));
-                if (defender.TTip().includes("Rending Mark")) {
+                if (defender.token.get(Debuffs["Rending Mark"])) {
                     ignoreRegen = "Rending Mark";
-                    RemoveTTip("Rending Mark");
+                    defender.AddRemoval("Debuff","Rending Mark")
                 }
-                if (defender.token.get(Debuffs["Rending Against"])) {
-                    ignoreRegen = "Rending Against Debuff";
-                    defender.token.set(Debuffs["Rending Against"],false);
-                }
+
 
                 if (ignoreRegen && (defender.keywords.includes("Regeneration") || defender.Auras().includes("Regeneration"))) {
                     saveInfo.saveTip += "<br>Regeneration ignored due to " + ignoreRegen;
@@ -2971,7 +2948,6 @@ const Main = (() => {
 
                 outputCard.body.push(defender.name + ' suffers ' + saveOut + noun);
 
-                defender.RemoveBuffs("Defense");
                 if (hp > 0) {
                     defender.token.set("bar1_value",hp);
                     if (hp <= Math.floor(defender.wounds/2) && totalWounds > 0) {
@@ -3235,22 +3211,11 @@ const Main = (() => {
         //remove these things
         let things = ["AP1","TH1","Ferocious Boost"];
         _.each(things,thing => {
-            attacker.token.set(Buffs[thing],false);
+            attacker.AddRemoval("Buff",thing)
         })
         if (attacker.token.get("aura1_color") === "#ff00ff") {
-            let info = {
-                type: "Aura1",
-                name: "Overwatch",
-            }
-            if (Removals[attacker.id]) {
-                Removals[attacker.id].push(info);
-            } else {
-                Removals[attacker.id]= [info];
-            }
+            attacker.AddRemoval("Aura1","Overwatch");
         }
- 
-
-
 
 
         if (combatType === "Melee") {
@@ -3519,10 +3484,9 @@ const Main = (() => {
             outputCard.body.push("Bound - The Unit may immediately be placed anywhere within " + roll + " Hexes")
         }
 
-        unit.RemoveBuffs("Activation");
+        unit.RemoveBuffs(); //removes buffs or similar that lasted whole turn
 
         RemoveStuff();  //removes buffs or similar once 'used', generally when activate another unit
-////// maybe roll unit.RemoveBuffs into here ?
 
 
         outputCard.subtitle = order;
@@ -3572,6 +3536,7 @@ const Main = (() => {
         if ((unit.keywords.includes("Rapid Rush") || unitAuras.includes("Rapid Rush") || unit.token.get(Buffs["Rapid Rush"])) && order === "Charge/Rush") {
             preface.push("Unit has Rapid Rush and gets +3 Hexes to Rush");
             rush += 3;
+            unit.AddRemoval("Buff","Rapid Rush");
         }
 
         if (unit.keywords.includes("Strider") && order !== "Hold" && order !== "Rally") {
@@ -3592,7 +3557,7 @@ const Main = (() => {
             preface.push("The Unit has Speed Feat Active and Added");
             move += 1;
             charge += 2, rush+= 2;
-            unit.token.set(Buffs.speedFeat,false);
+            unit.AddRemoval("Buff","speeFeat");
             unit.SetTT2("Speed Feat Used");
         }
         if (shaken === true && order !== "Rally") {
@@ -3718,7 +3683,6 @@ const Main = (() => {
                 if ((unit.keywords.includes("Hit & Run")) || unitAuras.includes("Hit & Run")) {
                     outputCard.body.push("The Unit may move up to 2 Hexes after Shooting or Melee");
                 }
-                unit.token.set(Buffs["Rapid Rush"],false);
 
 
                 break;
@@ -3925,14 +3889,6 @@ log(unit.flavours)
             }
         }
 
-        //just placing the special name in tooltip
-        let tipList = ["Rending Mark"];
-        if (tipList.includes(specialName)) {
-            _.each(targets,target => {
-                target.SetTT2(specialName);
-                outputCard.body.push(target.name + " now has " + specialName);
-            })
-        }
         if (specialName.includes("Speed Feat")) {
             _.each(targets,target => {
                 let tt = target.TTip();
@@ -3945,8 +3901,7 @@ log(unit.flavours)
             })
         }
 
-
-        let markList = ["Entrenched Buff","No Retreat Buff","Precision Shooter Buff","Bane in Melee Buff","Relentless Mark"];
+        let markList = ["Entrenched Buff","No Retreat Buff","Precision Shooter Buff","Bane in Melee Buff","Relentless Mark","Rending Mark"];
         if (markList.includes(specialName)) {
             _.each(targets,target => {
                 target.token.set(Buffs[specialName],true);
