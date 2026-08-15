@@ -1001,20 +1001,11 @@ const Main = (() => {
                 success = true;
                 extra.push("The Test is still Passed due to No Retreat");
                 let hp = parseInt(this.token.get("bar1_value"));
-                let wounds = 0;
-                let noRRolls = [];
-                for (let i=0;i<hp;i++) {
-                    let roll = randomInteger(6);
-                    noRRolls.push(roll);
-                    if (roll < 4) {wounds++};
-                }
-                noRRolls = noRRolls.sort((a,b) => b-a);
-                let wtip = "Rolls: " + noRRolls.toString() + "<br>Rolls 1-3 = 1 Wound";
-                wtip = '[' + wounds + '](#" class="showtip" title="' + wtip + ')';
+                let wounds = this.toughness;
                 if (this.faction === "Imperial Guard") {
-                    extra.push("The Commissar has to shoot " + wtip + " Men to stop the Rout!");
+                    extra.push("The Commissar shoots a man and stops the Rout!");
                 } else {
-                    extra.push("No Retreat causes " + wtip + " Wounds");
+                    extra.push("No Retreat causes " + wounds + " Wounds");
                 }
                 hp = Math.max(0,hp - wounds);
                 if (hp <= 0) {
@@ -1482,7 +1473,9 @@ const Main = (() => {
                 AddAbility("Morale","!Morale;" + unit.id + ";?{Reason|Melee|Ranged|Spell}",unit.charID);
             }
             //Dangerous
-            AddAbility("Dangerous","!DangerousTest",unit.charID);
+            if (unit.type !== "Aircraft") {
+                AddAbility("Dangerous","!DangerousTest",unit.charID);
+            }
 
             if (unit.casterLevel > 0) {
                 action = "!CastSpell";
@@ -3245,7 +3238,15 @@ const Main = (() => {
             attacker.token.set(Buffs[thing],false);
         })
         if (attacker.token.get("aura1_color") === "#ff00ff") {
-            attacker.token.set("aura1_color","transparent");
+            let info = {
+                type: "Aura1",
+                name: "Overwatch",
+            }
+            if (Removals[attacker.id]) {
+                Removals[attacker.id].push(info);
+            } else {
+                Removals[attacker.id]= [info];
+            }
         }
  
 
@@ -3806,15 +3807,21 @@ const Main = (() => {
         let ids = Object.keys(Removals);
         _.each(ids,id => {
             let unit = UnitArray[id];
-            let info = Removals[id]; //an array
-            _.each(info,item => {
-                if (item.type === "Buff") {
-                    unit.token.set(Buffs[item.name],false);
-                }
-                if (item.type === "Debuff") {
-                    unit.token.set(Debuffs[item.name],false);
-                }
-            })
+            if (unit && unit.token) {
+                let info = Removals[id]; //an array
+                _.each(info,item => {
+                    if (item.type === "Buff") {
+                        unit.token.set(Buffs[item.name],false);
+                    }
+                    if (item.type === "Debuff") {
+                        unit.token.set(Debuffs[item.name],false);
+                    }
+                    if (item.type === "Aura1") {
+                        unit.token.set("aura1_color","transparent");
+                    }
+                })
+            }
+
         })
         Removals = {};
     }
@@ -5255,7 +5262,8 @@ log(unit.flavours)
                 log("State");
                 log(state.Epic);
                 log("Units");
-                log(UnitArray)
+                log(UnitArray);
+                log(Removals);
                 break;
             case '!ClearState':
                 ClearState(msg);
