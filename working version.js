@@ -2623,7 +2623,7 @@ const Main = (() => {
                         if ((attacker.keywords.includes("Relentless") || attackerAuras.includes("Relentless")) && losResult.distance > 4 && combatType !== "Spell") {
                             relentless++;
                         }
-                        if (defender.token.get(Debuffs["Relentless Mark"]) && losResult.distance > 4 && combatType !== "Spell") {
+                        if (defender.token.get(Debuffs["Relentless Mark"]) && losResult.distance > 4) {
                             relentless++;
                             defender.AddRemoval("Debuff","Relentless Mark");
                         }
