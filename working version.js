@@ -5196,6 +5196,7 @@ log(unit.flavours)
                 outputCard.body.push("The Unit must take a Dangerous Terrain Test");
                 PrintCard();
             }
+
             if ((newHex.type === "Dangerous" || prevHex.type === "Dangerous") && unit.type !== "System") {
                 SetupCard(unit.name,"Dangerous Terrain",unit.faction);
                 outputCard.body.push("The Unit must take a (single) Dangerous Terrain Test");
