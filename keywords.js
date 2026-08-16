@@ -107,6 +107,10 @@ const Keywords = {
     "Melee Shrouding Aura": "[Aura] - Enemies have -2 Hex Movement when charging this Unit",
 
     "Mend": "Once per activation, pick one friendly unit within 2 Hexes in LOS and heal D3 wounds",
+
+    "Mobile Artillery": "When this model uses a Hold action and shoots at enemies 5+ away, it gets +1 to hit rolls. As long this model hasn't moved during the round, when enemy units shoot at it from 5+ away, they get -2 to hit rolls.",
+
+
     "Morale Debuff": "Once per activation, before attacking, pick up to 4 enemy units within 9 in line of sight, which gets -1 to morale test rolls once (next time the effect would apply).",
 
 

@@ -2428,10 +2428,11 @@ const Main = (() => {
             }
 
             //Positive To Hits
-            if (attacker.keywords.includes("Artillery") && losResult.distance > 4) {
+            if ((attacker.keywords.includes("Artillery") || attacker.keywords.includes("Mobile Artillery")) && losResult.distance > 4) {
                 needed -= 1;
                 neededTip += "<br>Artillery at Range +1 to Hit";
             }
+
             if (attacker.token.get(Buffs.TH1) === true && combatType !== "Spell") {
                 needed -= 1;
                 neededTip += "<br>Unpredictable +1 to Hit";
@@ -2543,7 +2544,7 @@ const Main = (() => {
                 }
 
                 let art = false;
-                if (defender.keywords.includes("Artillery") && losResult.distance > 4) {
+                if ((defender.keywords.includes("Artillery") || defender.keywords.includes("Mobile Artillery")) && losResult.distance > 4) {
                     needed += 2;
                     neededTip += "<br>Artillery being shot at > 4 hexes";
                     art = true;
@@ -4270,6 +4271,8 @@ log(unit.flavours)
         if (charName.includes("Storm Leader")) {name = "Storm Leader "};
         if (charName.includes("Commander")) {name = "Commander "};
         if (charName.includes("Psyker")) {name = "Psyker "};
+        if (charName.includes("Lieutenant")) {name = "Lt. "};
+        if (charName.includes("Mek")) {name = "Mek "};
 
 
 
