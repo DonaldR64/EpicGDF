@@ -3114,9 +3114,7 @@ const Main = (() => {
                 }
                 if (losResult.distance > range && combatType === "Ranged" && weapon.type !== "CCW") {
                     notE = weapon.name + " - lacks Range";
-                    if (losResult.notes.length > 1 && losResult.notes.includes("Ranged Shrouding")) {
-                        notE += "[Ranged Shrouding in effect]";
-                    }
+
                 }
                 if (iconAttack === true) {
                     let proceed = false;
