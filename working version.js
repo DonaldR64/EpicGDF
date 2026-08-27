@@ -859,6 +859,10 @@ const Main = (() => {
                 if (aa["weapon" + i + "equipped"] === "Equipped") {
                     let key = (aa["weapon" + i + "special"] || " ").split(",");
                     let keywords = key.map((e) => e.trim()) || [""];
+                    if (keywords.includes("Counter")) {
+                        this.keywords.push("Counter")
+                    }
+
                     let name = aa["weapon" + i + "name"];
                     let number = parseInt(aa["weapon" + i + "number"]) || 1;
                     if (number > 1 && name.at(-1) !== "s") {name += "s"};
@@ -892,6 +896,7 @@ const Main = (() => {
             for (let im = 0;im < impactKeys.length; im++) {
                 impact += parseInt(impactKeys[im].replace(/\D/g,''));
             }
+
             if (impact > 0) {
                 let weapon = {name: "Impact",number: this.models,type: "CCW",range: 0,attacks: impact,ap: 0,keywords: [""],fx: "",sound: ""};
                 weapons.push(weapon);
@@ -2595,12 +2600,17 @@ const Main = (() => {
                     neededTip += "<br>Unit Damaged -1 to Hit";
                 }
             }
-                    /*
-                    needs fixing
-                                if (weapon.name === "Impact" && defender.keywords.includes("Counter")) {
-                                    attacks -= defender.models;
-                                }
-                    */
+log(weapon.name)
+log(defender.keywords)
+            if (weapon.name === "Impact" && defender.keywords.includes("Counter")) {
+                attacks = Math.max(0,attacks - defenderModels);
+                neededTip += "<br>Counter Reduced Attacks by " + defenderModels;
+                if (attacks === 0) {
+                    outputCard.body.push("All Impact Stopped by Counter");
+                    return;
+                }
+            }
+        
 
 
             attDisplay = attacks; //as attacks is deprecated
@@ -2868,7 +2878,7 @@ const Main = (() => {
                         savePass.push(saveRoll);
                     } else {
                         saveFail.push(saveRoll);
-                        let wounds = 1;
+                        wounds = 1;
                         let deadly = weapon.keywords.find((e) => e.includes("Deadly"));
                         if (deadly) {
                             wounds = parseInt(deadly.replace(/\D/g,''));
