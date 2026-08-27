@@ -2600,8 +2600,7 @@ const Main = (() => {
                     neededTip += "<br>Unit Damaged -1 to Hit";
                 }
             }
-log(weapon.name)
-log(defender.keywords)
+
             if (weapon.name === "Impact" && defender.keywords.includes("Counter")) {
                 attacks = Math.max(0,attacks - defenderModels);
                 neededTip += "<br>Counter Reduced Attacks by " + defenderModels;
