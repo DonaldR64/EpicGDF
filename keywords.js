@@ -88,7 +88,8 @@ const Keywords = {
     "Hit & Run Shooter Aura": "[Aura] - May Move up to 2 Hexes after shooting",
 
     "Hold the Line": "Units get +1 to Morale triggered by Shooting or Melee",
-    "Hold the Line Boost Aura": "This model and up to 3 friendly units picked before the start of the game get Hold the Line Boost. If this model is killed, picked models that are deployed lose the rule.",
+    "Hold the Line Boost": "If all models in this unit have Hold the Line, they get +2 to morale test rolls from Hold the Line (instead of only +1).",
+    "Hold the Line Boost Aura": "If all models in this unit have Hold the Line, they get +2 to morale test rolls from Hold the Line (instead of only +1).",
 
     "Immobile": "Models with this special rule may only use Hold actions.",
 
