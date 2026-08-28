@@ -1452,7 +1452,7 @@ const Main = (() => {
 
 
         //special ability macros
-            let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6},{name: "Speed Feat", targets: 1, range: 0},{name: "Speed Feat Aura", targets: 2, range: 0},{name: "Entrenched Buff", targets: 1, range: 6},{name: "No Retreat Buff", targets: 1, range: 6},{name: "Precision Shooter Buff", targets: 1, range: 6},{name: "Relentless Mark", targets: 1, range: 9}];
+            let specials = [{name: "Dangerous Terrain Debuff", targets: 1, range: 9},{name: "Mend", targets: 1, range: 2},{name: "Piercing Shooting Mark", targets: 1, range: 9},{name: "Precision Spotter", targets: 1, range: 18},{name: "Steadfast Buff", targets: 1, range: 6},{name: "Rending Mark", targets: 1, range: 9},{name: "Bane in Melee Buff", targets: 1, range: 6},{name: "Speed Feat", targets: 1, range: 0},{name: "Speed Feat Aura", targets: 2, range: 0},{name: "Entrenched Buff", targets: 1, range: 6},{name: "No Retreat Buff", targets: 1, range: 6},{name: "Precision Shooter Buff", targets: 1, range: 6},{name: "Coordinate", targets: 1, range: 6},{name: "Relentless Mark", targets: 1, range: 9},];
 
             _.each(specials,special => {
                 let t = "";
@@ -3881,6 +3881,11 @@ log(unit.flavours)
             PrintCard();
             return;
         }
+
+        if (specialName === "Coordinate") {
+            outputCard.body.push(targets[0].name + " may activate immediately after this units activation is done");
+        }
+
 
         if (specialName === "Dangerous Terrain Debuff") {
             for (let i=0;i<targets.length;i++) {
