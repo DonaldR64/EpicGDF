@@ -978,7 +978,7 @@ const Main = (() => {
             if (reason && reason !== "Spell" && this.keywords.includes("Hold the Line")) {
                 target -= 1;
                 tip += "<br>Hold the Line +1";
-                if (this.token.get(Buffs["Hold the Line Boost"])) {
+                if (this.token.get(Buffs["Hold the Line Boost"]) || auras.includes("Hold the Line Boost")) {
                     target -= 1;
                     tip += "<br>Hold the Line Boost +1";
                     this.AddRemoval("Buff","Hold the Line Boost");
